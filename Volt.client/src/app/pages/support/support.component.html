@@ -1,0 +1,200 @@
+<div class="entity-form">
+  <div class="entity-form__top">
+    <div class="entity-form__intro">
+      <div>
+        <h1 class="entity-form__title">{{ 'support.title' | t }}</h1>
+        <p class="entity-form__subtitle">{{ 'support.subtitle' | t }}</p>
+      </div>
+    </div>
+
+    <div class="entity-form__top-actions" *ngIf="!isLoading">
+      <button
+        type="button"
+        class="entity-form__btn entity-form__btn--primary"
+        (click)="onSubmit()"
+        [disabled]="supportForm.invalid || isSaving"
+      >
+        {{ isSaving ? ('common.saving' | t) : ('common.save' | t) }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="entity-form__alert entity-form__alert--ok" role="status">
+    {{ successMessage }}
+  </div>
+
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="isLoading" class="entity-form__loading">
+    <div class="entity-form__spinner" aria-hidden="true"></div>
+    <p>{{ 'common.loading' | t }}</p>
+  </div>
+
+  <form
+    *ngIf="!isLoading"
+    [formGroup]="supportForm"
+    (ngSubmit)="onSubmit()"
+    class="entity-form__shell entity-form__shell--stack"
+  >
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'support.contactKicker' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'support.basicInfo' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'support.basicInfoSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__field">
+          <label class="entity-form__label">
+            {{ 'support.companyName' | t }}<span class="entity-form__req">*</span>
+          </label>
+          <input
+            type="text"
+            formControlName="companyName"
+            class="entity-form__input"
+            [placeholder]="'support.companyNamePlaceholder' | t"
+          />
+          <p *ngIf="supportForm.get('companyName')?.invalid && supportForm.get('companyName')?.touched" class="entity-form__error">
+            {{ 'support.companyNameRequired' | t }}
+          </p>
+        </div>
+
+        <div class="entity-form__field">
+          <label class="entity-form__label">{{ 'support.address' | t }}</label>
+          <textarea
+            formControlName="address"
+            class="entity-form__textarea"
+            rows="3"
+            [placeholder]="'support.addressPlaceholder' | t"
+          ></textarea>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.phoneNumber' | t }}</label>
+            <input
+              type="tel"
+              formControlName="phoneNumber"
+              class="entity-form__input"
+              [placeholder]="'support.phonePlaceholder' | t"
+            />
+          </div>
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.whatsAppNumber' | t }}</label>
+            <input
+              type="tel"
+              formControlName="whatsAppNumber"
+              class="entity-form__input"
+              [placeholder]="'support.whatsAppPlaceholder' | t"
+            />
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.email' | t }}</label>
+            <input
+              type="email"
+              formControlName="email"
+              class="entity-form__input"
+              [placeholder]="'support.emailPlaceholder' | t"
+            />
+            <p *ngIf="supportForm.get('email')?.invalid && supportForm.get('email')?.touched" class="entity-form__error">
+              {{ 'support.emailInvalid' | t }}
+            </p>
+          </div>
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.workingHours' | t }}</label>
+            <input
+              type="text"
+              formControlName="workingHours"
+              class="entity-form__input"
+              [placeholder]="'support.workingHoursPlaceholder' | t"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'support.socialKicker' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'support.socialLinks' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'support.socialLinksSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.websiteUrl' | t }}</label>
+            <input type="url" formControlName="websiteUrl" class="entity-form__input" placeholder="https://" />
+          </div>
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.facebookUrl' | t }}</label>
+            <input type="url" formControlName="facebookUrl" class="entity-form__input" placeholder="https://" />
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.instagramUrl' | t }}</label>
+            <input type="url" formControlName="instagramUrl" class="entity-form__input" placeholder="https://" />
+          </div>
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.twitterUrl' | t }}</label>
+            <input type="url" formControlName="twitterUrl" class="entity-form__input" placeholder="https://" />
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.linkedInUrl' | t }}</label>
+            <input type="url" formControlName="linkedInUrl" class="entity-form__input" placeholder="https://" />
+          </div>
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.tikTokUrl' | t }}</label>
+            <input type="url" formControlName="tikTokUrl" class="entity-form__input" placeholder="https://" />
+          </div>
+        </div>
+
+        <div class="entity-form__field">
+          <label class="entity-form__label">{{ 'support.youTubeUrl' | t }}</label>
+          <input type="url" formControlName="youTubeUrl" class="entity-form__input" placeholder="https://" />
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'support.locationKicker' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'support.locationInfo' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'support.locationInfoSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.latitude' | t }}</label>
+            <input type="number" formControlName="latitude" class="entity-form__input" step="any" placeholder="0.000000" />
+          </div>
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'support.longitude' | t }}</label>
+            <input type="number" formControlName="longitude" class="entity-form__input" step="any" placeholder="0.000000" />
+          </div>
+        </div>
+
+        <div class="entity-form__field">
+          <label class="entity-form__label">{{ 'support.additionalInfo' | t }}</label>
+          <textarea
+            formControlName="additionalInfo"
+            class="entity-form__textarea"
+            rows="4"
+            [placeholder]="'support.additionalInfoPlaceholder' | t"
+          ></textarea>
+        </div>
+      </div>
+    </section>
+  </form>
+</div>

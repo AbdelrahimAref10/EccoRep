@@ -1,0 +1,212 @@
+{
+  "landing": {
+    "nav": {
+      "features": "Fonctionnalités",
+      "why": "Pourquoi ECCO",
+      "vehicles": "Véhicules",
+      "contact": "Contact",
+      "downloadApp": "Télécharger l'app",
+      "toggleTheme": "Changer le thème",
+      "toggleMenu": "Ouvrir le menu",
+      "language": "Langue"
+    },
+    "hero": {
+      "title": "Vivez une mobilité urbaine moderne",
+      "subtitle": "Location de trottinettes intelligentes et écologiques — à tout moment, partout",
+      "download": "Télécharger l'application",
+      "browse": "Voir les trottinettes"
+    },
+    "features": {
+      "title": "Fonctionnalités clés",
+      "subtitle": "Tout ce qu'il vous faut pour une mobilité urbaine fluide",
+      "items": {
+        "booking": {
+          "title": "Réservation facile",
+          "desc": "Louez une trottinette en quelques secondes grâce à notre application intuitive"
+        },
+        "vehicles": {
+          "title": "Plusieurs types de véhicules",
+          "desc": "Trottinettes électriques, vélos urbains et vélos d'aventure disponibles"
+        },
+        "flexible": {
+          "title": "Locations flexibles",
+          "desc": "Choisissez une location à l'heure, à la journée ou longue durée"
+        },
+        "payments": {
+          "title": "Paiements sécurisés",
+          "desc": "Transactions sécurisées avec Visa, Mastercard et portefeuilles électroniques"
+        },
+        "notify": {
+          "title": "Notifications en temps réel",
+          "desc": "Recevez des mises à jour, rappels et alertes instantanés"
+        },
+        "profile": {
+          "title": "Gestion du profil",
+          "desc": "Personnalisez vos paramètres et suivez votre historique de location"
+        }
+      }
+    },
+    "why": {
+      "title": "Pourquoi choisir ECCO ?",
+      "subtitle": "Le choix intelligent pour le transport urbain moderne",
+      "items": {
+        "eco": {
+          "title": "Écologique",
+          "desc": "Une mobilité zéro émission pour une ville plus propre et plus verte"
+        },
+        "affordable": {
+          "title": "Abordable",
+          "desc": "Des tarifs compétitifs avec des options de paiement flexibles"
+        },
+        "convenient": {
+          "title": "Pratique",
+          "desc": "Disponible dans toute la ville avec prise en charge et dépôt faciles"
+        },
+        "smart": {
+          "title": "Technologie intelligente",
+          "desc": "Application moderne avec GPS et verrouillage intelligent"
+        }
+      }
+    },
+    "scooters": {
+      "eyebrow": "Notre flotte",
+      "title": "Vehicle Overview",
+      "subtitle": "Du loisir à la mobilité médicale — des véhicules pour chaque besoin",
+      "explore": "Explorer",
+      "items": {
+        "golf": {
+          "tag": "Loisirs",
+          "title": "Voiturette de golf",
+          "desc": "Carts électriques confortables pour resorts, campus et grands espaces"
+        },
+        "medical": {
+          "tag": "Médical",
+          "title": "Fauteuil roulant médical",
+          "desc": "Mobilité fiable conçue pour les soins et l'autonomie au quotidien"
+        },
+        "scooter": {
+          "tag": "Urbain",
+          "title": "Trottinette électrique",
+          "desc": "Déplacements rapides et agiles pour la ville et les trajets courts"
+        }
+      }
+    },
+    "vehicleDetail": {
+      "back": "Retour à la flotte",
+      "about": "À propos de ce véhicule",
+      "storyTitle": "Conçu pour de vrais trajets",
+      "highlightsTitle": "Pourquoi les utilisateurs l'adorent",
+      "highlightsSubtitle": "Des atouts concrets pour chaque trajet",
+      "galleryTitle": "Galerie",
+      "gallerySubtitle": "Découvrez chaque angle",
+      "idealEyebrow": "Idéal pour",
+      "idealTitle": "Là où ce véhicule excelle",
+      "relatedTitle": "Explorer d'autres véhicules",
+      "relatedSubtitle": "Trouvez le bon véhicule pour chaque style",
+      "ctaApp": "Télécharger l'application",
+      "ctaFleet": "Voir tous les véhicules",
+      "bottomCtaTitle": "Prêt à rouler avec ECCO ?",
+      "bottomCtaSubtitle": "Réservez en quelques minutes, déverrouillez et partez.",
+      "specs": {
+        "seats": "Places",
+        "range": "Autonomie",
+        "speed": "Vitesse max",
+        "charge": "Charge",
+        "weight": "Poids",
+        "fold": "Pliage",
+        "wheels": "Roues",
+        "support": "Assistance"
+      },
+      "golf": {
+        "subtitle": "Confort électrique premium pour les grands espaces",
+        "lead": "Une voiturette de golf silencieuse pour resorts, campus et trajets en groupe — sans bruit ni carburant.",
+        "story1": "La voiturette ECCO rend la mobilité loisirs plus propre. Chemins de resort, transferts d'invités ou balades détendues : le trajet reste calme et confortable.",
+        "story2": "Avec des places spacieuses et une conduite électrique stable, elle convient quand il faut plus qu'une trottinette, tout en restant simple et écologique.",
+        "story3": "Les exploitants apprécient l'entretien réduit, les usagers aiment le confort et la réservation via l'app ECCO.",
+        "h1t": "Motorisation électrique silencieuse",
+        "h1d": "Fonctionnement quasi silencieux pour resorts, parcs et campus.",
+        "h2t": "Place pour les groupes",
+        "h2d": "Configuration multiplaces pour familles, invités et équipes.",
+        "h3t": "Utilisation toute la journée",
+        "h3d": "Bonne autonomie pour un usage diurne continu.",
+        "h4t": "Réservation facile",
+        "h4d": "Réservez, déverrouillez et suivez via l'application ECCO.",
+        "ideal1": "Hôtels, resorts et clubs de golf",
+        "ideal2": "Campus universitaires et d'entreprises",
+        "ideal3": "Parcours loisirs et transport d'invités",
+        "specs": {
+          "seats": "4 places",
+          "range": "Jusqu'à 60 km",
+          "speed": "25 km/h",
+          "charge": "4–6 heures"
+        }
+      },
+      "medical": {
+        "subtitle": "Mobilité fiable au quotidien",
+        "lead": "Un fauteuil médical conçu pour le confort, la stabilité et l'autonomie — à domicile, en clinique ou lors de sorties planifiées.",
+        "story1": "Le soutien à la mobilité doit être fiable et simple. Le fauteuil médical ECCO privilégie une manipulation fluide et un siège confortable.",
+        "story2": "Les aidants gagnent en contrôle, les utilisateurs en confiance dans les couloirs et les parcours accessibles.",
+        "story3": "Avec ECCO, familles et établissements réservent le bon fauteuil au bon moment.",
+        "h1t": "Cadre chrome stable",
+        "h1d": "Structure solide pour un usage médical et personnel quotidien.",
+        "h2t": "Assise confortable",
+        "h2d": "Siège et dossier supportants pour une utilisation prolongée.",
+        "h3t": "Pensé pour les aidants",
+        "h3d": "Poignées et contrôles pratiques pour la mobilité assistée.",
+        "h4t": "Disponible quand il le faut",
+        "h4d": "Réservez via ECCO pour cliniques, convalescence ou besoin temporaire.",
+        "ideal1": "Cliniques, hôpitaux et centres de récupération",
+        "ideal2": "Soins à domicile temporaires",
+        "ideal3": "Mobilité assistée pour rendez-vous et sorties",
+        "specs": {
+          "weight": "Cadre léger",
+          "fold": "Pliable",
+          "wheels": "Arrière + pivots",
+          "support": "Mobilité assistée"
+        }
+      },
+      "scooter": {
+        "subtitle": "Conduite électrique agile pour la ville",
+        "lead": "Une trottinette électrique élégante pour les trajets quotidiens, courses courtes et last mile.",
+        "story1": "La ville fonctionne mieux avec une mobilité légère et proche. La trottinette ECCO est faite pour ce rythme.",
+        "story2": "Design compact et contrôles réactifs : idéale pour étudiants, professionnels et courtes alternatives à la voiture.",
+        "story3": "Disponibilité en temps réel dans l'app : trouvez, déverrouillez et partez en quelques secondes.",
+        "h1t": "Agilité urbaine",
+        "h1d": "Compacte et réactive pour rues denses et courts trajets.",
+        "h2t": "Batterie efficace",
+        "h2d": "Assez d'autonomie pour les trajets quotidiens.",
+        "h3t": "Déverrouillage smart",
+        "h3d": "Localisez et ouvrez instantanément via l'app ECCO.",
+        "h4t": "Déplacements sans friction",
+        "h4d": "Moins de stress de stationnement, plus de liberté.",
+        "ideal1": "Trajets quotidiens et campus",
+        "ideal2": "Courses et last mile",
+        "ideal3": "Exploration urbaine écologique",
+        "specs": {
+          "range": "Jusqu'à 35 km",
+          "speed": "25 km/h",
+          "weight": "Env. 14 kg",
+          "charge": "3–5 heures"
+        }
+      }
+    },
+    "cta": {
+      "title": "Roulez plus malin. Roulez électrique.",
+      "subtitle": "Téléchargez l'application ECCO dès aujourd'hui et commencez votre aventure écologique",
+      "appStore": "App Store",
+      "googlePlay": "Google Play"
+    },
+    "footer": {
+      "tagline": "Des solutions de mobilité urbaine intelligentes et écologiques pour les villes modernes.",
+      "company": "Entreprise",
+      "about": "À propos",
+      "careers": "Carrières",
+      "press": "Presse",
+      "support": "Assistance",
+      "help": "Centre d'aide",
+      "safety": "Sécurité",
+      "contact": "Contact",
+      "follow": "Suivez-nous"
+    }
+  }
+}

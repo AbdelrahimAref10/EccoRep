@@ -1,0 +1,98 @@
+.lp-cta {
+  background: var(--lp-gradient-cta);
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.lp-cta__orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.lp-cta__orb--1 {
+  width: min(28rem, 70vw);
+  height: min(28rem, 70vw);
+  top: -30%;
+  inset-inline-end: -10%;
+  background: rgba(255, 255, 255, 0.22);
+  animation: lp-cta-orb 10s ease-in-out infinite alternate;
+}
+
+.lp-cta__orb--2 {
+  width: min(22rem, 55vw);
+  height: min(22rem, 55vw);
+  bottom: -35%;
+  inset-inline-start: -8%;
+  background: rgba(0, 0, 0, 0.18);
+  animation: lp-cta-orb 12s ease-in-out infinite alternate-reverse;
+}
+
+.lp-cta__inner {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.lp-cta h2 {
+  margin: 0 0 0.7rem;
+  font-size: clamp(1.65rem, 3vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.lp-cta p {
+  margin: 0 auto 1.35rem;
+  max-width: 34rem;
+  opacity: 0.95;
+  line-height: 1.55;
+  font-size: 1rem;
+  font-weight: 400;
+}
+
+.lp-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.65rem;
+}
+
+.lp-cta__store {
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  min-width: 9.5rem;
+  min-height: 2.25rem;
+  padding: 0.4rem 1rem;
+  font-size: 0.875rem;
+  transition:
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    background 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.lp-cta__store:hover {
+  background: rgba(0, 0, 0, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.lp-cta__store svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+@keyframes lp-cta-orb {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to { transform: translate3d(-6%, 8%, 0) scale(1.12); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-cta__orb,
+  .lp-cta__store {
+    animation: none !important;
+  }
+}

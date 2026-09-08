@@ -1,0 +1,103 @@
+.lp-footer {
+  background: hsl(157 55% 14%);
+  color: rgba(255, 255, 255, 0.92);
+  padding: 3.5rem 0 0;
+}
+
+:host-context(html.dark) .lp-footer,
+.lp--dark .lp-footer {
+  background: hsl(157 30% 8%);
+}
+
+.lp-footer__grid {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 1fr;
+  padding-bottom: 2.5rem;
+}
+
+.lp-footer__logo-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.75rem;
+}
+
+.lp-footer__logo-row img,
+.lp-footer__logo {
+  width: auto;
+  height: 2.5rem;
+  max-width: 9rem;
+  object-fit: contain;
+  border-radius: 0.35rem;
+  background: #fff;
+  display: block;
+}
+
+.lp-footer__logo-row strong {
+  letter-spacing: 0.05em;
+  font-size: 1.1rem;
+}
+
+.lp-footer__brand p {
+  margin: 0;
+  max-width: 18rem;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.55;
+}
+
+.lp-footer h4 {
+  margin: 0 0 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.lp-footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.lp-footer a {
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.lp-footer a:hover {
+  color: #fff;
+}
+
+.lp-footer__social {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.lp-footer__social a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.lp-footer__bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  text-align: center;
+  padding: 1.15rem 1rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+}
+
+@media (min-width: 800px) {
+  .lp-footer__grid {
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+  }
+}

@@ -1,0 +1,21 @@
+<section class="lp-section lp-why" id="why">
+  <div class="lp-container">
+    <div class="lp-section__head" lpReveal>
+      <h2 class="lp-section__title">{{ 'landing.why.title' | t }}</h2>
+      <p class="lp-section__subtitle">{{ 'landing.why.subtitle' | t }}</p>
+    </div>
+
+    <div class="lp-why__grid lp-stagger" lpReveal>
+      <article class="lp-card lp-why__card lp-stagger__item" *ngFor="let item of items">
+        <div class="lp-why__icon" aria-hidden="true">
+          <svg *ngIf="item.icon === 'eco'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 22c4-4 7-7.5 7-12a7 7 0 10-14 0c0 4.5 3 8 7 12z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 13a3 3 0 100-6 3 3 0 000 6z"/></svg>
+          <svg *ngIf="item.icon === 'affordable'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          <svg *ngIf="item.icon === 'convenient'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 21s7-4.5 7-11a7 7 0 10-14 0c0 6.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5" stroke-width="1.75"/></svg>
+          <svg *ngIf="item.icon === 'smart'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9.75 17L9 21h6l-.75-4M7 10V7a5 5 0 0110 0v3M5 10h14v7a2 2 0 01-2 2H7a2 2 0 01-2-2v-7z"/></svg>
+        </div>
+        <h3>{{ item.titleKey | t }}</h3>
+        <p>{{ item.descKey | t }}</p>
+      </article>
+    </div>
+  </div>
+</section>

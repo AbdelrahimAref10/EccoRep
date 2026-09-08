@@ -1,0 +1,4 @@
+/* Category form uses shared entity-form.css */
+:host {
+  display: block;
+}

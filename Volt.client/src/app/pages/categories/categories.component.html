@@ -1,0 +1,346 @@
+<div class="categories">
+  <header class="categories__header">
+    <div class="categories__header-text">
+      <h1 class="categories__title">{{ 'categories.title' | t }}</h1>
+      <p class="categories__subtitle">{{ 'categories.subtitle' | t }}</p>
+    </div>
+    <div class="categories__header-actions">
+      <div class="categories__view-toggle" role="group" [attr.aria-label]="'categories.viewTable' | t">
+        <button
+          type="button"
+          class="categories__view-btn"
+          [class.categories__view-btn--active]="viewMode === 'table'"
+          (click)="setViewMode('table')"
+          [attr.title]="'categories.viewTable' | t"
+          [attr.aria-label]="'categories.viewTable' | t"
+          [attr.aria-pressed]="viewMode === 'table'"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="categories__view-btn"
+          [class.categories__view-btn--active]="viewMode === 'gallery'"
+          (click)="setViewMode('gallery')"
+          [attr.title]="'categories.viewGallery' | t"
+          [attr.aria-label]="'categories.viewGallery' | t"
+          [attr.aria-pressed]="viewMode === 'gallery'"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2h-4a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zm10 0a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2h-4a2 2 0 01-2-2v-4z"/>
+          </svg>
+        </button>
+      </div>
+
+      <button type="button" class="categories__add-btn" (click)="onAddNew()">
+        <svg class="categories__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>{{ 'categories.add' | t }}</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="list-filters" aria-label="filters">
+    <div class="list-filters__search">
+      <span class="list-filters__search-icon-wrap" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </span>
+      <input
+        type="search"
+        class="list-filters__search-input"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="applyFilters()"
+        [placeholder]="'categories.searchPlaceholder' | t"
+        [attr.aria-label]="'common.search' | t"
+      />
+    </div>
+
+    <div class="list-filters__field">
+      <app-multi-select
+        [placeholder]="'categories.filterCitiesPlaceholder' | t"
+        [options]="cityOptions"
+        [values]="selectedCityIds"
+        (valuesChange)="onCityIdsChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <div class="list-filters__field list-filters__field--sm">
+      <app-multi-select
+        [placeholder]="'categories.filterStatusPlaceholder' | t"
+        [options]="statusOptions"
+        [values]="selectedStatusValues"
+        [searchable]="false"
+        (valuesChange)="onStatusChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <button type="button" class="list-filters__search-btn" (click)="applyFilters()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <span>{{ 'common.search' | t }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="list-filters__clear"
+      (click)="clearFilters()"
+      [disabled]="activeFilterCount === 0"
+      [attr.title]="'common.clearFilters' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <span>{{ 'common.clear' | t }}</span>
+    </button>
+  </section>
+
+  <div *ngIf="successMessage" class="categories__alert categories__alert--success" role="status">
+    <svg class="categories__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ successMessage }}</span>
+  </div>
+
+  <div *ngIf="errorMessage" class="categories__alert categories__alert--error" role="alert">
+    <svg class="categories__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <section class="categories__panel" [class.categories__panel--gallery]="viewMode === 'gallery' && !isLoading && categories.length > 0">
+    <div *ngIf="isLoading" class="categories__loading">
+      <div class="categories__spinner" aria-hidden="true"></div>
+      <p>{{ 'common.loading' | t }}</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading && categories.length > 0">
+      <!-- Table view -->
+      <div class="categories__table-scroll" *ngIf="viewMode === 'table'">
+        <table class="categories__table">
+          <caption class="sr-only">{{ 'categories.tableCaption' | t }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'common.image' | t }}</th>
+              <th scope="col">{{ 'common.name' | t }}</th>
+              <th scope="col">{{ 'common.description' | t }}</th>
+              <th scope="col">{{ 'common.city' | t }}</th>
+              <th scope="col">{{ 'common.subcategories' | t }}</th>
+              <th scope="col">{{ 'common.status' | t }}</th>
+              <th scope="col" class="categories__th-actions">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let category of categories">
+              <td>
+                <div class="categories__thumb">
+                  <img
+                    *ngIf="category.imageUrl"
+                    [src]="category.imageUrl"
+                    [alt]="category.name"
+                    class="categories__thumb-img"
+                  />
+                  <div *ngIf="!category.imageUrl" class="categories__thumb-fallback" aria-hidden="true">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="categories__name">{{ category.name }}</span>
+              </td>
+              <td>
+                <span class="categories__desc" [class.categories__desc--empty]="!category.description">
+                  {{ category.description || ('common.noData' | t) }}
+                </span>
+              </td>
+              <td>
+                <span class="categories__meta-chip">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  {{ category.cityName }}
+                </span>
+              </td>
+              <td>
+                <span class="categories__count">{{ category.subCategoryCount || 0 }}</span>
+              </td>
+              <td>
+                <span
+                  class="categories__status"
+                  [class.categories__status--active]="category.isActive"
+                  [class.categories__status--inactive]="!category.isActive"
+                >
+                  <span class="categories__status-dot" aria-hidden="true"></span>
+                  {{ category.isActive ? ('common.active' | t) : ('common.inactive' | t) }}
+                </span>
+              </td>
+              <td>
+                <ng-container *ngTemplateOutlet="actionsTpl; context: { $implicit: category }"></ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Gallery view -->
+      <div class="categories__gallery" *ngIf="viewMode === 'gallery'">
+        <article class="categories__tile" *ngFor="let category of categories">
+          <div class="categories__tile-media">
+            <img
+              *ngIf="category.imageUrl"
+              [src]="category.imageUrl"
+              [alt]="category.name"
+              class="categories__tile-img"
+            />
+            <div *ngIf="!category.imageUrl" class="categories__tile-fallback" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <span
+              class="categories__tile-status"
+              [class.categories__tile-status--active]="category.isActive"
+              [class.categories__tile-status--inactive]="!category.isActive"
+            >
+              {{ category.isActive ? ('common.active' | t) : ('common.inactive' | t) }}
+            </span>
+          </div>
+
+          <div class="categories__tile-body">
+            <h3 class="categories__tile-title">{{ category.name }}</h3>
+            <p class="categories__tile-desc" [class.categories__tile-desc--empty]="!category.description">
+              {{ category.description || ('common.noData' | t) }}
+            </p>
+
+            <div class="categories__tile-meta">
+              <span class="categories__meta-chip">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                {{ category.cityName }}
+              </span>
+              <span class="categories__tile-subs">
+                {{ 'categories.subcategoriesCount' | t:{ count: category.subCategoryCount || 0 } }}
+              </span>
+            </div>
+          </div>
+
+          <div class="categories__tile-footer">
+            <ng-container *ngTemplateOutlet="actionsTpl; context: { $implicit: category }"></ng-container>
+          </div>
+        </article>
+      </div>
+
+      <div class="categories__pager">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          [totalCount]="totalCount"
+          [pageSize]="pageSize"
+          (pageChange)="onPageChange($event)"
+        ></app-pagination>
+      </div>
+    </ng-container>
+
+    <div *ngIf="!isLoading && categories.length === 0" class="categories__empty">
+      <div class="categories__empty-icon" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/>
+        </svg>
+      </div>
+      <h2 class="categories__empty-title">{{ 'categories.empty' | t }}</h2>
+      <p class="categories__empty-text">{{ 'categories.emptyHint' | t }}</p>
+      <button type="button" class="categories__add-btn" (click)="onAddNew()">
+        <svg class="categories__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>{{ 'categories.add' | t }}</span>
+      </button>
+    </div>
+  </section>
+</div>
+
+<ng-template #actionsTpl let-category>
+  <div class="categories__actions">
+    <button
+      type="button"
+      class="categories__action"
+      (click)="onViewSubCategories(category.categoryId)"
+      [attr.title]="'categories.viewSubcategories' | t"
+      [attr.aria-label]="'categories.viewSubcategories' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="categories__action"
+      (click)="onEdit(category)"
+      [attr.title]="'categories.editCategory' | t"
+      [attr.aria-label]="'categories.editCategory' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+      </svg>
+    </button>
+    <button
+      *ngIf="category.isActive"
+      type="button"
+      class="categories__action categories__action--warn"
+      (click)="onDeactivate(category.categoryId)"
+      [attr.title]="'categories.deactivateCategory' | t"
+      [attr.aria-label]="'categories.deactivateCategory' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+      </svg>
+    </button>
+    <button
+      *ngIf="!category.isActive"
+      type="button"
+      class="categories__action categories__action--success"
+      (click)="onActivate(category.categoryId)"
+      [attr.title]="'categories.activateCategory' | t"
+      [attr.aria-label]="'categories.activateCategory' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="categories__action categories__action--danger"
+      (click)="onDelete(category.categoryId)"
+      [attr.title]="'categories.deleteCategory' | t"
+      [attr.aria-label]="'categories.deleteCategory' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+      </svg>
+    </button>
+  </div>
+</ng-template>
+
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog"
+  [title]="confirmDialogTitle"
+  [message]="confirmDialogMessage"
+  [type]="confirmDialogType"
+  [isLoading]="confirmDialogLoading"
+  [confirmText]="pendingAction === 'delete' ? ('common.delete' | t) : pendingAction === 'activate' ? ('common.active' | t) : ('common.inactive' | t)"
+  [cancelText]="'common.cancel' | t"
+  (confirm)="onConfirmAction()"
+  (cancel)="onCancelAction()"
+></app-confirm-dialog>

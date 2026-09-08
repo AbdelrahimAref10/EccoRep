@@ -1,0 +1,94 @@
+/* Confirm Dialog Component */
+
+.confirm-dialog__overlay {
+  @apply fixed inset-0 z-[9999] flex items-center justify-center;
+  background: transparent;
+  pointer-events: none;
+}
+
+.confirm-dialog__container {
+  @apply bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform transition-all;
+  animation: slideIn 0.2s ease-out;
+  z-index: 10000;
+  pointer-events: auto;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.confirm-dialog__header {
+  @apply px-6 pt-6 pb-4 flex items-start gap-4;
+}
+
+.confirm-dialog__icon-wrapper {
+  @apply flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center;
+}
+
+.confirm-dialog__icon-wrapper--danger {
+  @apply bg-error-100 text-error-600;
+}
+
+.confirm-dialog__icon-wrapper--warning {
+  @apply bg-warning-100 text-warning-600;
+}
+
+.confirm-dialog__icon-wrapper--info {
+  @apply bg-primary-100 text-primary-600;
+}
+
+.confirm-dialog__icon {
+  @apply w-6 h-6;
+}
+
+.confirm-dialog__title {
+  @apply text-xl font-semibold text-neutral-900 flex-1;
+}
+
+.confirm-dialog__body {
+  @apply px-6 py-4;
+}
+
+.confirm-dialog__message {
+  @apply text-neutral-700 leading-relaxed;
+}
+
+.confirm-dialog__footer {
+  @apply px-6 py-4 flex items-center justify-end gap-3 border-t border-neutral-200;
+}
+
+.confirm-dialog__btn {
+  @apply px-6 py-2.5 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2;
+}
+
+.confirm-dialog__btn--cancel {
+  @apply bg-neutral-100 text-neutral-700 hover:bg-neutral-200 focus:ring-neutral-500;
+}
+
+.confirm-dialog__btn--confirm {
+  @apply text-white;
+}
+
+.confirm-dialog__btn--danger {
+  @apply bg-error-500 hover:bg-error-600 focus:ring-error-500;
+}
+
+.confirm-dialog__btn--warning {
+  @apply bg-warning-500 hover:bg-warning-600 focus:ring-warning-500;
+}
+
+.confirm-dialog__btn--info {
+  @apply bg-primary-500 hover:bg-primary-600 focus:ring-primary-500;
+}
+
+.confirm-dialog__spinner {
+  @apply w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin;
+}
+

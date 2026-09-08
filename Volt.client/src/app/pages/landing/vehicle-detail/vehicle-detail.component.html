@@ -1,0 +1,161 @@
+<div class="lp vd" [class.lp--dark]="theme.isDark()" *ngIf="vehicle() as v">
+  <app-landing-header />
+
+  <main>
+    <section class="vd-hero" [attr.data-tone]="v.tone">
+      <div class="lp-container vd-hero__content">
+        <button type="button" class="vd-back" (click)="goBack()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          {{ 'landing.vehicleDetail.back' | t }}
+        </button>
+
+        <div class="vd-hero__layout">
+          <div class="vd-hero__copy" lpReveal>
+            <span class="vd-pill">{{ v.tagKey | t }}</span>
+            <h1>{{ v.titleKey | t }}</h1>
+            <p class="vd-hero__subtitle">{{ v.subtitleKey | t }}</p>
+            <p class="vd-hero__lead">{{ v.leadKey | t }}</p>
+
+            <div class="vd-hero__actions">
+              <a class="vd-btn vd-btn--primary" routerLink="/" fragment="download">
+                {{ 'landing.vehicleDetail.ctaApp' | t }}
+              </a>
+              <a class="vd-btn vd-btn--ghost" routerLink="/" fragment="vehicles">
+                {{ 'landing.vehicleDetail.ctaFleet' | t }}
+              </a>
+            </div>
+          </div>
+
+          <div class="vd-hero__visual" lpReveal>
+            <img [src]="activeImage()" [alt]="v.titleKey | t" class="vd-hero__photo" />
+            <div class="vd-thumbs">
+              <button
+                type="button"
+                class="vd-thumbs__item"
+                *ngFor="let img of v.gallery"
+                [class.is-active]="activeImage() === img"
+                (click)="selectImage(img)"
+              >
+                <img [src]="img" [alt]="v.titleKey | t" loading="lazy" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="vd-specs">
+      <div class="lp-container vd-specs__grid lp-stagger" lpReveal>
+        <article class="vd-spec lp-stagger__item" *ngFor="let spec of v.specs">
+          <span>{{ spec.labelKey | t }}</span>
+          <strong>{{ spec.valueKey | t }}</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="lp-section vd-story">
+      <div class="lp-container vd-story__grid">
+        <div class="vd-story__intro" lpReveal>
+          <p class="vd-eyebrow">{{ 'landing.vehicleDetail.about' | t }}</p>
+          <h2>{{ 'landing.vehicleDetail.storyTitle' | t }}</h2>
+        </div>
+        <div class="vd-story__blocks" lpReveal>
+          <p *ngFor="let key of v.storyKeys">{{ key | t }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-section vd-highlights">
+      <div class="lp-container">
+        <div class="lp-section__head" lpReveal>
+          <h2 class="lp-section__title">{{ 'landing.vehicleDetail.highlightsTitle' | t }}</h2>
+          <p class="lp-section__subtitle">{{ 'landing.vehicleDetail.highlightsSubtitle' | t }}</p>
+        </div>
+
+        <div class="vd-highlights__grid lp-stagger" lpReveal>
+          <article class="vd-highlight lp-stagger__item" *ngFor="let item of v.highlightKeys; let i = index">
+            <span class="vd-highlight__num">0{{ i + 1 }}</span>
+            <h3>{{ item.titleKey | t }}</h3>
+            <p>{{ item.descKey | t }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-section vd-gallery">
+      <div class="lp-container">
+        <div class="lp-section__head" lpReveal>
+          <h2 class="lp-section__title">{{ 'landing.vehicleDetail.galleryTitle' | t }}</h2>
+          <p class="lp-section__subtitle">{{ 'landing.vehicleDetail.gallerySubtitle' | t }}</p>
+        </div>
+
+        <div class="vd-gallery__grid lp-stagger" lpReveal>
+          <button
+            type="button"
+            class="vd-gallery__tile lp-stagger__item"
+            *ngFor="let img of v.gallery"
+            (click)="selectImage(img)"
+          >
+            <img [src]="img" [alt]="v.titleKey | t" loading="lazy" />
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-section vd-ideal">
+      <div class="lp-container vd-ideal__panel lp-reveal--scale" lpReveal>
+        <div>
+          <p class="vd-eyebrow">{{ 'landing.vehicleDetail.idealEyebrow' | t }}</p>
+          <h2>{{ 'landing.vehicleDetail.idealTitle' | t }}</h2>
+        </div>
+        <ul>
+          <li *ngFor="let key of v.idealKeys">{{ key | t }}</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="lp-section vd-related" *ngIf="related().length">
+      <div class="lp-container">
+        <div class="lp-section__head" lpReveal>
+          <h2 class="lp-section__title">{{ 'landing.vehicleDetail.relatedTitle' | t }}</h2>
+          <p class="lp-section__subtitle">{{ 'landing.vehicleDetail.relatedSubtitle' | t }}</p>
+        </div>
+
+        <div class="vd-related__grid lp-stagger" lpReveal>
+          <a
+            class="vd-related__card lp-stagger__item"
+            *ngFor="let item of related()"
+            [routerLink]="['/vehicles', item.slug]"
+          >
+            <img [src]="item.cover" [alt]="item.titleKey | t" loading="lazy" />
+            <div class="vd-related__shade"></div>
+            <div class="vd-related__body">
+              <span>{{ item.tagKey | t }}</span>
+              <h3>{{ item.titleKey | t }}</h3>
+              <em>{{ 'landing.scooters.explore' | t }} →</em>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="lp-section vd-cta">
+      <div class="lp-container vd-cta__inner" lpReveal>
+        <h2>{{ 'landing.vehicleDetail.bottomCtaTitle' | t }}</h2>
+        <p>{{ 'landing.vehicleDetail.bottomCtaSubtitle' | t }}</p>
+        <div class="vd-hero__actions">
+          <a class="vd-btn vd-btn--primary" routerLink="/" fragment="download">
+            {{ 'landing.vehicleDetail.ctaApp' | t }}
+          </a>
+          <button type="button" class="vd-btn vd-btn--ghost" (click)="goBack()">
+            {{ 'landing.vehicleDetail.back' | t }}
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <app-landing-footer />
+</div>

@@ -1,0 +1,44 @@
+<section class="lp-section lp-vehicles" id="vehicles">
+  <div class="lp-vehicles__bg" aria-hidden="true"></div>
+
+  <div class="lp-container">
+    <div class="lp-section__head" lpReveal>
+      <p class="lp-vehicles__eyebrow">{{ 'landing.scooters.eyebrow' | t }}</p>
+      <h2 class="lp-section__title">{{ 'landing.scooters.title' | t }}</h2>
+      <p class="lp-section__subtitle">{{ 'landing.scooters.subtitle' | t }}</p>
+    </div>
+
+    <div class="lp-vehicles__grid lp-stagger" lpReveal>
+      <article
+        class="lp-vehicles__card lp-stagger__item"
+        *ngFor="let vehicle of vehicles; let i = index"
+        [attr.data-tone]="vehicle.tone"
+        role="link"
+        tabindex="0"
+        (click)="openVehicle(vehicle.slug)"
+        (keydown.enter)="openVehicle(vehicle.slug)"
+      >
+        <img
+          class="lp-vehicles__photo"
+          [src]="vehicle.image"
+          [alt]="vehicle.titleKey | t"
+          loading="lazy"
+        />
+        <div class="lp-vehicles__shade" aria-hidden="true"></div>
+        <span class="lp-vehicles__index">{{ '0' + (i + 1) }}</span>
+
+        <div class="lp-vehicles__body">
+          <span class="lp-vehicles__tag">{{ vehicle.tagKey | t }}</span>
+          <h3>{{ vehicle.titleKey | t }}</h3>
+          <p>{{ vehicle.descKey | t }}</p>
+          <span class="lp-vehicles__cta">
+            {{ 'landing.scooters.explore' | t }}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+          </span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>

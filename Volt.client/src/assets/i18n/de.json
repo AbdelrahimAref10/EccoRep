@@ -1,0 +1,212 @@
+{
+  "landing": {
+    "nav": {
+      "features": "Funktionen",
+      "why": "Warum ECCO",
+      "vehicles": "Fahrzeuge",
+      "contact": "Kontakt",
+      "downloadApp": "App herunterladen",
+      "toggleTheme": "Design wechseln",
+      "toggleMenu": "Menü öffnen",
+      "language": "Sprache"
+    },
+    "hero": {
+      "title": "Erlebe moderne urbane Mobilität",
+      "subtitle": "Smarte, umweltfreundliche Scooter-Vermietung — jederzeit und überall",
+      "download": "App herunterladen",
+      "browse": "Scooter entdecken"
+    },
+    "features": {
+      "title": "Wichtigste Funktionen",
+      "subtitle": "Alles, was du für nahtlose urbane Mobilität brauchst",
+      "items": {
+        "booking": {
+          "title": "Einfache Buchung",
+          "desc": "Miete Scooter in Sekunden über unsere intuitive App"
+        },
+        "vehicles": {
+          "title": "Mehrere Fahrzeugtypen",
+          "desc": "E-Scooter, Stadträder und Adventure-Bikes verfügbar"
+        },
+        "flexible": {
+          "title": "Flexible Mietoptionen",
+          "desc": "Wähle stundenweise, täglich oder langfristig"
+        },
+        "payments": {
+          "title": "Sichere Zahlungen",
+          "desc": "Sichere Transaktionen mit Visa, Mastercard und E-Wallets"
+        },
+        "notify": {
+          "title": "Echtzeit-Benachrichtigungen",
+          "desc": "Erhalte sofortige Booking-Updates, Erinnerungen und Alerts"
+        },
+        "profile": {
+          "title": "Profilverwaltung",
+          "desc": "Passe Einstellungen an und verfolge deine Miet-Historie"
+        }
+      }
+    },
+    "why": {
+      "title": "Warum ECCO wählen?",
+      "subtitle": "Die smarte Wahl für modernen Stadtverkehr",
+      "items": {
+        "eco": {
+          "title": "Umweltfreundlich",
+          "desc": "Emissionsfreie Mobilität für eine sauberere, grünere Stadt"
+        },
+        "affordable": {
+          "title": "Preiswert",
+          "desc": "Wettbewerbsfähige Preise mit flexiblen Zahlungsoptionen"
+        },
+        "convenient": {
+          "title": "Praktisch",
+          "desc": "In der ganzen Stadt verfügbar mit einfacher Abholung und Rückgabe"
+        },
+        "smart": {
+          "title": "Smarte Technologie",
+          "desc": "Moderne App mit GPS-Tracking und Smart-Lock-Funktionen"
+        }
+      }
+    },
+    "scooters": {
+      "eyebrow": "Unsere Flotte",
+      "title": "Vehicle Overview",
+      "subtitle": "Von Freizeitfahrten bis medizinischer Mobilität — Fahrzeuge für jeden Bedarf",
+      "explore": "Entdecken",
+      "items": {
+        "golf": {
+          "tag": "Freizeit",
+          "title": "Golf Cart",
+          "desc": "Komfortable Elektro-Carts für Resorts, Campusse und offene Flächen"
+        },
+        "medical": {
+          "tag": "Medizin",
+          "title": "Medizinischer Rollstuhl",
+          "desc": "Zuverlässige Mobilitätshilfe für Pflege und Alltag"
+        },
+        "scooter": {
+          "tag": "Urban",
+          "title": "E-Scooter",
+          "desc": "Schnelle, agile Stadtfahrten für Pendeln und kurze Wege"
+        }
+      }
+    },
+    "vehicleDetail": {
+      "back": "Zurück zur Flotte",
+      "about": "Über dieses Fahrzeug",
+      "storyTitle": "Für echte Fahrten gebaut",
+      "highlightsTitle": "Warum Fahrer es lieben",
+      "highlightsSubtitle": "Praktische Stärken für jede Fahrt",
+      "galleryTitle": "Galerie",
+      "gallerySubtitle": "Aus jedem Blickwinkel entdecken",
+      "idealEyebrow": "Ideal für",
+      "idealTitle": "Wo dieses Fahrzeug glänzt",
+      "relatedTitle": "Weitere Fahrzeuge entdecken",
+      "relatedSubtitle": "Finde das passende Fahrzeug für jeden Stil",
+      "ctaApp": "App herunterladen",
+      "ctaFleet": "Alle Fahrzeuge",
+      "bottomCtaTitle": "Bereit, mit ECCO zu fahren?",
+      "bottomCtaSubtitle": "In Minuten buchen, freischalten und losfahren.",
+      "specs": {
+        "seats": "Sitze",
+        "range": "Reichweite",
+        "speed": "Höchstgeschwindigkeit",
+        "charge": "Ladezeit",
+        "weight": "Gewicht",
+        "fold": "Klappbar",
+        "wheels": "Räder",
+        "support": "Unterstützung"
+      },
+      "golf": {
+        "subtitle": "Premium-Elektrokomfort für offene Flächen",
+        "lead": "Ein leiser Golf Cart für Resorts, Campusse und Gruppenfahrten — ohne Lärm und Kraftstoff klassischer Carts.",
+        "story1": "Der ECCO Golf Cart macht Freizeitmobilität sauberer. Ob Resortwege, Gästetransfer oder entspannte Outdoor-Routen — die Fahrt bleibt ruhig und komfortabel.",
+        "story2": "Mit großzügigen Sitzen und stabilem Elektroantrieb ideal, wenn du mehr als einen Scooter brauchst, aber dennoch einfach und umweltfreundlich unterwegs sein willst.",
+        "story3": "Betreiber schätzen den geringen Wartungsaufwand, Fahrer die sanfte Fahrt und die einfache Buchung in der ECCO-App.",
+        "h1t": "Leiser Elektroantrieb",
+        "h1d": "Fast geräuschloser Betrieb für Resorts, Parks und Campus.",
+        "h2t": "Platz für Gruppen",
+        "h2d": "Mehrsitz-Layout für Familien, Gäste und Mitarbeitende.",
+        "h3t": "Ganztägige Nutzung",
+        "h3d": "Starke Akkureichweite für den Tagesbetrieb.",
+        "h4t": "Einfache App-Buchung",
+        "h4d": "Reservieren, freischalten und tracken in der ECCO-App.",
+        "ideal1": "Hotels, Resorts und Golfclubs",
+        "ideal2": "Uni- und Business-Campusse",
+        "ideal3": "Freizeitrouten und Gästetransport",
+        "specs": {
+          "seats": "4 Sitze",
+          "range": "Bis 60 km",
+          "speed": "25 km/h",
+          "charge": "4–6 Stunden"
+        }
+      },
+      "medical": {
+        "subtitle": "Zuverlässige Mobilität mit Alltagswürde",
+        "lead": "Ein medizinischer Rollstuhl für Komfort, Stabilität und Unabhängigkeit — zu Hause, in Kliniken oder bei geplanten Ausflügen.",
+        "story1": "Mobilitätshilfe soll verlässlich und einfach sein. Der ECCO Medical Wheelchair setzt auf ruhige Handhabung, stützenden Sitz und praxisnahes Design.",
+        "story2": "Pflegepersonen erhalten bessere Kontrolle, Nutzer mehr Sicherheit und Komfort in Fluren, Wartebereichen und barrierefreien Wegen.",
+        "story3": "Mit ECCO-Buchung können Familien und Einrichtungen den passenden Rollstuhl rechtzeitig reservieren.",
+        "h1t": "Stabiler Chromrahmen",
+        "h1d": "Solide Konstruktion für den täglichen medizinischen und privaten Einsatz.",
+        "h2t": "Komfortsitz",
+        "h2d": "Stützende Sitz- und Rückenfläche für längere Nutzung.",
+        "h3t": "Pflegefreundlich",
+        "h3d": "Schiebegriffe und praktische Steuerung für assistierte Mobilität.",
+        "h4t": "Bereit bei Bedarf",
+        "h4d": "Über ECCO für Kliniken, Erholung oder kurzfristigen Support buchen.",
+        "ideal1": "Kliniken, Krankenhäuser und Reha-Zentren",
+        "ideal2": "Kurzfristige häusliche Pflege",
+        "ideal3": "Assistierte Mobilität für Termine und Ausflüge",
+        "specs": {
+          "weight": "Leichter Rahmen",
+          "fold": "Klappbar",
+          "wheels": "Hinterräder + Lenkrollen",
+          "support": "Assistierte Mobilität"
+        }
+      },
+      "scooter": {
+        "subtitle": "Agile Elektromobilität für die Stadt",
+        "lead": "Ein schlanker E-Scooter für Pendeln, kurze Erledigungen und flexible Last-Mile-Fahrten.",
+        "story1": "Stadt funktioniert am besten, wenn Mobilität leicht und nah ist. Der ECCO E-Scooter ist für genau diesen Rhythmus gebaut.",
+        "story2": "Kompaktes Design und direkte Steuerung machen ihn ideal für Studierende, Berufstätige und kurze Alternativen zum Auto.",
+        "story3": "Mit Echtzeit-Verfügbarkeit in der App findest, entsperrst und startest du in Sekunden.",
+        "h1t": "Stadttaugliche Agilität",
+        "h1d": "Kompakt und reaktionsschnell für kurze Strecken und dichte Straßen.",
+        "h2t": "Effiziente Akkulaufzeit",
+        "h2d": "Genug Reichweite für Pendeln und mehrere Fahrten am Tag.",
+        "h3t": "Smart Unlock",
+        "h3d": "Sofort finden und freischalten in der ECCO-App.",
+        "h4t": "Unkompliziert unterwegs",
+        "h4d": "Weniger Parkstress, mehr Bewegungsfreiheit.",
+        "ideal1": "Tägliches Pendeln und Campus",
+        "ideal2": "Erledigungen und Last-Mile",
+        "ideal3": "Umweltfreundliche Stadterkundung",
+        "specs": {
+          "range": "Bis 35 km",
+          "speed": "25 km/h",
+          "weight": "Ca. 14 kg",
+          "charge": "3–5 Stunden"
+        }
+      }
+    },
+    "cta": {
+      "title": "Fahr smarter. Fahr elektrisch.",
+      "subtitle": "Lade die ECCO-App heute herunter und starte deine umweltfreundliche Reise",
+      "appStore": "App Store",
+      "googlePlay": "Google Play"
+    },
+    "footer": {
+      "tagline": "Smarte, umweltfreundliche urbane Mobilitätslösungen für moderne Städte.",
+      "company": "Unternehmen",
+      "about": "Über uns",
+      "careers": "Karriere",
+      "press": "Presse",
+      "support": "Support",
+      "help": "Hilfe-Center",
+      "safety": "Sicherheit",
+      "contact": "Kontakt",
+      "follow": "Folge uns"
+    }
+  }
+}

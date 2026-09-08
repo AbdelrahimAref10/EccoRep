@@ -1,0 +1,254 @@
+<div class="entity-form">
+  <div class="entity-form__top">
+    <div class="entity-form__intro">
+      <button
+        type="button"
+        class="entity-form__back"
+        (click)="onCancel()"
+        [attr.title]="'cities.backToList' | t"
+        [attr.aria-label]="'cities.backToList' | t"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="entity-form__title">
+          {{ (isEditMode ? 'cities.editTitle' : 'cities.addNew') | t }}
+        </h1>
+        <p class="entity-form__subtitle">
+          {{ (isEditMode ? 'cities.editSubtitle' : 'cities.addSubtitle') | t }}
+        </p>
+      </div>
+    </div>
+
+    <div class="entity-form__top-actions" *ngIf="!isLoading">
+      <button type="button" class="entity-form__btn entity-form__btn--ghost" (click)="onCancel()" [disabled]="isSaving">
+        {{ 'common.cancel' | t }}
+      </button>
+      <button
+        type="button"
+        class="entity-form__btn entity-form__btn--primary"
+        (click)="onSubmit()"
+        [disabled]="cityForm.get('name')?.invalid || isSaving"
+      >
+        {{ (isEditMode ? 'cities.update' : 'cities.create') | t }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+
+  <div *ngIf="isLoading" class="entity-form__loading">
+    <div class="entity-form__spinner" aria-hidden="true"></div>
+    <p>{{ 'cities.loadingDetails' | t }}</p>
+  </div>
+
+  <form *ngIf="!isLoading" [formGroup]="cityForm" (ngSubmit)="onSubmit()" class="entity-form__shell entity-form__shell--stack">
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.details' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'cities.basicInfo' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'cities.basicInfoSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__field">
+          <label class="entity-form__label">
+            {{ 'cities.name' | t }}<span class="entity-form__req">*</span>
+          </label>
+          <input
+            type="text"
+            formControlName="name"
+            class="entity-form__input"
+            [placeholder]="'cities.namePlaceholder' | t"
+          />
+          <p *ngIf="cityForm.get('name')?.invalid && cityForm.get('name')?.touched" class="entity-form__error">
+            {{ 'cities.nameRequired' | t }}
+          </p>
+        </div>
+
+        <div class="entity-form__field">
+          <label class="entity-form__label">{{ 'common.description' | t }}</label>
+          <textarea
+            formControlName="description"
+            class="entity-form__textarea"
+            rows="4"
+            [placeholder]="'cities.descriptionPlaceholder' | t"
+          ></textarea>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'cities.feesKicker' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'cities.feesConfig' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'cities.feesConfigSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'cities.deliveryFees' | t }}</label>
+            <input
+              type="number"
+              formControlName="deliveryFees"
+              class="entity-form__input"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'cities.urgentDelivery' | t }}</label>
+            <input
+              type="number"
+              formControlName="urgentDelivery"
+              class="entity-form__input"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'cities.serviceFees' | t }}</label>
+            <input
+              type="number"
+              formControlName="serviceFees"
+              class="entity-form__input"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'cities.cancellationFees' | t }}</label>
+            <input
+              type="number"
+              formControlName="cancellationFees"
+              class="entity-form__input"
+              min="0"
+              max="100"
+              step="0.01"
+              placeholder="0.00"
+            />
+            <p *ngIf="cityForm.get('cancellationFees')?.invalid && cityForm.get('cancellationFees')?.touched" class="entity-form__error">
+              {{ 'cities.cancellationFeesRange' | t }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head city-form__tier-head">
+        <div>
+          <p class="entity-form__card-kicker">{{ 'cities.discountsKicker' | t }}</p>
+          <h2 class="entity-form__card-title">{{ 'cities.tieredDiscounts' | t }}</h2>
+          <p class="entity-form__card-text">{{ 'cities.tieredDiscountsSubtitle' | t }}</p>
+        </div>
+        <button type="button" class="city-form__add-tier" (click)="addTieredDiscount()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+          </svg>
+          <span>{{ 'cities.addTier' | t }}</span>
+        </button>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="city-form__tiers">
+          <div
+            *ngFor="let tierControl of tieredDiscountsFormArray.controls; let i = index"
+            class="city-form__tier"
+            [formGroup]="getTieredDiscountFormGroup(i)"
+          >
+            <div class="city-form__tier-top">
+              <span class="city-form__tier-label">{{ 'cities.tierNumber' | t:{ n: i + 1 } }}</span>
+              <button
+                type="button"
+                class="city-form__tier-remove"
+                (click)="removeTieredDiscount(i)"
+                [attr.title]="'cities.removeTier' | t"
+                [attr.aria-label]="'cities.removeTier' | t"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="entity-form__row entity-form__row--3">
+              <div class="entity-form__field">
+                <label class="entity-form__label">{{ 'cities.tierFrom' | t }}</label>
+                <div class="city-form__day-input">
+                  <input
+                    type="number"
+                    formControlName="from"
+                    class="entity-form__input"
+                    min="1"
+                    step="1"
+                    placeholder="1"
+                  />
+                  <span class="city-form__day-unit">{{ 'cities.tierDayUnit' | t }}</span>
+                </div>
+                <p *ngIf="tierControl.get('from')?.invalid && tierControl.get('from')?.touched" class="entity-form__error">
+                  {{ 'common.required' | t }}
+                </p>
+              </div>
+
+              <div class="entity-form__field">
+                <label class="entity-form__label">{{ 'cities.tierTo' | t }}</label>
+                <div class="city-form__day-input">
+                  <input
+                    type="number"
+                    formControlName="to"
+                    class="entity-form__input"
+                    min="1"
+                    step="1"
+                    placeholder="1"
+                  />
+                  <span class="city-form__day-unit">{{ 'cities.tierDayUnit' | t }}</span>
+                </div>
+                <p *ngIf="tierControl.get('to')?.invalid && tierControl.get('to')?.touched" class="entity-form__error">
+                  {{ 'common.required' | t }}
+                </p>
+                <p *ngIf="tierControl.hasError('invalidRange') && tierControl.get('to')?.touched" class="entity-form__error">
+                  {{ 'cities.tierInvalidRange' | t }}
+                </p>
+              </div>
+
+              <div class="entity-form__field">
+                <label class="entity-form__label">{{ 'cities.tierDiscount' | t }}</label>
+                <input
+                  type="number"
+                  formControlName="discount"
+                  class="entity-form__input"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  placeholder="0.00"
+                />
+                <p *ngIf="tierControl.get('discount')?.invalid && tierControl.get('discount')?.touched" class="entity-form__error">
+                  {{ 'cities.discountRange' | t }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="tieredDiscountsFormArray.length === 0" class="city-form__tier-empty">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <p>{{ 'cities.tierEmpty' | t }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </form>
+</div>

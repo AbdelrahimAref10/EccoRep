@@ -1,0 +1,23 @@
+<section class="lp-section lp-features" id="features">
+  <div class="lp-container">
+    <div class="lp-section__head" lpReveal>
+      <h2 class="lp-section__title">{{ 'landing.features.title' | t }}</h2>
+      <p class="lp-section__subtitle">{{ 'landing.features.subtitle' | t }}</p>
+    </div>
+
+    <div class="lp-features__grid lp-stagger" lpReveal>
+      <article class="lp-card lp-features__card lp-stagger__item" *ngFor="let feature of features">
+        <div class="lp-features__icon" [attr.data-icon]="feature.icon" aria-hidden="true">
+          <svg *ngIf="feature.icon === 'booking'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="1.75"/><path stroke-linecap="round" stroke-width="1.75" d="M12 7v5l3 2"/></svg>
+          <svg *ngIf="feature.icon === 'vehicles'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="6.5" cy="16.5" r="2.5" stroke-width="1.75"/><circle cx="17.5" cy="16.5" r="2.5" stroke-width="1.75"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 16.5h5.5l2-6H11l-1.2 3.5H8M14.5 10.5V8h3"/></svg>
+          <svg *ngIf="feature.icon === 'flexible'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>
+          <svg *ngIf="feature.icon === 'payments'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 3l8 3v6c0 5-3.5 8.5-8 9.5C7.5 20.5 4 17 4 12V6l8-3z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9.5 12l1.8 1.8L15 10"/></svg>
+          <svg *ngIf="feature.icon === 'notify'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1"/></svg>
+          <svg *ngIf="feature.icon === 'profile'" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3" stroke-width="1.75"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19.4 15a1.7 1.7 0 00.34 1.86l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.7 1.7 0 00-1.86-.34 1.7 1.7 0 00-1 1.55V21a2 2 0 11-4 0v-.09a1.7 1.7 0 00-1-1.55 1.7 1.7 0 00-1.86.34l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.7 1.7 0 00.34-1.86 1.7 1.7 0 00-1.55-1H3a2 2 0 110-4h.09a1.7 1.7 0 001.55-1 1.7 1.7 0 00-.34-1.86l-.06-.06a2 2 0 112.83-2.83l.06.06a1.7 1.7 0 001.86.34H9a1.7 1.7 0 001-1.55V3a2 2 0 114 0v.09a1.7 1.7 0 001 1.55 1.7 1.7 0 001.86-.34l.06-.06a2 2 0 112.83 2.83l-.06.06a1.7 1.7 0 00-.34 1.86V9c.36.5.95.8 1.55.8H21a2 2 0 110 4h-.09a1.7 1.7 0 00-1.51 1z"/></svg>
+        </div>
+        <h3>{{ feature.titleKey | t }}</h3>
+        <p>{{ feature.descKey | t }}</p>
+      </article>
+    </div>
+  </div>
+</section>

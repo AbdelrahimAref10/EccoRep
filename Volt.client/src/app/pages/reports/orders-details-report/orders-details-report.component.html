@@ -1,0 +1,206 @@
+<div class="rp">
+  <div class="rp__top">
+    <div>
+      <button type="button" class="rp__back" (click)="back()">← {{ 'reports.backToReports' | t }}</button>
+      <p class="rp__eyebrow">{{ 'reports.title' | t }}</p>
+      <h1 class="rp__title">{{ 'reports.ordersDetails' | t }}</h1>
+      <p class="rp__subtitle">{{ 'reports.ordersDetailsDesc' | t }}</p>
+    </div>
+    <div class="rp__actions">
+      <button type="button" class="rp__btn rp__btn--excel" (click)="export(ReportExportFormat.Excel)" [disabled]="isExporting || isLoading">
+        {{ 'reports.exportExcel' | t }}
+      </button>
+      <button type="button" class="rp__btn rp__btn--pdf" (click)="export(ReportExportFormat.Pdf)" [disabled]="isExporting || isLoading">
+        {{ 'reports.exportPdf' | t }}
+      </button>
+    </div>
+  </div>
+
+  <section class="rp__panel">
+    <div class="rp__panel-head">
+      <div>
+        <h2 class="rp__panel-title">{{ 'reports.filters' | t }}</h2>
+        <p class="rp__panel-hint">{{ 'reports.filtersHint' | t }}</p>
+      </div>
+      <div class="rp__actions">
+        <button type="button" class="rp__btn rp__btn--ghost" (click)="clearFilters()" [disabled]="isLoading">{{ 'common.clear' | t }}</button>
+        <button type="button" class="rp__btn rp__btn--primary" (click)="search()" [disabled]="isLoading">
+          {{ isLoading ? ('reports.loading' | t) : ('reports.generate' | t) }}
+        </button>
+      </div>
+    </div>
+
+    <div class="rp__filters">
+      <div class="rp__field">
+        <label class="rp__label">{{ 'orders.orderCode' | t }}</label>
+        <input class="rp__input" [(ngModel)]="orderCode" (keyup.enter)="search()" [placeholder]="'reports.searchOrderCode' | t" />
+      </div>
+      <div class="rp__field">
+        <app-multi-select
+          [label]="'common.city' | t"
+          [placeholder]="'common.all' | t"
+          [options]="cityOptions"
+          [values]="cityIds"
+          (valuesChange)="onCitiesChange($event)"
+        ></app-multi-select>
+      </div>
+      <div class="rp__field">
+        <app-multi-select
+          [label]="'orders.orderStatus' | t"
+          [placeholder]="'common.all' | t"
+          [options]="stateOptions"
+          [values]="orderStates"
+          (valuesChange)="onStatesChange($event)"
+        ></app-multi-select>
+      </div>
+      <div class="rp__field">
+        <app-multi-select
+          [label]="'nav.customers' | t"
+          [placeholder]="'common.all' | t"
+          [options]="customerOptions"
+          [values]="customerIds"
+          (valuesChange)="onCustomersChange($event)"
+        ></app-multi-select>
+      </div>
+      <div class="rp__field">
+        <app-multi-select
+          [label]="'orders.paymentMethod' | t"
+          [placeholder]="'common.all' | t"
+          [options]="paymentMethodOptions"
+          [values]="paymentMethodIds"
+          (valuesChange)="onPaymentMethodsChange($event)"
+        ></app-multi-select>
+      </div>
+      <div class="rp__field">
+        <app-multi-select
+          [label]="'reports.paymentState' | t"
+          [placeholder]="'common.all' | t"
+          [options]="paymentStateOptions"
+          [values]="paymentStates"
+          (valuesChange)="onPaymentStatesChange($event)"
+        ></app-multi-select>
+      </div>
+      <div class="rp__field">
+        <app-multi-select
+          [label]="'orders.cancelled' | t"
+          [placeholder]="'common.all' | t"
+          [options]="cancelledOptions"
+          [multiple]="false"
+          [values]="isCancelled === null ? [] : [isCancelled]"
+          (valuesChange)="onCancelledChange($event)"
+        ></app-multi-select>
+      </div>
+      <div class="rp__field">
+        <label class="rp__label">{{ 'reports.fromDate' | t }}</label>
+        <input class="rp__input" type="date" [(ngModel)]="fromDate" />
+      </div>
+      <div class="rp__field">
+        <label class="rp__label">{{ 'reports.toDate' | t }}</label>
+        <input class="rp__input" type="date" [(ngModel)]="toDate" />
+      </div>
+      <div class="rp__field">
+        <label class="rp__label">{{ 'orders.reservationFrom' | t }}</label>
+        <input class="rp__input" type="date" [(ngModel)]="reservationFrom" />
+      </div>
+      <div class="rp__field">
+        <label class="rp__label">{{ 'orders.reservationTo' | t }}</label>
+        <input class="rp__input" type="date" [(ngModel)]="reservationTo" />
+      </div>
+    </div>
+  </section>
+
+  <div class="rp__error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <ng-container *ngIf="report as data">
+    <div class="rp__kpis">
+      <article class="rp__kpi">
+        <p class="rp__kpi-label">{{ 'reports.ordersCount' | t }}</p>
+        <p class="rp__kpi-value">{{ data.totals.ordersCount }}</p>
+      </article>
+      <article class="rp__kpi">
+        <p class="rp__kpi-label">{{ 'orders.subTotal' | t }}</p>
+        <p class="rp__kpi-value">{{ formatMoney(data.totals.totalSubTotal) }}</p>
+      </article>
+      <article class="rp__kpi">
+        <p class="rp__kpi-label">{{ 'orders.previousDebt' | t }}</p>
+        <p class="rp__kpi-value">{{ formatMoney(data.totals.totalPreviousDebt) }}</p>
+      </article>
+      <article class="rp__kpi">
+        <p class="rp__kpi-label">{{ 'orders.orderTotal' | t }}</p>
+        <p class="rp__kpi-value">{{ formatMoney(data.totals.totalOrderAmount) }}</p>
+      </article>
+      <article class="rp__kpi">
+        <p class="rp__kpi-label">{{ 'reports.paidTotal' | t }}</p>
+        <p class="rp__kpi-value">{{ formatMoney(data.totals.totalPaidAmount) }}</p>
+      </article>
+    </div>
+
+    <section class="rp__table-card">
+      <div class="rp__loading" *ngIf="isLoading">{{ 'reports.loading' | t }}</div>
+      <div class="rp__empty" *ngIf="!isLoading && !data.items?.length">{{ 'reports.noResults' | t }}</div>
+
+      <div class="rp__table-wrap" *ngIf="!isLoading && data.items?.length">
+        <table class="rp__table">
+          <thead>
+            <tr>
+              <th>{{ 'orders.orderCode' | t }}</th>
+              <th>{{ 'nav.customers' | t }}</th>
+              <th>{{ 'common.city' | t }}</th>
+              <th>{{ 'orders.reservationFrom' | t }}</th>
+              <th>{{ 'orders.reservationTo' | t }}</th>
+              <th class="rp__num">{{ 'orders.previousDebt' | t }}</th>
+              <th class="rp__num">{{ 'orders.orderTotal' | t }}</th>
+              <th>{{ 'orders.paymentMethod' | t }}</th>
+              <th>{{ 'reports.paymentState' | t }}</th>
+              <th>{{ 'orders.orderStatus' | t }}</th>
+              <th>{{ 'orders.cancelled' | t }}</th>
+              <th>{{ 'orders.createdOn' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of data.items">
+              <td><span class="rp__code">{{ row.orderCode }}</span></td>
+              <td>
+                <div>{{ row.customerName }}</div>
+                <div class="rp__meta">{{ row.customerMobile }}</div>
+              </td>
+              <td>{{ row.cityName }}</td>
+              <td>{{ row.reservationDateFrom | date:'mediumDate' }}</td>
+              <td>{{ row.reservationDateTo | date:'mediumDate' }}</td>
+              <td class="rp__num">{{ formatMoney(row.previousDebt) }}</td>
+              <td class="rp__num"><strong>{{ formatMoney(row.orderTotal) }}</strong></td>
+              <td>{{ paymentMethodLabel(row.paymentMethod) }}</td>
+              <td>
+                <span class="rp__chip" [ngClass]="paymentStateClass(row.paymentState)">
+                  {{ paymentStateLabel(row.paymentState) }}
+                </span>
+              </td>
+              <td>{{ stateLabel(row.orderState) }}</td>
+              <td>
+                <span class="rp__chip" [class.rp__chip--bad]="row.isCancelled" [class.rp__chip--ok]="!row.isCancelled">
+                  {{ row.isCancelled ? ('reports.yes' | t) : ('reports.no' | t) }}
+                </span>
+              </td>
+              <td>{{ row.createdDate | date:'short' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rp__footer-totals" *ngIf="data.items?.length">
+        <div class="rp__footer-item">
+          <span>{{ 'reports.ordersCount' | t }}</span>
+          <strong>{{ data.totals.ordersCount }}</strong>
+        </div>
+        <div class="rp__footer-item">
+          <span>{{ 'orders.orderTotal' | t }}</span>
+          <strong>{{ formatMoney(data.totals.totalOrderAmount) }} {{ 'common.currency' | t }}</strong>
+        </div>
+        <div class="rp__footer-item">
+          <span>{{ 'reports.paidTotal' | t }}</span>
+          <strong>{{ formatMoney(data.totals.totalPaidAmount) }} {{ 'common.currency' | t }}</strong>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

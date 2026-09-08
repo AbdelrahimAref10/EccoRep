@@ -1,0 +1,12 @@
+<div class="merchant-layout">
+  <header class="merchant-layout__header">
+    <div class="merchant-layout__brand">{{ 'merchant.brand' | t }}</div>
+    <button type="button" class="merchant-layout__logout" (click)="logout()">
+      {{ 'common.logout' | t }}
+    </button>
+  </header>
+
+  <main class="merchant-layout__main">
+    <router-outlet></router-outlet>
+  </main>
+</div>

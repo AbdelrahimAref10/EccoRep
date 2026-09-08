@@ -1,0 +1,156 @@
+<div class="entity-form">
+  <div class="entity-form__top">
+    <div class="entity-form__intro">
+      <button type="button" class="entity-form__back" (click)="onCancel()" title="Back to SubCategories">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="entity-form__title">
+          {{ isEditMode ? 'Edit SubCategory' : 'Add New SubCategory' }}
+        </h1>
+        <p class="entity-form__subtitle">
+          {{ isEditMode ? 'Update subcategory information' : 'Create a new subcategory for vehicles' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="entity-form__top-actions" *ngIf="!isLoading">
+      <button type="button" class="entity-form__btn entity-form__btn--ghost" (click)="onCancel()" [disabled]="isSaving">
+        Cancel
+      </button>
+      <button
+        type="button"
+        class="entity-form__btn entity-form__btn--primary"
+        (click)="onSubmit()"
+        [disabled]="subCategoryForm.invalid || isSaving"
+      >
+        {{ isEditMode ? 'Update SubCategory' : 'Create SubCategory' }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+
+  <div *ngIf="isLoading" class="entity-form__loading">
+    <div class="entity-form__spinner" aria-hidden="true"></div>
+    <p>Loading subcategory details...</p>
+  </div>
+
+  <form *ngIf="!isLoading" [formGroup]="subCategoryForm" (ngSubmit)="onSubmit()" class="entity-form__shell">
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">Details</p>
+        <h2 class="entity-form__card-title">Basic Information</h2>
+        <p class="entity-form__card-text">Name, category, pricing and description</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__row entity-form__row--3">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              SubCategory Name<span class="entity-form__req">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="name"
+              class="entity-form__input"
+              placeholder="Enter subcategory name"
+            />
+            <p *ngIf="subCategoryForm.get('name')?.invalid && subCategoryForm.get('name')?.touched" class="entity-form__error">
+              Name is required and must be at least 2 characters
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              Category<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="categoryId"
+              [multiple]="false"
+              [options]="categoryOptions"
+              placeholder="Select a category"
+            ></app-multi-select>
+            <p *ngIf="subCategoryForm.get('categoryId')?.invalid && subCategoryForm.get('categoryId')?.touched" class="entity-form__error">
+              Category is required
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'subcategories.price' | t }} ({{ 'common.currency' | t }})<span class="entity-form__req">*</span>
+            </label>
+            <input
+              type="number"
+              formControlName="price"
+              class="entity-form__input"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            />
+            <p *ngIf="subCategoryForm.get('price')?.invalid && subCategoryForm.get('price')?.touched" class="entity-form__error">
+              {{ 'subcategories.priceRequired' | t }}
+            </p>
+          </div>
+        </div>
+
+        <div class="entity-form__field">
+          <label class="entity-form__label">
+            Description<span class="entity-form__req">*</span>
+          </label>
+          <textarea
+            formControlName="description"
+            class="entity-form__textarea"
+            rows="4"
+            placeholder="Enter subcategory description"
+          ></textarea>
+          <p *ngIf="subCategoryForm.get('description')?.invalid && subCategoryForm.get('description')?.touched" class="entity-form__error">
+            Description is required
+          </p>
+        </div>
+
+        <div class="entity-form__field">
+          <label class="entity-form__label">Offer</label>
+          <label class="entity-form__check">
+            <input type="checkbox" formControlName="isOffer" />
+            <span>Mark as offer</span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">Media</p>
+        <h2 class="entity-form__card-title">SubCategory Image</h2>
+        <p class="entity-form__card-text">Upload a clear product image</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__media">
+          <div *ngIf="imagePreview" class="entity-form__preview">
+            <img [src]="imagePreview" alt="SubCategory preview" />
+            <button type="button" class="entity-form__remove" (click)="removeImage()" title="Remove Image">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <label class="entity-form__upload" for="subcategory-image">
+            <input id="subcategory-image" type="file" accept="image/*" (change)="onImageSelect($event)" />
+            <span class="entity-form__upload-icon" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            <strong>{{ imagePreview ? 'Change Image' : 'Click to upload or drag and drop' }}</strong>
+            <small>PNG, JPG, GIF up to 10MB</small>
+          </label>
+        </div>
+      </div>
+    </section>
+  </form>
+</div>

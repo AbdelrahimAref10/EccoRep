@@ -1,0 +1,205 @@
+/* User detail — entity-form extensions */
+
+.user-detail__shell {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.user-detail__alert {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 550;
+}
+
+.user-detail__alert--success {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.28);
+  color: #15803d;
+}
+
+.user-detail__info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.user-detail__info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.user-detail__info-label {
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--volt-text-muted);
+}
+
+.user-detail__info-value {
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--volt-text-primary);
+}
+
+.user-detail__verified {
+  margin-inline-start: 0.35rem;
+  color: #15803d;
+  font-weight: 800;
+}
+
+.user-detail__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.user-detail__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--volt-accent-soft);
+  color: var(--volt-accent-strong);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.user-detail__chip--muted {
+  background: var(--volt-surface-muted);
+  color: var(--volt-text-muted);
+  border: 1px solid var(--volt-border);
+}
+
+.user-detail__status {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.user-detail__status--active {
+  background: rgba(30, 200, 184, 0.14);
+  color: #0f766e;
+}
+
+.user-detail__status--inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+}
+
+.user-detail__password-wrap {
+  position: relative;
+}
+
+.user-detail__password-wrap .entity-form__input {
+  padding-inline-end: 2.75rem;
+}
+
+.user-detail__password-toggle {
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 0.55rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--volt-text-muted);
+  cursor: pointer;
+}
+
+.user-detail__password-toggle:hover {
+  color: var(--volt-text-primary);
+  background: var(--volt-surface-muted);
+}
+
+.user-detail__password-toggle svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.user-detail__strength {
+  margin-top: 0.35rem;
+}
+
+.user-detail__strength-track {
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--volt-surface-muted);
+  overflow: hidden;
+}
+
+.user-detail__strength-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.25s ease;
+}
+
+.user-detail__strength-fill--weak { background: #ef4444; }
+.user-detail__strength-fill--medium { background: #f59e0b; }
+.user-detail__strength-fill--strong { background: #22c55e; }
+
+.user-detail__strength-label {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--volt-text-secondary);
+}
+
+.user-detail__reqs {
+  margin: 0.35rem 0 0;
+  padding: 0.75rem 0.9rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-bg);
+}
+
+.user-detail__reqs li {
+  font-size: 0.8rem;
+  font-weight: 550;
+  color: var(--volt-text-muted);
+}
+
+.user-detail__req--met {
+  color: #15803d !important;
+}
+
+.user-detail__btn--success:hover:not(:disabled) {
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #15803d;
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.user-detail__btn--warn:hover:not(:disabled) {
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.user-detail__btn--danger:hover:not(:disabled) {
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+@media (max-width: 720px) {
+  .entity-form__top-actions {
+    flex-wrap: wrap;
+  }
+}

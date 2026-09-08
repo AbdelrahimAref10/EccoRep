@@ -1,0 +1,70 @@
+<div
+  class="notification-dropdown"
+  [class.notification-dropdown--open]="isOpen"
+>
+  <div class="notification-dropdown__header">
+    <h3 class="notification-dropdown__title">{{ 'notifications.title' | t }}</h3>
+    <button
+      *ngIf="unreadCount > 0"
+      type="button"
+      (click)="onMarkAllAsRead()"
+      class="notification-dropdown__mark-all"
+    >
+      {{ 'notifications.markAllAsRead' | t }}
+    </button>
+  </div>
+
+  <div class="notification-dropdown__content">
+    <div *ngIf="notifications.length === 0" class="notification-dropdown__empty">
+      <svg class="notification-dropdown__empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+      <p class="notification-dropdown__empty-text">{{ 'notifications.empty' | t }}</p>
+      <p class="notification-dropdown__empty-subtext">{{ 'notifications.emptySubtext' | t }}</p>
+    </div>
+
+    <div *ngIf="notifications.length > 0" class="notification-dropdown__list">
+      <div
+        *ngFor="let notification of notifications; let i = index"
+        (click)="onNotificationClick(notification)"
+        [class.notification-dropdown__item--unread]="!notification.isRead"
+        [routerLink]="notification.actionUrl"
+        class="notification-dropdown__item stagger-item group cursor-pointer"
+      >
+        <div class="notification-dropdown__item-icon" [ngClass]="getNotificationColor(notification.type)">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" [attr.d]="getNotificationIcon(notification.type)"/>
+          </svg>
+        </div>
+        <div class="notification-dropdown__item-content">
+          <div class="notification-dropdown__item-header">
+            <h4 class="notification-dropdown__item-title">{{ notification.title }}</h4>
+            <button
+              *ngIf="!notification.isRead"
+              type="button"
+              (click)="onMarkAsRead(notification.id, $event)"
+              class="notification-dropdown__item-mark"
+              [attr.aria-label]="'notifications.markAsRead' | t"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M5 13l4 4L19 7"/>
+              </svg>
+            </button>
+          </div>
+          <p class="notification-dropdown__item-message">{{ notification.message }}</p>
+          <div class="notification-dropdown__item-footer">
+            <span class="notification-dropdown__item-time">{{ getTimeAgo(notification.timestamp) }}</span>
+            <span class="notification-dropdown__item-type">{{ notification.type }}</span>
+          </div>
+        </div>
+        <div *ngIf="!notification.isRead" class="notification-dropdown__item-indicator"></div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="notifications.length > 0" class="notification-dropdown__footer">
+    <a routerLink="/main/orders" class="notification-dropdown__view-all">
+      {{ 'notifications.viewAllOrders' | t }}
+    </a>
+  </div>
+</div>

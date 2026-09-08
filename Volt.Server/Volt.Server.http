@@ -1,0 +1,6 @@
+@Volt.Server_HostAddress = http://localhost:5272
+
+GET {{Volt.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

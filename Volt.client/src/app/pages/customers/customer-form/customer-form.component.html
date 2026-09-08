@@ -1,0 +1,289 @@
+<div class="entity-form">
+  <div class="entity-form__top">
+    <div class="entity-form__intro">
+      <button
+        type="button"
+        class="entity-form__back"
+        (click)="onCancel()"
+        [attr.title]="'customers.backToList' | t"
+        [attr.aria-label]="'customers.backToList' | t"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="entity-form__title">
+          {{ (isEditMode ? 'customers.editTitle' : 'customers.addNew') | t }}
+        </h1>
+        <p class="entity-form__subtitle">
+          {{ (isEditMode ? 'customers.editSubtitle' : 'customers.addSubtitle') | t }}
+        </p>
+      </div>
+    </div>
+
+    <div class="entity-form__top-actions" *ngIf="!isLoading">
+      <button type="button" class="entity-form__btn entity-form__btn--ghost" (click)="onCancel()" [disabled]="isSaving">
+        {{ 'common.cancel' | t }}
+      </button>
+      <button
+        type="button"
+        class="entity-form__btn entity-form__btn--primary"
+        (click)="onSubmit()"
+        [disabled]="customerForm.invalid || isSaving"
+      >
+        {{ (isEditMode ? 'customers.update' : 'customers.create') | t }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+
+  <div *ngIf="isLoading" class="entity-form__loading">
+    <div class="entity-form__spinner" aria-hidden="true"></div>
+    <p>{{ 'customers.loadingDetails' | t }}</p>
+  </div>
+
+  <form *ngIf="!isLoading" [formGroup]="customerForm" (ngSubmit)="onSubmit()" class="entity-form__shell">
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.details' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'customers.basicInfo' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'customers.basicInfoSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'customers.fullName' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="fullName"
+              class="entity-form__input"
+              [placeholder]="'customers.fullNamePlaceholder' | t"
+            />
+            <p *ngIf="customerForm.get('fullName')?.invalid && customerForm.get('fullName')?.touched" class="entity-form__error">
+              {{ 'customers.fullNameRequired' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'customers.mobile' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="mobileNumber"
+              class="entity-form__input"
+              [placeholder]="'customers.mobilePlaceholder' | t"
+            />
+            <p *ngIf="customerForm.get('mobileNumber')?.invalid && customerForm.get('mobileNumber')?.touched" class="entity-form__error">
+              {{ 'customers.mobileRequired' | t }}
+            </p>
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'customers.gender' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="gender"
+              [multiple]="false"
+              [options]="genderOptions"
+              [searchable]="false"
+              [placeholder]="'customers.selectGender' | t"
+            ></app-multi-select>
+            <p *ngIf="customerForm.get('gender')?.invalid && customerForm.get('gender')?.touched" class="entity-form__error">
+              {{ 'customers.genderRequired' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.city' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="cityId"
+              [multiple]="false"
+              [options]="cityOptions"
+              [disabled]="isLoadingCities"
+              [placeholder]="'customers.selectCity' | t"
+            ></app-multi-select>
+            <p *ngIf="customerForm.get('cityId')?.invalid && customerForm.get('cityId')?.touched" class="entity-form__error">
+              {{ 'customers.cityRequired' | t }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.details' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'customers.accountInfo' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'customers.accountInfoSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'customers.registerAs' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="registerAs"
+              [multiple]="false"
+              [options]="registerAsOptions"
+              [searchable]="false"
+              [clearable]="false"
+              [placeholder]="'customers.selectType' | t"
+            ></app-multi-select>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'customers.verificationBy' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="verificationBy"
+              [multiple]="false"
+              [options]="verificationByOptions"
+              [searchable]="false"
+              [clearable]="false"
+              [placeholder]="'customers.selectVerification' | t"
+            ></app-multi-select>
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.email' | t }}
+              <span *ngIf="customerForm.get('verificationBy')?.value === 1" class="entity-form__req">*</span>
+            </label>
+            <input
+              type="email"
+              formControlName="email"
+              class="entity-form__input"
+              [placeholder]="'customers.emailPlaceholder' | t"
+            />
+            <p *ngIf="customerForm.get('email')?.invalid && customerForm.get('email')?.touched" class="entity-form__error">
+              {{ 'customers.emailRequired' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'customers.password' | t }}
+              <span *ngIf="!isEditMode" class="entity-form__req">*</span>
+            </label>
+            <input
+              type="password"
+              formControlName="password"
+              class="entity-form__input"
+              [placeholder]="(isEditMode ? 'customers.passwordOptionalHint' : 'customers.passwordPlaceholder') | t"
+            />
+            <p *ngIf="customerForm.get('password')?.invalid && customerForm.get('password')?.touched" class="entity-form__error">
+              {{ 'customers.passwordRequired' | t }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.media' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'customers.personalImage' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'customers.personalImageSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__media">
+          <div *ngIf="personalImagePreview" class="entity-form__preview">
+            <img [src]="personalImagePreview" [alt]="'customers.imagePreviewAlt' | t" />
+            <button
+              type="button"
+              class="entity-form__remove"
+              (click)="removePersonalImage()"
+              [attr.title]="'customers.removeImage' | t"
+              [attr.aria-label]="'customers.removeImage' | t"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <label class="entity-form__upload" for="personal-image">
+            <input
+              #personalImageInput
+              id="personal-image"
+              type="file"
+              accept="image/*"
+              (change)="onPersonalImageSelect()"
+            />
+            <span class="entity-form__upload-icon" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            <strong>{{ personalImagePreview ? ('customers.changeImage' | t) : ('customers.uploadHint' | t) }}</strong>
+            <small>{{ 'customers.imageFormats' | t }}</small>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card" *ngIf="isInstitution">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.media' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'customers.commercialImage' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'customers.commercialImageSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__media">
+          <div *ngIf="commercialImagePreview" class="entity-form__preview">
+            <img [src]="commercialImagePreview" [alt]="'customers.commercialImage' | t" />
+            <button
+              type="button"
+              class="entity-form__remove"
+              (click)="removeCommercialImage()"
+              [attr.title]="'customers.removeImage' | t"
+              [attr.aria-label]="'customers.removeImage' | t"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <label class="entity-form__upload" for="commercial-image">
+            <input
+              #commercialImageInput
+              id="commercial-image"
+              type="file"
+              accept="image/*"
+              (change)="onCommercialImageSelect()"
+            />
+            <span class="entity-form__upload-icon" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            <strong>{{ commercialImagePreview ? ('customers.changeImage' | t) : ('customers.uploadHint' | t) }}</strong>
+            <small>{{ 'customers.imageFormats' | t }}</small>
+          </label>
+        </div>
+        <p *ngIf="showCommercialImageError" class="entity-form__error">
+          {{ 'customers.commercialImageRequired' | t }}
+        </p>
+      </div>
+    </section>
+  </form>
+</div>

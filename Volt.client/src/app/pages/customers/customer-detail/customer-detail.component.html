@@ -1,0 +1,257 @@
+<div class="entity-form customer-detail" *ngIf="customer">
+  <div class="entity-form__top">
+    <div class="entity-form__intro">
+      <button
+        type="button"
+        class="entity-form__back"
+        (click)="onBack()"
+        [attr.title]="'customers.backToList' | t"
+        [attr.aria-label]="'customers.backToList' | t"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div class="customer-detail__intro">
+        <div class="customer-detail__avatar">
+          <img
+            *ngIf="customer.personalImage"
+            [src]="customer.personalImage"
+            [alt]="customer.fullName"
+          />
+          <div *ngIf="!customer.personalImage" class="customer-detail__avatar-fallback" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+        </div>
+        <div>
+          <h1 class="entity-form__title">{{ customer.fullName }}</h1>
+          <p class="entity-form__subtitle">
+            {{ customer.mobileNumber }}
+            <span class="customer-detail__dot" aria-hidden="true">·</span>
+            {{ customer.cityName || ('common.noData' | t) }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="entity-form__top-actions">
+      <span class="customer-detail__status" [ngClass]="getStateClass(customer.state)">
+        <span class="customer-detail__status-dot" aria-hidden="true"></span>
+        {{ getStateLabel(customer.state) }}
+      </span>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="customer-detail__alert customer-detail__alert--success" role="status">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+
+  <div class="entity-form__shell customer-detail__layout">
+    <div class="customer-detail__main">
+      <section class="entity-form__card">
+        <div class="entity-form__card-head">
+          <p class="entity-form__card-kicker">{{ 'common.details' | t }}</p>
+          <h2 class="entity-form__card-title">{{ 'customers.personalInfo' | t }}</h2>
+          <p class="entity-form__card-text">{{ 'customers.detail' | t }}</p>
+        </div>
+        <div class="entity-form__card-body">
+          <div class="customer-detail__grid">
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'customers.fullName' | t }}</span>
+              <span class="customer-detail__value">{{ customer.fullName }}</span>
+            </div>
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'customers.mobile' | t }}</span>
+              <span class="customer-detail__value">{{ customer.mobileNumber }}</span>
+            </div>
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'customers.gender' | t }}</span>
+              <span class="customer-detail__value">{{ getGenderLabel(customer.gender) }}</span>
+            </div>
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'common.city' | t }}</span>
+              <span class="customer-detail__value">{{ customer.cityName || ('common.noData' | t) }}</span>
+            </div>
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'customers.registerAs' | t }}</span>
+              <span class="customer-detail__chip">{{ getTypeLabel(customer.registerAs) }}</span>
+            </div>
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'customers.verificationBy' | t }}</span>
+              <span class="customer-detail__chip">{{ getVerificationLabel(customer.verificationBy) }}</span>
+            </div>
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'common.email' | t }}</span>
+              <span class="customer-detail__value">{{ customer.email || ('customers.notProvided' | t) }}</span>
+            </div>
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'customers.accountCreated' | t }}</span>
+              <span class="customer-detail__value">{{ customer.createdDate | date : 'medium' }}</span>
+            </div>
+          </div>
+
+          <div class="customer-detail__media" *ngIf="customer.commercialRegisterImage">
+            <span class="customer-detail__label">{{ 'customers.commercialImage' | t }}</span>
+            <img
+              [src]="customer.commercialRegisterImage"
+              [alt]="'customers.commercialImage' | t"
+              class="customer-detail__commercial"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="entity-form__card">
+        <div class="entity-form__card-head">
+          <p class="entity-form__card-kicker">{{ 'common.status' | t }}</p>
+          <h2 class="entity-form__card-title">{{ 'customers.accountStatus' | t }}</h2>
+        </div>
+        <div class="entity-form__card-body">
+          <div class="customer-detail__grid">
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'common.status' | t }}</span>
+              <span class="customer-detail__status" [ngClass]="getStateClass(customer.state)">
+                <span class="customer-detail__status-dot" aria-hidden="true"></span>
+                {{ getStateLabel(customer.state) }}
+              </span>
+            </div>
+            <div class="customer-detail__field">
+              <span class="customer-detail__label">{{ 'customers.cashPaymentStatus' | t }}</span>
+              <span
+                class="customer-detail__status"
+                [class.customer-detail__status--active]="!customer.cashBlock"
+                [class.customer-detail__status--blocked]="customer.cashBlock"
+              >
+                <span class="customer-detail__status-dot" aria-hidden="true"></span>
+                {{ customer.cashBlock ? ('common.blocked' | t) : ('customers.allowed' | t) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="customer-detail__aside">
+      <section class="entity-form__card">
+        <div class="entity-form__card-head">
+          <p class="entity-form__card-kicker">{{ 'common.actions' | t }}</p>
+          <h2 class="entity-form__card-title">{{ 'customers.controlPanel' | t }}</h2>
+          <p class="entity-form__card-text">{{ 'customers.controlPanelSubtitle' | t }}</p>
+        </div>
+        <div class="entity-form__card-body customer-detail__actions">
+          <div class="customer-detail__action-group">
+            <h3 class="customer-detail__action-title">{{ 'customers.accountStatus' | t }}</h3>
+
+            <button
+              *ngIf="canActivate()"
+              type="button"
+              class="entity-form__btn entity-form__btn--primary customer-detail__action-btn"
+              (click)="onActivate()"
+              [disabled]="isActionLoading('activate')"
+            >
+              {{ isActionLoading('activate') ? ('customers.activating' | t) : ('customers.activateAccount' | t) }}
+            </button>
+
+            <button
+              *ngIf="canDeactivate()"
+              type="button"
+              class="entity-form__btn entity-form__btn--ghost customer-detail__action-btn"
+              (click)="onDeactivate()"
+              [disabled]="isActionLoading('deactivate')"
+            >
+              {{ isActionLoading('deactivate') ? ('customers.deactivating' | t) : ('customers.deactivateAccount' | t) }}
+            </button>
+
+            <button
+              *ngIf="canBlock()"
+              type="button"
+              class="entity-form__btn customer-detail__action-btn customer-detail__action-btn--danger"
+              (click)="onBlock()"
+              [disabled]="isActionLoading('block')"
+            >
+              {{ isActionLoading('block') ? ('customers.blocking' | t) : ('customers.blockAccount' | t) }}
+            </button>
+
+            <button
+              *ngIf="canUnblock()"
+              type="button"
+              class="entity-form__btn entity-form__btn--primary customer-detail__action-btn"
+              (click)="onUnblock()"
+              [disabled]="isActionLoading('unblock')"
+            >
+              {{ isActionLoading('unblock') ? ('customers.unblocking' | t) : ('customers.unblockAccount' | t) }}
+            </button>
+          </div>
+
+          <div class="customer-detail__action-group">
+            <h3 class="customer-detail__action-title">{{ 'customers.cashPaymentStatus' | t }}</h3>
+
+            <button
+              *ngIf="!customer.cashBlock"
+              type="button"
+              class="entity-form__btn customer-detail__action-btn customer-detail__action-btn--danger"
+              (click)="onBlockCash()"
+              [disabled]="isActionLoading('blockCash')"
+            >
+              {{ isActionLoading('blockCash') ? ('customers.blocking' | t) : ('customers.blockCash' | t) }}
+            </button>
+
+            <button
+              *ngIf="customer.cashBlock"
+              type="button"
+              class="entity-form__btn entity-form__btn--primary customer-detail__action-btn"
+              (click)="onUnblockCash()"
+              [disabled]="isActionLoading('unblockCash')"
+            >
+              {{ isActionLoading('unblockCash') ? ('customers.unblocking' | t) : ('customers.unblockCash' | t) }}
+            </button>
+
+            <p class="customer-detail__hint">{{ 'customers.cashPaymentHint' | t }}</p>
+          </div>
+
+          <div *ngIf="customer.state === CustomerState.Blocked" class="customer-detail__warning">
+            <strong>{{ 'customers.accountBlocked' | t }}</strong>
+            <span>{{ 'customers.accountBlockedText' | t }}</span>
+          </div>
+
+          <div *ngIf="customer.cashBlock" class="customer-detail__warning customer-detail__warning--cash">
+            <strong>{{ 'customers.cashBlocked' | t }}</strong>
+            <span>{{ 'customers.cashBlockedText' | t }}</span>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<div *ngIf="isLoading" class="entity-form">
+  <div class="entity-form__loading">
+    <div class="entity-form__spinner" aria-hidden="true"></div>
+    <p>{{ 'customers.loadingDetails' | t }}</p>
+  </div>
+</div>
+
+<div *ngIf="!isLoading && !customer && errorMessage" class="entity-form">
+  <div class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+  <div class="customer-detail__not-found">
+    <h2>{{ 'customers.notFound' | t }}</h2>
+    <button type="button" class="entity-form__btn entity-form__btn--ghost" (click)="onBack()">
+      {{ 'customers.backToList' | t }}
+    </button>
+  </div>
+</div>
+
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog"
+  [title]="confirmDialogTitle"
+  [message]="confirmDialogMessage"
+  [type]="confirmDialogType"
+  [isLoading]="confirmDialogLoading"
+  [confirmText]="confirmButtonText"
+  [cancelText]="'common.cancel' | t"
+  (confirm)="onConfirmAction()"
+  (cancel)="onCancelAction()"
+></app-confirm-dialog>

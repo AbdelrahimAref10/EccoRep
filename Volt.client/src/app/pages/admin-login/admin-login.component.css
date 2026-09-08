@@ -1,0 +1,228 @@
+.login {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, var(--volt-accent-soft), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(15, 118, 110, 0.12), transparent 50%),
+    var(--volt-bg);
+}
+
+.login__toolbar {
+  position: absolute;
+  top: 1.25rem;
+  inset-inline-end: 1.25rem;
+  z-index: 20;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.login__panel {
+  width: min(920px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 1.05fr;
+  border-radius: 1.35rem;
+  overflow: hidden;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-surface);
+  box-shadow: var(--volt-shadow);
+  animation: fadeIn 0.4s ease;
+}
+
+.login__brand-side {
+  position: relative;
+  padding: 2.5rem;
+  display: flex;
+  align-items: flex-end;
+  background:
+    linear-gradient(160deg, #0b1614 0%, #115e59 55%, #0d9488 100%);
+  color: #fff;
+  min-height: 28rem;
+}
+
+.login__brand-glow {
+  position: absolute;
+  inset: auto -20% -30% auto;
+  width: 18rem;
+  height: 18rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  filter: blur(10px);
+}
+
+.login__brand-content {
+  position: relative;
+  z-index: 1;
+}
+
+.login__brand-mark {
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 1rem;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+.login__brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.login__brand-name {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.login__brand-tag {
+  margin: 0.65rem 0 0;
+  max-width: 16rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.login__card {
+  padding: 2.5rem 2.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login__header {
+  margin-bottom: 1.75rem;
+}
+
+.login__title {
+  margin: 0 0 0.4rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--volt-text-primary);
+}
+
+.login__subtitle {
+  margin: 0;
+  color: var(--volt-text-secondary);
+  font-size: 0.95rem;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.login__error {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+.login__error-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+}
+
+.login__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.login__label {
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--volt-text-primary);
+}
+
+.login__required {
+  color: #ef4444;
+}
+
+.login__input {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-bg);
+  color: var(--volt-text-primary);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.login__input::placeholder {
+  color: var(--volt-text-muted);
+}
+
+.login__input:focus {
+  outline: none;
+  border-color: var(--volt-accent);
+  box-shadow: 0 0 0 4px var(--volt-accent-muted);
+  background: var(--volt-surface);
+}
+
+.login__input--invalid {
+  border-color: #f87171;
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.login__field-error {
+  font-size: 0.8rem;
+  color: #dc2626;
+}
+
+.login__footer {
+  margin-top: 1.75rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--volt-border);
+  text-align: center;
+}
+
+.login__footer-text {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--volt-text-muted);
+}
+
+@media (max-width: 860px) {
+  .login__panel {
+    grid-template-columns: 1fr;
+  }
+
+  .login__brand-side {
+    min-height: 10rem;
+    padding: 1.5rem;
+    align-items: center;
+  }
+
+  .login__brand-name {
+    font-size: 1.75rem;
+  }
+
+  .login__brand-tag {
+    display: none;
+  }
+
+  .login__card {
+    padding: 1.75rem 1.35rem 2rem;
+  }
+}

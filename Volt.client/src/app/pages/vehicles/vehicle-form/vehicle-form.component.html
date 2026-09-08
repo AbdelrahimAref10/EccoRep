@@ -1,0 +1,162 @@
+<div class="entity-form">
+  <div class="entity-form__top">
+    <div class="entity-form__intro">
+      <button
+        type="button"
+        class="entity-form__back"
+        (click)="onCancel()"
+        [attr.title]="'vehicles.backToList' | t"
+        [attr.aria-label]="'vehicles.backToList' | t"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="entity-form__title">
+          {{ (isEditMode ? 'vehicles.editTitle' : 'vehicles.addNew') | t }}
+        </h1>
+        <p class="entity-form__subtitle">
+          {{ (isEditMode ? 'vehicles.editSubtitle' : 'vehicles.addSubtitle') | t }}
+        </p>
+      </div>
+    </div>
+
+    <div class="entity-form__top-actions" *ngIf="!isLoading">
+      <button type="button" class="entity-form__btn entity-form__btn--ghost" (click)="onCancel()" [disabled]="isSaving">
+        {{ 'common.cancel' | t }}
+      </button>
+      <button
+        type="button"
+        class="entity-form__btn entity-form__btn--primary"
+        (click)="onSubmit()"
+        [disabled]="vehicleForm.invalid || isSaving"
+      >
+        {{ (isEditMode ? 'vehicles.update' : 'vehicles.create') | t }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+
+  <div *ngIf="isLoading" class="entity-form__loading">
+    <div class="entity-form__spinner" aria-hidden="true"></div>
+    <p>{{ 'vehicles.loadingDetails' | t }}</p>
+  </div>
+
+  <form *ngIf="!isLoading" [formGroup]="vehicleForm" (ngSubmit)="onSubmit()" class="entity-form__shell">
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.details' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'vehicles.basicInfo' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'vehicles.basicInfoSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'vehicles.name' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="name"
+              class="entity-form__input"
+              [placeholder]="'vehicles.namePlaceholder' | t"
+            />
+            <p *ngIf="vehicleForm.get('name')?.invalid && vehicleForm.get('name')?.touched" class="entity-form__error">
+              {{ 'vehicles.nameRequired' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'vehicles.code' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="vehicleCode"
+              class="entity-form__input"
+              [placeholder]="'vehicles.codePlaceholder' | t"
+            />
+            <p *ngIf="vehicleForm.get('vehicleCode')?.invalid && vehicleForm.get('vehicleCode')?.touched" class="entity-form__error">
+              {{ 'vehicles.codeRequired' | t }}
+            </p>
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'vehicles.subCategory' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="subCategoryId"
+              [multiple]="false"
+              [options]="subCategoryOptions"
+              [placeholder]="'vehicles.selectSubCategory' | t"
+            ></app-multi-select>
+            <p *ngIf="vehicleForm.get('subCategoryId')?.invalid && vehicleForm.get('subCategoryId')?.touched" class="entity-form__error">
+              {{ 'vehicles.subCategoryRequired' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.status' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="status"
+              [multiple]="false"
+              [options]="statusOptions"
+              [searchable]="false"
+              [clearable]="false"
+              [placeholder]="'vehicles.selectStatus' | t"
+            ></app-multi-select>
+            <p *ngIf="vehicleForm.get('status')?.invalid && vehicleForm.get('status')?.touched" class="entity-form__error">
+              {{ 'vehicles.statusRequired' | t }}
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.media' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'vehicles.image' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'vehicles.imageSubtitle' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__media">
+          <div *ngIf="imagePreview" class="entity-form__preview">
+            <img [src]="imagePreview" [alt]="'vehicles.imagePreviewAlt' | t" />
+            <button
+              type="button"
+              class="entity-form__remove"
+              (click)="removeImage()"
+              [attr.title]="'vehicles.removeImage' | t"
+              [attr.aria-label]="'vehicles.removeImage' | t"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <label class="entity-form__upload" for="vehicle-image">
+            <input id="vehicle-image" type="file" accept="image/*" (change)="onImageSelect($event)" />
+            <span class="entity-form__upload-icon" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </span>
+            <strong>{{ imagePreview ? ('vehicles.changeImage' | t) : ('vehicles.uploadHint' | t) }}</strong>
+            <small>{{ 'vehicles.imageFormats' | t }}</small>
+          </label>
+        </div>
+      </div>
+    </section>
+  </form>
+</div>

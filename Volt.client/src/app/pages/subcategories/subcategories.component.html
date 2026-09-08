@@ -1,0 +1,403 @@
+<div class="subcategories">
+  <header class="subcategories__header">
+    <div class="subcategories__header-text">
+      <h1 class="subcategories__title">{{ 'subcategories.title' | t }}</h1>
+      <p class="subcategories__subtitle">{{ 'subcategories.subtitle' | t }}</p>
+    </div>
+    <div class="subcategories__header-actions">
+      <div class="subcategories__view-toggle" role="group" [attr.aria-label]="'subcategories.viewTable' | t">
+        <button
+          type="button"
+          class="subcategories__view-btn"
+          [class.subcategories__view-btn--active]="viewMode === 'table'"
+          (click)="setViewMode('table')"
+          [attr.title]="'subcategories.viewTable' | t"
+          [attr.aria-label]="'subcategories.viewTable' | t"
+          [attr.aria-pressed]="viewMode === 'table'"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="subcategories__view-btn"
+          [class.subcategories__view-btn--active]="viewMode === 'gallery'"
+          (click)="setViewMode('gallery')"
+          [attr.title]="'subcategories.viewGallery' | t"
+          [attr.aria-label]="'subcategories.viewGallery' | t"
+          [attr.aria-pressed]="viewMode === 'gallery'"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2h-4a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zm10 0a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2h-4a2 2 0 01-2-2v-4z"/>
+          </svg>
+        </button>
+      </div>
+
+      <button type="button" class="subcategories__add-btn" (click)="onAddNew()">
+        <svg class="subcategories__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>{{ 'subcategories.add' | t }}</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="list-filters" aria-label="filters">
+    <div class="list-filters__search">
+      <span class="list-filters__search-icon-wrap" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </span>
+      <input
+        type="search"
+        class="list-filters__search-input"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="applyFilters()"
+        [placeholder]="'subcategories.searchPlaceholder' | t"
+        [attr.aria-label]="'common.search' | t"
+      />
+    </div>
+
+    <div class="list-filters__field">
+      <app-multi-select
+        [placeholder]="'subcategories.filterCategoriesPlaceholder' | t"
+        [options]="categoryOptions"
+        [values]="selectedCategoryIds"
+        (valuesChange)="onCategoryIdsChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <div class="list-filters__field">
+      <app-multi-select
+        [placeholder]="'subcategories.filterCitiesPlaceholder' | t"
+        [options]="cityOptions"
+        [values]="selectedCityIds"
+        (valuesChange)="onCityIdsChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <div class="list-filters__field list-filters__field--sm">
+      <app-multi-select
+        [placeholder]="'subcategories.filterStatusPlaceholder' | t"
+        [options]="statusOptions"
+        [values]="selectedStatusValues"
+        [searchable]="false"
+        (valuesChange)="onStatusChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <div class="list-filters__field list-filters__field--sm">
+      <app-multi-select
+        [placeholder]="'subcategories.filterOfferPlaceholder' | t"
+        [options]="offerOptions"
+        [values]="selectedOfferValues"
+        [searchable]="false"
+        (valuesChange)="onOfferChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <button type="button" class="list-filters__search-btn" (click)="applyFilters()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <span>{{ 'common.search' | t }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="list-filters__clear"
+      (click)="clearFilters()"
+      [disabled]="activeFilterCount === 0"
+      [attr.title]="'common.clearFilters' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <span>{{ 'common.clear' | t }}</span>
+    </button>
+  </section>
+
+  <div *ngIf="successMessage" class="subcategories__alert subcategories__alert--success" role="status">
+    <svg class="subcategories__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ successMessage }}</span>
+  </div>
+
+  <div *ngIf="errorMessage" class="subcategories__alert subcategories__alert--error" role="alert">
+    <svg class="subcategories__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <section class="subcategories__panel" [class.subcategories__panel--gallery]="viewMode === 'gallery' && !isLoading && subCategories.length > 0">
+    <div *ngIf="isLoading" class="subcategories__loading">
+      <div class="subcategories__spinner" aria-hidden="true"></div>
+      <p>{{ 'common.loading' | t }}</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading && subCategories.length > 0">
+      <!-- Table view -->
+      <div class="subcategories__table-scroll" *ngIf="viewMode === 'table'">
+        <table class="subcategories__table">
+          <caption class="sr-only">{{ 'subcategories.tableCaption' | t }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'common.image' | t }}</th>
+              <th scope="col">{{ 'common.name' | t }}</th>
+              <th scope="col">{{ 'common.description' | t }}</th>
+              <th scope="col">{{ 'subcategories.category' | t }}</th>
+              <th scope="col">{{ 'common.city' | t }}</th>
+              <th scope="col">{{ 'subcategories.price' | t }}</th>
+              <th scope="col">{{ 'common.vehicles' | t }}</th>
+              <th scope="col">{{ 'common.status' | t }}</th>
+              <th scope="col" class="subcategories__th-actions">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let subCategory of subCategories">
+              <td>
+                <div class="subcategories__thumb">
+                  <img
+                    *ngIf="subCategory.imageUrl"
+                    [src]="subCategory.imageUrl"
+                    [alt]="subCategory.name"
+                    class="subcategories__thumb-img"
+                  />
+                  <div *ngIf="!subCategory.imageUrl" class="subcategories__thumb-fallback" aria-hidden="true">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="subcategories__name-cell">
+                  <span class="subcategories__name">{{ subCategory.name }}</span>
+                  <span
+                    class="subcategories__offer-badge"
+                    [class.subcategories__offer-badge--offer]="subCategory.isOffer"
+                    [class.subcategories__offer-badge--regular]="!subCategory.isOffer"
+                  >
+                    {{ subCategory.isOffer ? ('subcategories.offer' | t) : ('subcategories.regular' | t) }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span class="subcategories__desc" [class.subcategories__desc--empty]="!subCategory.description">
+                  {{ subCategory.description || ('common.noData' | t) }}
+                </span>
+              </td>
+              <td>
+                <span class="subcategories__meta-chip">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                  </svg>
+                  {{ subCategory.categoryName }}
+                </span>
+              </td>
+              <td>
+                <span class="subcategories__meta-chip">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  {{ subCategory.cityName }}
+                </span>
+              </td>
+              <td>
+                <span class="subcategories__price">{{ formatPrice(subCategory.price) }}</span>
+              </td>
+              <td>
+                <span class="subcategories__count">{{ subCategory.vehicleCount || 0 }}</span>
+              </td>
+              <td>
+                <span
+                  class="subcategories__status"
+                  [class.subcategories__status--active]="subCategory.isActive"
+                  [class.subcategories__status--inactive]="!subCategory.isActive"
+                >
+                  <span class="subcategories__status-dot" aria-hidden="true"></span>
+                  {{ subCategory.isActive ? ('common.active' | t) : ('common.inactive' | t) }}
+                </span>
+              </td>
+              <td>
+                <ng-container *ngTemplateOutlet="actionsTpl; context: { $implicit: subCategory }"></ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Gallery view -->
+      <div class="subcategories__gallery" *ngIf="viewMode === 'gallery'">
+        <article class="subcategories__tile" *ngFor="let subCategory of subCategories">
+          <div class="subcategories__tile-media">
+            <img
+              *ngIf="subCategory.imageUrl"
+              [src]="subCategory.imageUrl"
+              [alt]="subCategory.name"
+              class="subcategories__tile-img"
+            />
+            <div *ngIf="!subCategory.imageUrl" class="subcategories__tile-fallback" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <span
+              class="subcategories__tile-status"
+              [class.subcategories__tile-status--active]="subCategory.isActive"
+              [class.subcategories__tile-status--inactive]="!subCategory.isActive"
+            >
+              {{ subCategory.isActive ? ('common.active' | t) : ('common.inactive' | t) }}
+            </span>
+            <span
+              *ngIf="subCategory.isOffer"
+              class="subcategories__tile-offer"
+            >
+              {{ 'subcategories.offer' | t }}
+            </span>
+          </div>
+
+          <div class="subcategories__tile-body">
+            <h3 class="subcategories__tile-title">{{ subCategory.name }}</h3>
+            <p class="subcategories__tile-desc" [class.subcategories__tile-desc--empty]="!subCategory.description">
+              {{ subCategory.description || ('common.noData' | t) }}
+            </p>
+
+            <div class="subcategories__tile-meta">
+              <span class="subcategories__meta-chip">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+                {{ subCategory.categoryName }}
+              </span>
+              <span class="subcategories__meta-chip">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                {{ subCategory.cityName }}
+              </span>
+            </div>
+
+            <div class="subcategories__tile-stats">
+              <span class="subcategories__price">{{ formatPrice(subCategory.price) }}</span>
+              <span class="subcategories__tile-subs">
+                {{ 'subcategories.vehiclesCount' | t:{ count: subCategory.vehicleCount || 0 } }}
+              </span>
+            </div>
+          </div>
+
+          <div class="subcategories__tile-footer">
+            <ng-container *ngTemplateOutlet="actionsTpl; context: { $implicit: subCategory }"></ng-container>
+          </div>
+        </article>
+      </div>
+
+      <div class="subcategories__pager">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          [totalCount]="totalCount"
+          [pageSize]="pageSize"
+          (pageChange)="onPageChange($event)"
+        ></app-pagination>
+      </div>
+    </ng-container>
+
+    <div *ngIf="!isLoading && subCategories.length === 0" class="subcategories__empty">
+      <div class="subcategories__empty-icon" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6a2 2 0 012-2h4l2 2h8a2 2 0 012 2v10a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/>
+        </svg>
+      </div>
+      <h2 class="subcategories__empty-title">{{ 'subcategories.empty' | t }}</h2>
+      <p class="subcategories__empty-text">{{ 'subcategories.emptyHint' | t }}</p>
+      <button type="button" class="subcategories__add-btn" (click)="onAddNew()">
+        <svg class="subcategories__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>{{ 'subcategories.add' | t }}</span>
+      </button>
+    </div>
+  </section>
+</div>
+
+<ng-template #actionsTpl let-subCategory>
+  <div class="subcategories__actions">
+    <button
+      type="button"
+      class="subcategories__action"
+      (click)="onViewVehicles(subCategory.subCategoryId)"
+      [attr.title]="'subcategories.viewVehicles' | t"
+      [attr.aria-label]="'subcategories.viewVehicles' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="subcategories__action"
+      (click)="onEdit(subCategory)"
+      [attr.title]="'subcategories.editItem' | t"
+      [attr.aria-label]="'subcategories.editItem' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+      </svg>
+    </button>
+    <button
+      *ngIf="subCategory.isActive"
+      type="button"
+      class="subcategories__action subcategories__action--warn"
+      (click)="onDeactivate(subCategory.subCategoryId)"
+      [attr.title]="'subcategories.deactivateItem' | t"
+      [attr.aria-label]="'subcategories.deactivateItem' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+      </svg>
+    </button>
+    <button
+      *ngIf="!subCategory.isActive"
+      type="button"
+      class="subcategories__action subcategories__action--success"
+      (click)="onActivate(subCategory.subCategoryId)"
+      [attr.title]="'subcategories.activateItem' | t"
+      [attr.aria-label]="'subcategories.activateItem' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="subcategories__action subcategories__action--danger"
+      (click)="onDelete(subCategory.subCategoryId)"
+      [attr.title]="'subcategories.deleteItem' | t"
+      [attr.aria-label]="'subcategories.deleteItem' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+      </svg>
+    </button>
+  </div>
+</ng-template>
+
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog"
+  [title]="confirmDialogTitle"
+  [message]="confirmDialogMessage"
+  [type]="confirmDialogType"
+  [isLoading]="confirmDialogLoading"
+  [confirmText]="pendingAction === 'delete' ? ('common.delete' | t) : pendingAction === 'activate' ? ('common.active' | t) : ('common.inactive' | t)"
+  [cancelText]="'common.cancel' | t"
+  (confirm)="onConfirmAction()"
+  (cancel)="onCancelAction()"
+></app-confirm-dialog>

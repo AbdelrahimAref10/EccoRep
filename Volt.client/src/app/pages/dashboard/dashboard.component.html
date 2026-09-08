@@ -1,0 +1,381 @@
+<div class="home">
+  <header class="home__header">
+    <div class="home__intro">
+      <h1 class="home__title">{{ 'dashboard.title' | t }}</h1>
+    </div>
+  </header>
+
+  <section class="home-panel home-panel--kpis" [class.home-panel--loading]="loading.summary">
+    <header class="home-panel__head">
+      <div>
+        <h2>{{ 'dashboard.summary' | t }}</h2>
+      </div>
+      <div class="home-range">
+        <label>
+          <span>{{ 'dashboard.from' | t }}</span>
+          <input type="date" [(ngModel)]="ranges.summary.from" (change)="onRangeChange('summary')" />
+        </label>
+        <label>
+          <span>{{ 'dashboard.to' | t }}</span>
+          <input type="date" [(ngModel)]="ranges.summary.to" (change)="onRangeChange('summary')" />
+        </label>
+      </div>
+    </header>
+
+    <div class="home-kpis">
+      <article class="home-kpi home-kpi--accent">
+        <div class="home-kpi__label">{{ 'dashboard.revenue' | t }}</div>
+        <div class="home-kpi__value">{{ formatCurrency(summary?.revenue) }}</div>
+        <div class="home-kpi__delta" [ngClass]="deltaClass(summary?.revenueChangePercent)">
+          {{ formatPercent(summary?.revenueChangePercent) }}
+          <span>{{ 'dashboard.vsPrevious' | t }}</span>
+        </div>
+      </article>
+
+      <article class="home-kpi">
+        <div class="home-kpi__label">{{ 'dashboard.orders' | t }}</div>
+        <div class="home-kpi__value">{{ formatNumber(summary?.ordersCount) }}</div>
+        <div class="home-kpi__delta" [ngClass]="deltaClass(summary?.ordersChangePercent)">
+          {{ formatPercent(summary?.ordersChangePercent) }}
+          <span>{{ 'dashboard.vsPrevious' | t }}</span>
+        </div>
+      </article>
+
+      <article class="home-kpi">
+        <div class="home-kpi__label">{{ 'dashboard.avgOrderValue' | t }}</div>
+        <div class="home-kpi__value">{{ formatCurrency(summary?.averageOrderValue) }}</div>
+        <div class="home-kpi__meta">{{ 'dashboard.completedOrders' | t }}</div>
+      </article>
+
+      <article class="home-kpi">
+        <div class="home-kpi__label">{{ 'dashboard.activeRentals' | t }}</div>
+        <div class="home-kpi__value">{{ formatNumber(summary?.activeRentals) }}</div>
+        <div class="home-kpi__meta">{{ formatNumber(summary?.pendingOrders) }} {{ 'dashboard.pendingOrders' | t }}</div>
+      </article>
+
+      <article class="home-kpi">
+        <div class="home-kpi__label">{{ 'dashboard.vehicleUtilization' | t }}</div>
+        <div class="home-kpi__value">{{ formatPercent(summary?.vehicleUtilizationPercent).replace('+','') }}</div>
+        <div class="home-kpi__meta">{{ formatNumber(summary?.availableVehicles) }} / {{ formatNumber(summary?.totalVehicles) }} {{ 'dashboard.available' | t }}</div>
+      </article>
+
+      <article class="home-kpi">
+        <div class="home-kpi__label">{{ 'dashboard.newCustomers' | t }}</div>
+        <div class="home-kpi__value">{{ formatNumber(summary?.newCustomers) }}</div>
+        <div class="home-kpi__delta" [ngClass]="deltaClass(summary?.newCustomersChangePercent)">
+          {{ formatPercent(summary?.newCustomersChangePercent) }}
+          <span>{{ 'dashboard.vsPrevious' | t }}</span>
+        </div>
+      </article>
+
+      <article class="home-kpi">
+        <div class="home-kpi__label">{{ 'dashboard.treasuryBalance' | t }}</div>
+        <div class="home-kpi__value">{{ formatCurrency(summary?.treasuryBalance) }}</div>
+        <div class="home-kpi__meta">{{ 'dashboard.liveBalance' | t }}</div>
+      </article>
+
+      <article class="home-kpi home-kpi--warn">
+        <div class="home-kpi__label">{{ 'dashboard.unpaidFees' | t }}</div>
+        <div class="home-kpi__value">{{ formatNumber(summary?.unpaidCancellationFeesCount) }}</div>
+        <div class="home-kpi__meta">{{ 'dashboard.needsAttention' | t }}</div>
+      </article>
+    </div>
+  </section>
+
+  <section class="home-grid">
+    <article class="home-panel home-panel--wide" [class.home-panel--loading]="loading.revenue">
+      <header class="home-panel__head">
+        <div>
+          <h2>{{ 'dashboard.revenueTrend' | t }}</h2>
+          <p>{{ formatCurrency(revenue?.totalRevenue) }} · {{ formatNumber(revenue?.totalOrders) }} {{ 'dashboard.orders' | t }}</p>
+        </div>
+        <div class="home-range">
+          <label>
+            <span>{{ 'dashboard.from' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.revenue.from" (change)="onRangeChange('revenue')" />
+          </label>
+          <label>
+            <span>{{ 'dashboard.to' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.revenue.to" (change)="onRangeChange('revenue')" />
+          </label>
+        </div>
+      </header>
+      <div class="home-panel__chart home-panel__chart--tall">
+        <volt-chart type="line" [labels]="revenueLabels" [datasets]="revenueDatasets" [currency]="true" [emptyLabel]="'dashboard.noChartData' | t"></volt-chart>
+      </div>
+    </article>
+
+    <article class="home-panel" [class.home-panel--loading]="loading.pipeline">
+      <header class="home-panel__head">
+        <div>
+          <h2>{{ 'dashboard.orderPipeline' | t }}</h2>
+          <p>{{ formatNumber(pipeline?.createdInRange) }} {{ 'dashboard.created' | t }} · {{ formatNumber(pipeline?.completedInRange) }} {{ 'dashboard.completed' | t }}</p>
+        </div>
+        <div class="home-range">
+          <label>
+            <span>{{ 'dashboard.from' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.pipeline.from" (change)="onRangeChange('pipeline')" />
+          </label>
+          <label>
+            <span>{{ 'dashboard.to' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.pipeline.to" (change)="onRangeChange('pipeline')" />
+          </label>
+        </div>
+      </header>
+      <div class="home-panel__stats">
+        <div><strong>{{ formatNumber(pipeline?.activeRentals) }}</strong><span>{{ 'dashboard.activeRentals' | t }}</span></div>
+        <div><strong>{{ formatNumber(pipeline?.pendingOrders) }}</strong><span>{{ 'dashboard.pendingOrders' | t }}</span></div>
+        <div><strong>{{ formatNumber(pipeline?.urgentInRange) }}</strong><span>{{ 'dashboard.urgent' | t }}</span></div>
+      </div>
+      <div class="home-panel__chart">
+        <volt-chart type="doughnut" [labels]="pipelineLabels" [datasets]="pipelineDatasets" [emptyLabel]="'dashboard.noChartData' | t"></volt-chart>
+      </div>
+    </article>
+
+    <article class="home-panel" [class.home-panel--loading]="loading.customers">
+      <header class="home-panel__head">
+        <div>
+          <h2>{{ 'dashboard.customerGrowth' | t }}</h2>
+          <p>{{ formatNumber(customers?.newInRange) }} {{ 'dashboard.newInRange' | t }} · {{ formatNumber(customers?.totalCustomers) }} {{ 'dashboard.total' | t }}</p>
+        </div>
+        <div class="home-range">
+          <label>
+            <span>{{ 'dashboard.from' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.customers.from" (change)="onRangeChange('customers')" />
+          </label>
+          <label>
+            <span>{{ 'dashboard.to' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.customers.to" (change)="onRangeChange('customers')" />
+          </label>
+        </div>
+      </header>
+      <div class="home-panel__stats home-panel__stats--4">
+        <div><strong>{{ formatNumber(customers?.activeCustomers) }}</strong><span>{{ 'dashboard.active' | t }}</span></div>
+        <div><strong>{{ formatNumber(customers?.inactiveCustomers) }}</strong><span>{{ 'dashboard.inactive' | t }}</span></div>
+        <div><strong>{{ formatNumber(customers?.individualCustomers) }}</strong><span>{{ 'dashboard.individual' | t }}</span></div>
+        <div><strong>{{ formatNumber(customers?.institutionCustomers) }}</strong><span>{{ 'dashboard.institution' | t }}</span></div>
+      </div>
+      <div class="home-panel__chart">
+        <volt-chart type="line" [labels]="customerLabels" [datasets]="customerDatasets" [emptyLabel]="'dashboard.noChartData' | t"></volt-chart>
+      </div>
+    </article>
+
+    <article class="home-panel" [class.home-panel--loading]="loading.payments">
+      <header class="home-panel__head">
+        <div>
+          <h2>{{ 'dashboard.paymentsMix' | t }}</h2>
+          <p>{{ formatCurrency(payments?.totalPaidAmount) }} · {{ formatNumber(payments?.paidCount) }} {{ 'dashboard.paid' | t }}</p>
+        </div>
+        <div class="home-range">
+          <label>
+            <span>{{ 'dashboard.from' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.payments.from" (change)="onRangeChange('payments')" />
+          </label>
+          <label>
+            <span>{{ 'dashboard.to' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.payments.to" (change)="onRangeChange('payments')" />
+          </label>
+        </div>
+      </header>
+      <div class="home-panel__stats">
+        <div><strong>{{ formatNumber(payments?.pendingCount) }}</strong><span>{{ 'dashboard.pending' | t }}</span></div>
+        <div><strong>{{ formatNumber(payments?.failedCount) }}</strong><span>{{ 'dashboard.failed' | t }}</span></div>
+        <div><strong>{{ formatCurrency(payments?.refundedAmount) }}</strong><span>{{ 'dashboard.refunded' | t }}</span></div>
+      </div>
+      <div class="home-panel__chart">
+        <volt-chart type="doughnut" [labels]="paymentLabels" [datasets]="paymentDatasets" [currency]="true" [emptyLabel]="'dashboard.noChartData' | t"></volt-chart>
+      </div>
+    </article>
+
+    <article class="home-panel" [class.home-panel--loading]="loading.treasury">
+      <header class="home-panel__head">
+        <div>
+          <h2>{{ 'dashboard.treasuryFlow' | t }}</h2>
+          <p>{{ formatCurrency(treasury?.balance) }} · {{ 'dashboard.currentBalance' | t }}</p>
+        </div>
+        <div class="home-range">
+          <label>
+            <span>{{ 'dashboard.from' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.treasury.from" (change)="onRangeChange('treasury')" />
+          </label>
+          <label>
+            <span>{{ 'dashboard.to' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.treasury.to" (change)="onRangeChange('treasury')" />
+          </label>
+        </div>
+      </header>
+      <div class="home-panel__stats">
+        <div><strong>{{ formatCurrency(treasury?.totalDebit) }}</strong><span>{{ 'dashboard.debit' | t }}</span></div>
+        <div><strong>{{ formatCurrency(treasury?.totalCredit) }}</strong><span>{{ 'dashboard.credit' | t }}</span></div>
+        <div><strong>{{ formatDate(treasury?.lastUpdated) }}</strong><span>{{ 'dashboard.lastUpdated' | t }}</span></div>
+      </div>
+      <div class="home-panel__chart">
+        <volt-chart type="bar" [labels]="treasuryLabels" [datasets]="treasuryDatasets" [currency]="true" [emptyLabel]="'dashboard.noChartData' | t"></volt-chart>
+      </div>
+    </article>
+
+    <article class="home-panel" [class.home-panel--loading]="loading.cancellations">
+      <header class="home-panel__head">
+        <div>
+          <h2>{{ 'dashboard.cancellations' | t }}</h2>
+          <p>{{ formatNumber(cancellations?.cancelledOrders) }} {{ 'dashboard.cancelledOrders' | t }}</p>
+        </div>
+        <div class="home-range">
+          <label>
+            <span>{{ 'dashboard.from' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.cancellations.from" (change)="onRangeChange('cancellations')" />
+          </label>
+          <label>
+            <span>{{ 'dashboard.to' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.cancellations.to" (change)="onRangeChange('cancellations')" />
+          </label>
+        </div>
+      </header>
+      <div class="home-panel__stats">
+        <div><strong>{{ formatCurrency(cancellations?.totalFees) }}</strong><span>{{ 'dashboard.totalFees' | t }}</span></div>
+        <div><strong>{{ formatCurrency(cancellations?.paidFees) }}</strong><span>{{ 'dashboard.paidFees' | t }}</span></div>
+        <div><strong>{{ formatCurrency(cancellations?.unpaidFees) }}</strong><span>{{ 'dashboard.unpaidFeesAmount' | t }}</span></div>
+      </div>
+      <div class="home-panel__chart">
+        <volt-chart type="line" [labels]="cancelLabels" [datasets]="cancelDatasets" [currency]="true" [emptyLabel]="'dashboard.noChartData' | t"></volt-chart>
+      </div>
+    </article>
+
+    <article class="home-panel home-panel--wide" [class.home-panel--loading]="loading.cities">
+      <header class="home-panel__head">
+        <div>
+          <h2>{{ 'dashboard.cityPerformance' | t }}</h2>
+        </div>
+        <div class="home-range">
+          <label>
+            <span>{{ 'dashboard.from' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.cities.from" (change)="onRangeChange('cities')" />
+          </label>
+          <label>
+            <span>{{ 'dashboard.to' | t }}</span>
+            <input type="date" [(ngModel)]="ranges.cities.to" (change)="onRangeChange('cities')" />
+          </label>
+        </div>
+      </header>
+      <div class="home-panel__chart home-panel__chart--tall">
+        <volt-chart type="bar" [horizontal]="true" [labels]="cityLabels" [datasets]="cityDatasets" [currency]="true" [legend]="false" [emptyLabel]="'dashboard.noChartData' | t"></volt-chart>
+      </div>
+      <div class="home-city-table" *ngIf="cityPerformance?.cities?.length">
+        <div class="home-city-table__row home-city-table__row--head">
+          <span>{{ 'dashboard.city' | t }}</span>
+          <span>{{ 'dashboard.orders' | t }}</span>
+          <span>{{ 'dashboard.revenue' | t }}</span>
+          <span>{{ 'dashboard.vehicles' | t }}</span>
+          <span>{{ 'dashboard.newCustomers' | t }}</span>
+        </div>
+        <div class="home-city-table__row" *ngFor="let city of cityPerformance?.cities">
+          <span>{{ city.cityName }}</span>
+          <span>{{ formatNumber(city.ordersCount) }}</span>
+          <span>{{ formatCurrency(city.revenue) }}</span>
+          <span>{{ formatNumber(city.availableVehicles) }}/{{ formatNumber(city.vehiclesCount) }}</span>
+          <span>{{ formatNumber(city.newCustomers) }}</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="home-panel" [class.home-panel--loading]="loading.top">
+    <header class="home-panel__head">
+      <div>
+        <h2>{{ 'dashboard.topPerformers' | t }}</h2>
+      </div>
+      <div class="home-range">
+        <label>
+          <span>{{ 'dashboard.from' | t }}</span>
+          <input type="date" [(ngModel)]="ranges.top.from" (change)="onRangeChange('top')" />
+        </label>
+        <label>
+          <span>{{ 'dashboard.to' | t }}</span>
+          <input type="date" [(ngModel)]="ranges.top.to" (change)="onRangeChange('top')" />
+        </label>
+      </div>
+    </header>
+
+    <div class="home-split">
+      <div>
+        <h3 class="home-split__title">{{ 'dashboard.topCategories' | t }}</h3>
+        <div class="home-rank" *ngIf="topPerformers?.categories?.length; else emptyTop">
+          <div class="home-rank__item" *ngFor="let item of topPerformers?.categories; let i = index">
+            <div class="home-rank__index">{{ i + 1 }}</div>
+            <div class="home-rank__body">
+              <div class="home-rank__title">
+                <strong>{{ item.name }}</strong>
+                <span>{{ formatCurrency(item.revenue) }}</span>
+              </div>
+              <div class="home-rank__bar"><span [style.width.%]="barWidth(item.revenue)"></span></div>
+              <div class="home-rank__meta">{{ formatNumber(item.ordersCount) }} {{ 'dashboard.orders' | t }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="home-split__title">{{ 'dashboard.topSubcategories' | t }}</h3>
+        <div class="home-rank" *ngIf="topPerformers?.subCategories?.length; else emptyTop">
+          <div class="home-rank__item" *ngFor="let item of topPerformers?.subCategories; let i = index">
+            <div class="home-rank__index">{{ i + 1 }}</div>
+            <div class="home-rank__body">
+              <div class="home-rank__title">
+                <strong>{{ item.name }}</strong>
+                <span>{{ formatCurrency(item.revenue) }}</span>
+              </div>
+              <div class="home-rank__bar"><span [style.width.%]="barWidth(item.revenue)"></span></div>
+              <div class="home-rank__meta">{{ formatNumber(item.ordersCount) }} {{ 'dashboard.orders' | t }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-panel home-panel--table" [class.home-panel--loading]="loading.recent">
+    <header class="home-panel__head">
+      <div>
+        <h2>{{ 'dashboard.recentOrders' | t }}</h2>
+      </div>
+      <a routerLink="/main/orders" class="home-panel__link">{{ 'dashboard.viewAllOrders' | t }}</a>
+    </header>
+
+    <div class="home-table-wrap" *ngIf="recentActivity?.recentOrders?.length; else emptyOrders">
+      <table class="home-table">
+        <thead>
+          <tr>
+            <th>{{ 'dashboard.orderCode' | t }}</th>
+            <th>{{ 'dashboard.customer' | t }}</th>
+            <th>{{ 'dashboard.subCategory' | t }}</th>
+            <th>{{ 'dashboard.city' | t }}</th>
+            <th>{{ 'dashboard.state' | t }}</th>
+            <th>{{ 'dashboard.total' | t }}</th>
+            <th>{{ 'dashboard.date' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let order of recentActivity?.recentOrders">
+            <td>
+              <a [routerLink]="['/main/orders', order.orderId]" class="home-table__link">{{ order.orderCode }}</a>
+            </td>
+            <td>{{ order.customerName }}</td>
+            <td>{{ order.subCategoryName || '—' }}</td>
+            <td>{{ order.cityName || '—' }}</td>
+            <td><span class="home-badge" [ngClass]="stateClass(order.orderStateName)">{{ order.orderStateName }}</span></td>
+            <td>{{ formatCurrency(order.total) }}</td>
+            <td>{{ formatDate(order.createdDate) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<ng-template #emptyTop>
+  <div class="home-empty">{{ 'dashboard.noData' | t }}</div>
+</ng-template>
+
+<ng-template #emptyOrders>
+  <div class="home-empty">{{ 'dashboard.noRecentOrders' | t }}</div>
+</ng-template>

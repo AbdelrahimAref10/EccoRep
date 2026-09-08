@@ -1,0 +1,315 @@
+<div class="entity-form">
+  <div class="entity-form__top">
+    <div class="entity-form__intro">
+      <button
+        type="button"
+        class="entity-form__back"
+        (click)="onBack()"
+        [attr.title]="'users.backToList' | t"
+        [attr.aria-label]="'users.backToList' | t"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="entity-form__title">
+          {{ user?.userName || ('users.detail' | t) }}
+        </h1>
+        <p class="entity-form__subtitle">
+          {{ isEditing ? ('users.editSubtitle' | t) : ('users.detailSubtitle' | t) }}
+        </p>
+      </div>
+    </div>
+
+    <div class="entity-form__top-actions" *ngIf="user && !isLoading">
+      <ng-container *ngIf="!isEditing">
+        <button type="button" class="entity-form__btn entity-form__btn--primary" (click)="onEdit()">
+          {{ 'users.editUser' | t }}
+        </button>
+        <button
+          *ngIf="!isUserActive"
+          type="button"
+          class="entity-form__btn entity-form__btn--ghost user-detail__btn--success"
+          (click)="onActivate()"
+          [disabled]="actionLoading === 'activate'"
+        >
+          {{ actionLoading === 'activate' ? ('users.activating' | t) : ('users.activateUser' | t) }}
+        </button>
+        <button
+          *ngIf="isUserActive"
+          type="button"
+          class="entity-form__btn entity-form__btn--ghost user-detail__btn--warn"
+          (click)="onDeactivate()"
+          [disabled]="actionLoading === 'deactivate'"
+        >
+          {{ actionLoading === 'deactivate' ? ('users.deactivating' | t) : ('users.deactivateUser' | t) }}
+        </button>
+        <button
+          type="button"
+          class="entity-form__btn entity-form__btn--ghost user-detail__btn--danger"
+          (click)="onDelete()"
+          [disabled]="actionLoading === 'delete'"
+        >
+          {{ actionLoading === 'delete' ? ('users.deleting' | t) : ('common.delete' | t) }}
+        </button>
+      </ng-container>
+
+      <ng-container *ngIf="isEditing">
+        <button type="button" class="entity-form__btn entity-form__btn--ghost" (click)="onCancel()" [disabled]="actionLoading === 'save'">
+          {{ 'common.cancel' | t }}
+        </button>
+        <button
+          type="button"
+          class="entity-form__btn entity-form__btn--primary"
+          (click)="onSave()"
+          [disabled]="userForm.invalid || actionLoading === 'save'"
+        >
+          {{ actionLoading === 'save' ? ('users.saving' | t) : ('common.save' | t) }}
+        </button>
+      </ng-container>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="user-detail__alert user-detail__alert--success" role="status">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+
+  <div *ngIf="isLoading" class="entity-form__loading">
+    <div class="entity-form__spinner" aria-hidden="true"></div>
+    <p>{{ 'users.loadingDetails' | t }}</p>
+  </div>
+
+  <!-- Edit mode -->
+  <form *ngIf="user && isEditing && !isLoading" [formGroup]="userForm" class="entity-form__shell user-detail__shell">
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.details' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'users.profileInfo' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'users.profileInfoSubtitle' | t }}</p>
+      </div>
+      <div class="entity-form__card-body">
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'users.userName' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input type="text" formControlName="userName" class="entity-form__input" />
+            <p *ngIf="userForm.get('userName')?.invalid && userForm.get('userName')?.touched" class="entity-form__error">
+              {{ 'users.userNameRequired' | t }}
+            </p>
+          </div>
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.email' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input type="email" formControlName="email" class="entity-form__input" />
+            <p *ngIf="userForm.get('email')?.invalid && userForm.get('email')?.touched" class="entity-form__error">
+              {{ 'users.emailInvalid' | t }}
+            </p>
+          </div>
+        </div>
+        <div class="entity-form__field">
+          <label class="entity-form__label">
+            {{ 'common.phone' | t }}<span class="entity-form__req">*</span>
+          </label>
+          <input type="text" formControlName="phoneNumber" class="entity-form__input" />
+          <p *ngIf="userForm.get('phoneNumber')?.invalid && userForm.get('phoneNumber')?.touched" class="entity-form__error">
+            {{ 'users.phoneRequired' | t }}
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'users.security' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'users.password' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'users.passwordOptionalHint' | t }}</p>
+      </div>
+      <div class="entity-form__card-body">
+        <div class="entity-form__field">
+          <label class="entity-form__label">{{ 'users.password' | t }}</label>
+          <div class="user-detail__password-wrap">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              class="entity-form__input"
+              [placeholder]="'users.passwordKeepPlaceholder' | t"
+            />
+            <button type="button" class="user-detail__password-toggle" (click)="togglePasswordVisibility()" tabindex="-1">
+              <svg *ngIf="!showPassword" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              <svg *ngIf="showPassword" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
+              </svg>
+            </button>
+          </div>
+
+          <div *ngIf="userForm.get('password')?.value" class="user-detail__strength">
+            <div class="user-detail__strength-track">
+              <div
+                class="user-detail__strength-fill"
+                [class.user-detail__strength-fill--weak]="getPasswordStrength().strength === 'weak'"
+                [class.user-detail__strength-fill--medium]="getPasswordStrength().strength === 'medium'"
+                [class.user-detail__strength-fill--strong]="getPasswordStrength().strength === 'strong'"
+                [style.width.%]="getPasswordStrength().percentage"
+              ></div>
+            </div>
+            <p class="user-detail__strength-label">
+              {{ 'users.passwordStrength' | t }}:
+              {{ ('users.strength.' + getPasswordStrength().strength) | t }}
+            </p>
+          </div>
+
+          <ul *ngIf="userForm.get('password')?.value" class="user-detail__reqs">
+            <li [class.user-detail__req--met]="hasPasswordMinLength()">{{ 'users.passwordMinLength' | t }}</li>
+            <li [class.user-detail__req--met]="hasPasswordLowercase()">{{ 'users.passwordLower' | t }}</li>
+            <li [class.user-detail__req--met]="hasPasswordUppercase()">{{ 'users.passwordUpper' | t }}</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'users.roles' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'users.roleAssignment' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'users.roleAssignmentSubtitle' | t }}</p>
+      </div>
+      <div class="entity-form__card-body">
+        <div class="entity-form__field">
+          <label class="entity-form__label">
+            {{ 'users.role' | t }}<span class="entity-form__req">*</span>
+          </label>
+          <app-multi-select
+            formControlName="role"
+            [multiple]="false"
+            [options]="roleOptions"
+            [disabled]="isLoadingRoles"
+            [clearable]="false"
+            [placeholder]="'users.selectRole' | t"
+          ></app-multi-select>
+          <p *ngIf="userForm.get('role')?.invalid && userForm.get('role')?.touched" class="entity-form__error">
+            {{ 'users.roleRequired' | t }}
+          </p>
+        </div>
+      </div>
+    </section>
+  </form>
+
+  <!-- View mode -->
+  <div *ngIf="user && !isEditing && !isLoading" class="entity-form__shell user-detail__shell">
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.details' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'users.profileInfo' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'users.profileInfoSubtitle' | t }}</p>
+      </div>
+      <div class="entity-form__card-body">
+        <div class="user-detail__info">
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.userName' | t }}</span>
+            <span class="user-detail__info-value">{{ user.userName }}</span>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'common.email' | t }}</span>
+            <span class="user-detail__info-value">
+              {{ user.email || ('common.noData' | t) }}
+              <span *ngIf="user.emailConfirmed" class="user-detail__verified" [attr.title]="'users.emailVerified' | t">✓</span>
+            </span>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'common.phone' | t }}</span>
+            <span class="user-detail__info-value">
+              {{ user.phoneNumber || ('common.noData' | t) }}
+              <span *ngIf="user.phoneNumberConfirmed" class="user-detail__verified" [attr.title]="'users.phoneVerified' | t">✓</span>
+            </span>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.userId' | t }}</span>
+            <span class="user-detail__info-value">{{ user.id }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'users.roles' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'users.roleAssignment' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'users.accountStatusSubtitle' | t }}</p>
+      </div>
+      <div class="entity-form__card-body">
+        <div class="user-detail__info">
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.roles' | t }}</span>
+            <div class="user-detail__chips">
+              <span *ngFor="let role of user.roles" class="user-detail__chip">{{ role }}</span>
+              <span *ngIf="!user.roles || user.roles.length === 0" class="user-detail__chip user-detail__chip--muted">
+                {{ 'users.noRoles' | t }}
+              </span>
+            </div>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'common.status' | t }}</span>
+            <span
+              class="user-detail__status"
+              [class.user-detail__status--active]="isUserActive"
+              [class.user-detail__status--inactive]="!isUserActive"
+            >
+              {{ getLockoutStatus() }}
+            </span>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.emailConfirmed' | t }}</span>
+            <span class="user-detail__info-value">{{ user.emailConfirmed ? ('common.yes' | t) : ('common.no' | t) }}</span>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.phoneConfirmed' | t }}</span>
+            <span class="user-detail__info-value">{{ user.phoneNumberConfirmed ? ('common.yes' | t) : ('common.no' | t) }}</span>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.failedLogins' | t }}</span>
+            <span class="user-detail__info-value">{{ user.accessFailedCount }}</span>
+          </div>
+          <div *ngIf="user.lockoutEnd && isLockedOut()" class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.lockoutEnd' | t }}</span>
+            <span class="user-detail__info-value">{{ user.lockoutEnd | date : 'medium' }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'users.audit' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'users.auditInfo' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'users.auditInfoSubtitle' | t }}</p>
+      </div>
+      <div class="entity-form__card-body">
+        <div class="user-detail__info">
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.createdDate' | t }}</span>
+            <span class="user-detail__info-value">{{ user.createdDate | date : 'medium' }}</span>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.createdBy' | t }}</span>
+            <span class="user-detail__info-value">{{ user.createdBy || ('users.system' | t) }}</span>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.lastModified' | t }}</span>
+            <span class="user-detail__info-value">{{ user.lastModifiedDate | date : 'medium' }}</span>
+          </div>
+          <div class="user-detail__info-item">
+            <span class="user-detail__info-label">{{ 'users.lastModifiedBy' | t }}</span>
+            <span class="user-detail__info-value">{{ user.lastModifiedBy || ('common.noData' | t) }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

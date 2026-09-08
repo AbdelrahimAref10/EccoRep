@@ -1,0 +1,231 @@
+<div class="cities">
+  <header class="cities__header">
+    <div class="cities__header-text">
+      <h1 class="cities__title">{{ 'cities.title' | t }}</h1>
+      <p class="cities__subtitle">{{ 'cities.subtitle' | t }}</p>
+    </div>
+    <div class="cities__header-actions">
+      <button type="button" class="cities__add-btn" (click)="onAddNew()">
+        <svg class="cities__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>{{ 'cities.add' | t }}</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="list-filters" aria-label="filters">
+    <div class="list-filters__search">
+      <span class="list-filters__search-icon-wrap" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </span>
+      <input
+        type="search"
+        class="list-filters__search-input"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="applyFilters()"
+        [placeholder]="'cities.searchPlaceholder' | t"
+        [attr.aria-label]="'common.search' | t"
+      />
+    </div>
+
+    <div class="list-filters__field list-filters__field--sm">
+      <app-multi-select
+        [placeholder]="'cities.filterStatusPlaceholder' | t"
+        [options]="statusOptions"
+        [values]="selectedStatusValues"
+        [searchable]="false"
+        (valuesChange)="onStatusChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <button type="button" class="list-filters__search-btn" (click)="applyFilters()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <span>{{ 'common.search' | t }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="list-filters__clear"
+      (click)="clearFilters()"
+      [disabled]="activeFilterCount === 0"
+      [attr.title]="'common.clearFilters' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <span>{{ 'common.clear' | t }}</span>
+    </button>
+  </section>
+
+  <div *ngIf="successMessage" class="cities__alert cities__alert--success" role="status">
+    <svg class="cities__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ successMessage }}</span>
+  </div>
+
+  <div *ngIf="errorMessage" class="cities__alert cities__alert--error" role="alert">
+    <svg class="cities__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <section class="cities__panel">
+    <div *ngIf="isLoading" class="cities__loading">
+      <div class="cities__spinner" aria-hidden="true"></div>
+      <p>{{ 'common.loading' | t }}</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading && cities.length > 0">
+      <div class="cities__table-scroll">
+        <table class="cities__table">
+          <caption class="sr-only">{{ 'cities.tableCaption' | t }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'common.name' | t }}</th>
+              <th scope="col">{{ 'common.description' | t }}</th>
+              <th scope="col">{{ 'common.customers' | t }}</th>
+              <th scope="col">{{ 'cities.fees' | t }}</th>
+              <th scope="col">{{ 'common.status' | t }}</th>
+              <th scope="col" class="cities__th-actions">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let city of cities">
+              <td>
+                <span class="cities__name">{{ city.name }}</span>
+              </td>
+              <td>
+                <span class="cities__desc" [class.cities__desc--empty]="!city.description">
+                  {{ city.description || ('common.noData' | t) }}
+                </span>
+              </td>
+              <td>
+                <span class="cities__count">{{ city.customerCount || 0 }}</span>
+              </td>
+              <td>
+                <div class="cities__fees">
+                  <span class="cities__fees-chip">
+                    {{ 'cities.feeDeliveryShort' | t }}: {{ city.deliveryFees ?? 0 }}
+                  </span>
+                  <span class="cities__fees-chip">
+                    {{ 'cities.feeServiceShort' | t }}: {{ city.serviceFees ?? 0 }}
+                  </span>
+                  <span class="cities__fees-chip cities__fees-chip--muted">
+                    {{ 'cities.feeCancelShort' | t }}: {{ city.cancellationFees ?? 0 }}%
+                  </span>
+                </div>
+              </td>
+              <td>
+                <span
+                  class="cities__status"
+                  [class.cities__status--active]="city.isActive"
+                  [class.cities__status--inactive]="!city.isActive"
+                >
+                  <span class="cities__status-dot" aria-hidden="true"></span>
+                  {{ city.isActive ? ('common.active' | t) : ('common.inactive' | t) }}
+                </span>
+              </td>
+              <td>
+                <div class="cities__actions">
+                  <button
+                    type="button"
+                    class="cities__action"
+                    (click)="onEdit(city)"
+                    [attr.title]="'cities.editCity' | t"
+                    [attr.aria-label]="'cities.editCity' | t"
+                  >
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button
+                    *ngIf="city.isActive"
+                    type="button"
+                    class="cities__action cities__action--warn"
+                    (click)="onDelete(city.cityId)"
+                    [attr.title]="'cities.deactivateCity' | t"
+                    [attr.aria-label]="'cities.deactivateCity' | t"
+                  >
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                    </svg>
+                  </button>
+                  <button
+                    *ngIf="!city.isActive"
+                    type="button"
+                    class="cities__action cities__action--success"
+                    (click)="onActivate(city.cityId)"
+                    [attr.title]="'cities.activateCity' | t"
+                    [attr.aria-label]="'cities.activateCity' | t"
+                  >
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </button>
+                  <button
+                    *ngIf="!city.isActive"
+                    type="button"
+                    class="cities__action cities__action--danger"
+                    (click)="onPermanentlyDelete(city.cityId)"
+                    [attr.title]="'cities.permanentDeleteCity' | t"
+                    [attr.aria-label]="'cities.permanentDeleteCity' | t"
+                  >
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cities__pager">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          [totalCount]="totalCount"
+          [pageSize]="pageSize"
+          (pageChange)="onPageChange($event)"
+        ></app-pagination>
+      </div>
+    </ng-container>
+
+    <div *ngIf="!isLoading && cities.length === 0" class="cities__empty">
+      <div class="cities__empty-icon" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <h2 class="cities__empty-title">{{ 'cities.empty' | t }}</h2>
+      <p class="cities__empty-text">{{ 'cities.emptyHint' | t }}</p>
+      <button type="button" class="cities__add-btn" (click)="onAddNew()">
+        <svg class="cities__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>{{ 'cities.add' | t }}</span>
+      </button>
+    </div>
+  </section>
+</div>
+
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog"
+  [title]="confirmDialogTitle"
+  [message]="confirmDialogMessage"
+  [type]="confirmDialogType"
+  [isLoading]="confirmDialogLoading"
+  [confirmText]="pendingAction === 'permanentDelete' ? ('common.delete' | t) : (pendingAction === 'deactivate' ? ('common.inactive' | t) : ('common.active' | t))"
+  [cancelText]="'common.cancel' | t"
+  (confirm)="onConfirmAction()"
+  (cancel)="onCancelAction()"
+></app-confirm-dialog>

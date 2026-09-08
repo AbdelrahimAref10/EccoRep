@@ -1,0 +1,88 @@
+<div class="login">
+  <div class="login__toolbar">
+    <app-lang-switcher></app-lang-switcher>
+    <app-theme-toggle></app-theme-toggle>
+  </div>
+
+  <div class="login__panel">
+    <div class="login__brand-side" aria-hidden="true">
+      <div class="login__brand-glow"></div>
+      <div class="login__brand-content">
+        <div class="login__brand-mark">
+          <img src="assets/logo.jpg" alt="" class="login__brand-logo" />
+        </div>
+        <h2 class="login__brand-name">{{ 'app.name' | t }}</h2>
+        <p class="login__brand-tag">{{ 'app.tagline' | t }}</p>
+      </div>
+    </div>
+
+    <div class="login__card">
+      <div class="login__header">
+        <h1 class="login__title">{{ 'login.title' | t }}</h1>
+        <p class="login__subtitle">{{ 'login.subtitle' | t }}</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login__form">
+        <div *ngIf="errorMessage" class="login__error">
+          <svg class="login__error-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <div class="login__field">
+          <label for="userName" class="login__label">
+            {{ 'login.username' | t }}
+            <span class="login__required">*</span>
+          </label>
+          <input
+            type="text"
+            id="userName"
+            formControlName="userName"
+            class="login__input"
+            [class.login__input--invalid]="userName?.invalid && userName?.touched"
+            [placeholder]="'login.usernamePlaceholder' | t"
+            autocomplete="username"
+          />
+          <div *ngIf="userName?.invalid && userName?.touched" class="login__field-error">
+            {{ userNameError }}
+          </div>
+        </div>
+
+        <div class="login__field">
+          <label for="password" class="login__label">
+            {{ 'login.password' | t }}
+            <span class="login__required">*</span>
+          </label>
+          <input
+            type="password"
+            id="password"
+            formControlName="password"
+            class="login__input"
+            [class.login__input--invalid]="password?.invalid && password?.touched"
+            [placeholder]="'login.passwordPlaceholder' | t"
+            autocomplete="current-password"
+          />
+          <div *ngIf="password?.invalid && password?.touched" class="login__field-error">
+            {{ passwordError }}
+          </div>
+        </div>
+
+        <app-button
+          type="submit"
+          variant="primary"
+          size="lg"
+          [fullWidth]="true"
+          [loading]="isLoading"
+          [disabled]="loginForm.invalid"
+        >
+          {{ 'login.signIn' | t }}
+        </app-button>
+      </form>
+
+      <div class="login__footer">
+        <p class="login__footer-text">{{ 'login.footer' | t:{ year: currentYear } }}</p>
+      </div>
+    </div>
+  </div>
+</div>

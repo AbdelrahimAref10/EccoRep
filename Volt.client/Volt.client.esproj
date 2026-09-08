@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/0.5.271090-alpha">
+  <PropertyGroup>
+    <StartupCommand>npm start</StartupCommand>
+    <JavaScriptTestFramework>Jasmine</JavaScriptTestFramework>
+    <!-- Allows the build (or compile) script located on package.json to run on Build -->
+    <!-- Enable build script for Release configuration (publish) -->
+    <ShouldRunBuildScript Condition="'$(Configuration)' == 'Release'">true</ShouldRunBuildScript>
+    <ShouldRunBuildScript Condition="'$(Configuration)' != 'Release'">false</ShouldRunBuildScript>
+    <!-- Folder where production build objects will be placed -->
+    <BuildOutputFolder>$(MSBuildProjectDirectory)\dist\Volt.client\</BuildOutputFolder>
+  </PropertyGroup>
+</Project>

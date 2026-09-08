@@ -1,0 +1,415 @@
+/* Profile Page - Complete Redesign */
+
+.profile-page {
+  @apply min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50/30;
+}
+
+/* Hero Section */
+.profile-hero {
+  @apply bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 text-white shadow-2xl relative overflow-hidden;
+}
+
+.profile-hero::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-primary-500/20 to-transparent;
+}
+
+.profile-hero__container {
+  @apply max-w-7xl mx-auto px-6 py-12 relative z-10;
+}
+
+.profile-hero__content {
+  @apply flex flex-col md:flex-row items-start md:items-center gap-8;
+}
+
+.profile-hero__avatar-wrapper {
+  @apply relative flex-shrink-0;
+}
+
+.profile-hero__avatar {
+  @apply w-32 h-32 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border-4 border-white/30 shadow-xl;
+}
+
+.profile-hero__avatar svg {
+  @apply w-16 h-16 text-white;
+}
+
+.profile-hero__status {
+  @apply absolute -bottom-2 -right-2 px-4 py-1.5 rounded-full text-xs font-bold backdrop-blur-md border-2 flex items-center gap-2 shadow-lg;
+}
+
+.profile-hero__status--active {
+  @apply bg-success-500/95 text-white border-success-600;
+}
+
+.profile-hero__status--inactive {
+  @apply bg-error-500/95 text-white border-error-600;
+}
+
+.profile-hero__status-dot {
+  @apply w-2.5 h-2.5 rounded-full bg-current animate-pulse;
+}
+
+.profile-hero__info {
+  @apply flex-1 min-w-0;
+}
+
+.profile-hero__name {
+  @apply text-4xl md:text-5xl font-bold mb-2 drop-shadow-lg;
+}
+
+.profile-hero__role {
+  @apply text-primary-100 text-lg md:text-xl mb-6;
+}
+
+.profile-hero__details {
+  @apply flex flex-wrap gap-6 text-sm;
+}
+
+.profile-hero__detail-item {
+  @apply flex items-center gap-2 text-primary-100;
+}
+
+.profile-hero__detail-item svg {
+  @apply w-5 h-5;
+}
+
+.profile-hero__verified {
+  @apply ml-1 text-success-300 font-bold text-base;
+}
+
+.profile-hero__actions {
+  @apply flex-shrink-0;
+}
+
+.profile-hero__edit-buttons {
+  @apply flex gap-3;
+}
+
+/* Buttons */
+.profile-btn {
+  @apply flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200 shadow-lg;
+}
+
+.profile-btn svg {
+  @apply w-5 h-5;
+}
+
+.profile-btn--primary {
+  @apply [background:var(--volt-surface)] text-primary-600 hover:bg-primary-50 hover:shadow-xl hover:scale-105;
+}
+
+.profile-btn--secondary {
+  @apply bg-white/20 text-white hover:bg-white/30 backdrop-blur-sm border border-white/30;
+}
+
+.profile-btn:disabled {
+  @apply opacity-50 cursor-not-allowed hover:scale-100;
+}
+
+/* Messages */
+.profile-message {
+  @apply max-w-7xl mx-auto px-6 mt-6 flex items-center gap-3 p-4 rounded-xl shadow-sm;
+}
+
+.profile-message--success {
+  @apply bg-success-50 border border-success-200 text-success-700;
+}
+
+.profile-message--error {
+  @apply bg-error-50 border border-error-200 text-error-700;
+}
+
+.profile-message svg {
+  @apply w-5 h-5 flex-shrink-0;
+}
+
+/* Loading */
+.profile-loading {
+  @apply max-w-7xl mx-auto px-6 py-16 flex flex-col items-center justify-center;
+}
+
+.profile-spinner {
+  @apply w-12 h-12 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin mb-4;
+}
+
+/* Edit Mode */
+.profile-edit {
+  @apply max-w-5xl mx-auto px-6 py-8;
+}
+
+.profile-edit__container {
+  @apply [background:var(--volt-surface)] rounded-3xl shadow-2xl border [border-color:var(--volt-border)] p-8;
+}
+
+/* Progress */
+.profile-progress {
+  @apply mb-8 p-6 bg-gradient-to-r from-primary-50 to-primary-100 rounded-2xl border border-primary-200;
+}
+
+.profile-progress__bar {
+  @apply w-full h-3 [background:var(--volt-surface)] rounded-full overflow-hidden shadow-inner;
+}
+
+.profile-progress__fill {
+  @apply h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full transition-all duration-500 ease-out;
+}
+
+.profile-progress__text {
+  @apply text-sm font-bold text-primary-700 mt-3 text-center;
+}
+
+/* Steps */
+.profile-steps {
+  @apply flex items-center justify-between gap-4 mb-8 p-6 [background:var(--volt-surface-muted)] rounded-2xl border [border-color:var(--volt-border)];
+}
+
+.profile-step {
+  @apply flex items-center gap-3 flex-1 cursor-pointer transition-all duration-200;
+}
+
+.profile-step:hover {
+  @apply opacity-80;
+}
+
+.profile-step--active {
+  @apply opacity-100;
+}
+
+.profile-step--completed .profile-step__number {
+  @apply bg-success-500 text-white border-success-600;
+}
+
+.profile-step--active .profile-step__number {
+  @apply bg-primary-500 text-white border-primary-600 ring-4 ring-primary-200;
+}
+
+.profile-step__number {
+  @apply w-12 h-12 rounded-full flex items-center justify-center font-bold text-base border-2 border-neutral-300 [background:var(--volt-surface-muted)] [color:var(--volt-text-secondary)] transition-all duration-200 flex-shrink-0;
+}
+
+.profile-step__info {
+  @apply flex-1 min-w-0;
+}
+
+.profile-step__title {
+  @apply text-sm font-bold [color:var(--volt-text-primary)];
+}
+
+.profile-step__progress {
+  @apply text-xs [color:var(--volt-text-muted)] mt-0.5;
+}
+
+/* Form */
+.profile-form {
+  @apply space-y-6;
+}
+
+.profile-form__step {
+  @apply animate-fade-in;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.profile-form__grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-6;
+}
+
+.profile-form__field {
+  @apply flex flex-col;
+}
+
+.profile-form__label {
+  @apply flex items-center gap-1 text-sm font-bold [color:var(--volt-text-primary)] mb-2;
+}
+
+.profile-form__required {
+  @apply text-error-500;
+}
+
+.profile-form__input {
+  @apply w-full px-4 py-3.5 border-2 border-neutral-300 rounded-xl [background:var(--volt-surface)] [color:var(--volt-text-primary)] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base;
+}
+
+.profile-form__input--error {
+  @apply border-error-500 focus:ring-error-500 focus:border-error-500;
+}
+
+.profile-form__input--success {
+  @apply border-success-500 focus:ring-success-500 focus:border-success-500;
+}
+
+.profile-form__password-wrapper {
+  @apply relative;
+}
+
+.profile-form__input--password {
+  @apply pr-12;
+}
+
+.profile-form__password-toggle {
+  @apply absolute right-3 top-1/2 -translate-y-1/2 p-2 text-neutral-400 hover:[color:var(--volt-text-secondary)] transition-colors duration-200 focus:outline-none rounded-lg hover:[background:var(--volt-surface-muted)];
+}
+
+.profile-form__password-toggle svg {
+  @apply w-5 h-5;
+}
+
+.profile-form__error {
+  @apply mt-2 text-sm text-error-600 font-medium;
+}
+
+.profile-form__hint {
+  @apply mt-2 text-xs [color:var(--volt-text-muted)];
+}
+
+/* Password Strength Indicator */
+.profile-form__password-strength {
+  @apply mt-4;
+}
+
+.profile-form__password-strength-bar {
+  @apply w-full h-2.5 bg-neutral-200 rounded-full overflow-hidden shadow-inner;
+}
+
+.profile-form__password-strength-fill {
+  @apply h-full transition-all duration-300 ease-out rounded-full;
+}
+
+.profile-form__password-strength-fill--weak {
+  @apply bg-error-500;
+}
+
+.profile-form__password-strength-fill--medium {
+  @apply bg-warning-500;
+}
+
+.profile-form__password-strength-fill--strong {
+  @apply bg-success-500;
+}
+
+.profile-form__password-strength-text {
+  @apply mt-2 text-xs font-semibold;
+}
+
+.profile-form__password-strength-text--weak {
+  @apply text-error-600;
+}
+
+.profile-form__password-strength-text--medium {
+  @apply text-warning-600;
+}
+
+.profile-form__password-strength-text--strong {
+  @apply text-success-600;
+}
+
+/* Password Requirements */
+.profile-form__password-requirements {
+  @apply mt-4 space-y-2.5 p-4 bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-xl border-2 [border-color:var(--volt-border)];
+}
+
+.profile-form__password-requirement {
+  @apply flex items-center gap-2.5 text-sm font-medium transition-colors duration-200;
+}
+
+.profile-form__password-requirement--met {
+  @apply text-success-700;
+}
+
+.profile-form__password-requirement--unmet {
+  @apply [color:var(--volt-text-muted)];
+}
+
+.profile-form__requirement-icon {
+  @apply w-4 h-4 flex-shrink-0;
+}
+
+.profile-form__password-requirement--met .profile-form__requirement-icon {
+  @apply text-success-600;
+}
+
+.profile-form__password-requirement--unmet .profile-form__requirement-icon {
+  @apply text-neutral-400;
+}
+
+.profile-form__navigation {
+  @apply flex items-center justify-between pt-6 mt-8 border-t [border-color:var(--volt-border)];
+}
+
+/* Content */
+.profile-content {
+  @apply max-w-7xl mx-auto px-6 py-8;
+}
+
+.profile-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+/* Cards */
+.profile-card {
+  @apply [background:var(--volt-surface)] rounded-2xl shadow-lg border [border-color:var(--volt-border)] overflow-hidden transition-all duration-200 hover:shadow-xl hover:scale-[1.02];
+}
+
+.profile-card__header {
+  @apply px-6 py-4 bg-gradient-to-r from-neutral-50 to-white border-b [border-color:var(--volt-border)];
+}
+
+.profile-card__title {
+  @apply text-lg font-bold [color:var(--volt-text-primary)];
+}
+
+.profile-card__body {
+  @apply px-6 py-4;
+}
+
+/* Info */
+.profile-info {
+  @apply space-y-4;
+}
+
+.profile-info__item {
+  @apply flex flex-col gap-1;
+}
+
+.profile-info__label {
+  @apply text-xs font-bold [color:var(--volt-text-muted)] uppercase tracking-wider;
+}
+
+.profile-info__value {
+  @apply text-sm font-semibold [color:var(--volt-text-primary)];
+}
+
+.profile-info__verified {
+  @apply ml-2 text-success-600 font-bold;
+}
+
+/* Badges */
+.profile-badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-bold;
+}
+
+.profile-badge--role {
+  @apply bg-primary-100 text-primary-700 border border-primary-200 mr-2 mb-1;
+}
+
+.profile-badge--none {
+  @apply [background:var(--volt-surface-muted)] [color:var(--volt-text-muted)] border [border-color:var(--volt-border)];
+}
+
+.profile-badge--active {
+  @apply bg-success-100 text-success-700 border border-success-200;
+}
+
+.profile-badge--inactive {
+  @apply bg-error-100 text-error-700 border border-error-200;
+}

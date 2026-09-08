@@ -1,0 +1,224 @@
+/* Notification Dropdown — theme-aware */
+
+.notification-dropdown {
+  position: absolute;
+  inset-inline-end: 0;
+  top: calc(100% + 0.5rem);
+  width: 24rem;
+  max-width: calc(100vw - 2rem);
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1rem;
+  background: var(--volt-surface);
+  border: 1px solid var(--volt-border);
+  box-shadow: var(--volt-shadow);
+  z-index: 50;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px) scale(0.98);
+  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+}
+
+.notification-dropdown--open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.notification-dropdown__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--volt-border);
+}
+
+.notification-dropdown__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--volt-text-primary);
+}
+
+.notification-dropdown__mark-all {
+  border: none;
+  background: transparent;
+  color: var(--volt-accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 0.4rem;
+}
+
+.notification-dropdown__mark-all:hover {
+  background: var(--volt-accent-soft);
+}
+
+.notification-dropdown__content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.notification-dropdown__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+}
+
+.notification-dropdown__empty-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  color: var(--volt-text-muted);
+  margin-bottom: 0.85rem;
+}
+
+.notification-dropdown__empty-text {
+  margin: 0 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--volt-text-primary);
+}
+
+.notification-dropdown__empty-subtext {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--volt-text-secondary);
+}
+
+.notification-dropdown__list {
+  padding: 0.35rem 0;
+}
+
+.notification-dropdown__item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.9rem 1.25rem;
+  border-inline-start: 3px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+}
+
+.notification-dropdown__item:hover {
+  background: var(--volt-surface-hover);
+}
+
+.notification-dropdown__item--unread {
+  background: var(--volt-accent-soft);
+  border-inline-start-color: var(--volt-accent);
+}
+
+.notification-dropdown__item-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.7rem;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.notification-dropdown__item-icon svg {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.notification-dropdown__item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-dropdown__item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.notification-dropdown__item-title {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--volt-text-primary);
+}
+
+.notification-dropdown__item-mark {
+  border: none;
+  background: transparent;
+  color: var(--volt-accent);
+  cursor: pointer;
+  padding: 0.15rem;
+  border-radius: 0.35rem;
+}
+
+.notification-dropdown__item-mark svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.notification-dropdown__item-message {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--volt-text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notification-dropdown__item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+
+.notification-dropdown__item-time,
+.notification-dropdown__item-type {
+  font-size: 0.7rem;
+  color: var(--volt-text-muted);
+  text-transform: capitalize;
+}
+
+.notification-dropdown__item-indicator {
+  position: absolute;
+  top: 1.1rem;
+  inset-inline-end: 0.85rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--volt-accent);
+}
+
+.notification-dropdown__footer {
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--volt-border);
+}
+
+.notification-dropdown__view-all {
+  display: flex;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--volt-accent);
+  text-decoration: none;
+}
+
+.notification-dropdown__view-all:hover {
+  color: var(--volt-accent-strong);
+}
+
+html[dir="rtl"] .notification-dropdown {
+  /* inset-inline handles RTL */
+}

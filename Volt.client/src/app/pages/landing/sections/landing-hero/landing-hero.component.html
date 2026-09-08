@@ -1,0 +1,27 @@
+<section class="lp-hero" id="top">
+  <div class="lp-hero__bg" aria-hidden="true" [style.transform]="bgTransform()"></div>
+  <div class="lp-hero__overlay" aria-hidden="true"></div>
+  <div class="lp-hero__glow" aria-hidden="true"></div>
+
+  <div class="lp-hero__watermarks" aria-hidden="true">
+    <span class="lp-hero__wm lp-hero__wm--brand">ECCO</span>
+    <span class="lp-hero__wm lp-hero__wm--line">{{ 'landing.hero.title' | t }}</span>
+  </div>
+
+  <div class="lp-hero__content">
+    <h1 class="lp-hero__title">{{ 'landing.hero.title' | t }}</h1>
+    <p class="lp-hero__subtitle">{{ 'landing.hero.subtitle' | t }}</p>
+    <div class="lp-hero__actions">
+      <button type="button" class="lp-hero__btn lp-hero__btn--primary" (click)="scrollTo('download')">
+        {{ 'landing.hero.download' | t }}
+      </button>
+      <button type="button" class="lp-hero__btn lp-hero__btn--ghost" (click)="scrollTo('vehicles')">
+        {{ 'landing.hero.browse' | t }}
+      </button>
+    </div>
+  </div>
+
+  <button type="button" class="lp-hero__scroll" (click)="scrollTo('features')" aria-label="Scroll to features">
+    <span></span>
+  </button>
+</section>

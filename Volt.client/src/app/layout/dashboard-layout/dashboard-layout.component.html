@@ -1,0 +1,34 @@
+<div
+  class="dashboard-layout"
+  [class.dashboard-layout--compact]="isCompactViewport"
+  [class.dashboard-layout--mobile-nav-open]="isMobileNavOpen"
+>
+  <div
+    class="dashboard-layout__backdrop"
+    *ngIf="isMobileNavOpen"
+    (click)="closeMobileNav()"
+    aria-hidden="true"
+  ></div>
+
+  <app-dashboard-sidebar
+    [isOpen]="sidebarExpanded"
+    [isMobileOpen]="isMobileNavOpen"
+    (closeMobile)="closeMobileNav()"
+    class="dashboard-layout__sidebar"
+  ></app-dashboard-sidebar>
+
+  <div
+    class="dashboard-layout__main"
+    [class.dashboard-layout__main--sidebar-closed]="!isSidebarOpen"
+  >
+    <app-dashboard-header
+      [isMobileNavOpen]="isMobileNavOpen"
+      (toggleSidebar)="toggleSidebar()"
+      class="dashboard-layout__header"
+    ></app-dashboard-header>
+
+    <main class="dashboard-layout__content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

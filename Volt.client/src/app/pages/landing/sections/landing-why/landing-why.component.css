@@ -1,0 +1,73 @@
+.lp-why {
+  background: hsl(var(--lp-muted) / 0.7);
+}
+
+.lp-why__grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: 1fr;
+}
+
+.lp-why__card {
+  padding: 1.75rem 1.5rem;
+  text-align: start;
+}
+
+.lp-why__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  height: auto;
+  margin-bottom: 1rem;
+  border-radius: 0;
+  color: hsl(var(--lp-primary));
+  background: transparent;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), color 0.35s ease;
+}
+
+.lp-why__icon svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.lp-why__card:hover .lp-why__icon {
+  transform: scale(1.12) translateY(-2px);
+  color: #fff;
+}
+
+.lp-why__card h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: hsl(var(--lp-foreground));
+  letter-spacing: -0.01em;
+  transition: color 0.35s ease;
+}
+
+.lp-why__card p {
+  margin: 0;
+  color: hsl(var(--lp-muted-foreground));
+  line-height: 1.55;
+  font-size: 0.925rem;
+  transition: color 0.35s ease;
+}
+
+.lp-why__card:hover h3,
+.lp-why__card:hover p {
+  color: #fff;
+}
+
+@media (min-width: 720px) {
+  .lp-why__grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.35rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lp-why__grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+}

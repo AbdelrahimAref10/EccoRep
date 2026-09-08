@@ -1,0 +1,6 @@
+/* Support page uses shared entity-form styles. */
+.entity-form__alert--ok {
+  border-color: rgba(34, 197, 94, 0.28);
+  background: rgba(34, 197, 94, 0.1);
+  color: #15803d;
+}

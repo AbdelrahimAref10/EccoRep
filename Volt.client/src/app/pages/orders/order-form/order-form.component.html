@@ -1,0 +1,1110 @@
+<div class="entity-form order-form">
+  <div class="entity-form__top">
+    <div class="entity-form__intro">
+      <button
+        type="button"
+        class="entity-form__back"
+        (click)="onCancel()"
+        [attr.title]="'orders.backToOrders' | t"
+        [attr.aria-label]="'orders.backToOrders' | t"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="entity-form__title">
+          {{ (isEditMode ? 'orders.editTitle' : 'orders.addNew') | t }}
+        </h1>
+        <p class="entity-form__subtitle">
+          <ng-container *ngIf="isEditMode && orderCode; else createSub">
+            {{ 'orders.editSubtitle' | t:{ code: orderCode } }}
+          </ng-container>
+          <ng-template #createSub>{{ 'orders.addSubtitle' | t }}</ng-template>
+        </p>
+      </div>
+    </div>
+
+    <div class="entity-form__top-actions" *ngIf="!isBootstrapping && isEditMode">
+      <button type="button" class="entity-form__btn entity-form__btn--ghost" (click)="onCancel()" [disabled]="isSaving">
+        {{ 'common.cancel' | t }}
+      </button>
+      <button
+        type="button"
+        class="entity-form__btn entity-form__btn--primary"
+        (click)="onSubmitEdit()"
+        [disabled]="!canEditSubmit"
+      >
+        <svg *ngIf="isSaving" class="order-form__btn-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+          <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>{{ (isSaving ? 'orders.updating' : 'orders.update') | t }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+
+  <div *ngIf="isBootstrapping" class="entity-form__loading">
+    <div class="entity-form__spinner" aria-hidden="true"></div>
+    <p>{{ 'orders.loadingForm' | t }}</p>
+  </div>
+
+  <ng-container *ngIf="!isBootstrapping">
+
+    <!-- ============================= CREATE MODE — SHOPPING FLOW ============================= -->
+    <form *ngIf="!isEditMode" [formGroup]="orderForm" class="order-form__create" (ngSubmit)="onReviewOrder()">
+      <div class="order-form__main">
+
+        <!-- Trip & customer -->
+        <section class="entity-form__card order-form__card">
+          <div class="entity-form__card-head">
+            <p class="entity-form__card-kicker">{{ 'orders.tripKicker' | t }}</p>
+            <h2 class="entity-form__card-title">{{ 'orders.tripTitle' | t }}</h2>
+            <p class="entity-form__card-text">{{ 'orders.tripSubtitle' | t }}</p>
+          </div>
+          <div class="entity-form__card-body">
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.customer' | t }}<span class="entity-form__req">*</span>
+              </label>
+
+              <div class="order-customer">
+                <ng-container *ngIf="!selectedCustomer; else selectedCustomerCard">
+                  <p class="order-customer__hint">{{ 'orders.customerSearchHint' | t }}</p>
+                  <div class="order-customer__search">
+                    <div class="order-customer__input-wrap">
+                      <svg class="order-customer__input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                      </svg>
+                      <input
+                        type="tel"
+                        class="entity-form__input order-customer__input"
+                        [(ngModel)]="customerPhoneQuery"
+                        [ngModelOptions]="{standalone: true}"
+                        [placeholder]="'orders.customerPhonePlaceholder' | t"
+                        (keydown.enter)="$event.preventDefault(); searchCustomerByPhone()"
+                        autocomplete="tel"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      class="entity-form__btn entity-form__btn--primary order-customer__search-btn"
+                      (click)="searchCustomerByPhone()"
+                      [disabled]="!canSearchCustomer"
+                    >
+                      <svg *ngIf="isSearchingCustomer" class="order-form__btn-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+                        <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                      </svg>
+                      <span>{{ (isSearchingCustomer ? 'orders.customerSearching' : 'orders.customerSearch') | t }}</span>
+                    </button>
+                  </div>
+
+                  <p *ngIf="customerSearchError" class="entity-form__error">{{ customerSearchError }}</p>
+
+                  <div *ngIf="customerSearchResults.length > 0" class="order-customer__results" role="listbox">
+                    <button
+                      type="button"
+                      class="order-customer__result"
+                      *ngFor="let customer of customerSearchResults; trackBy: trackByCustomerId"
+                      (click)="selectCustomer(customer)"
+                    >
+                      <span class="order-customer__avatar" aria-hidden="true">{{ customer.fullName.charAt(0) }}</span>
+                      <span class="order-customer__result-copy">
+                        <strong>{{ customer.fullName }}</strong>
+                        <span>{{ customer.mobileNumber }}</span>
+                      </span>
+                      <span class="order-customer__badges">
+                        <span class="order-form__chip order-form__chip--muted">{{ customerStateLabel(customer.state) }}</span>
+                        <span *ngIf="customer.cashBlock" class="order-form__chip order-form__chip--warn">{{ 'orders.cashBlockedBadge' | t }}</span>
+                      </span>
+                    </button>
+                  </div>
+
+                  <p
+                    *ngIf="customerSearchAttempted && !isSearchingCustomer && !customerSearchError && customerSearchResults.length === 0 && !selectedCustomer"
+                    class="order-customer__empty"
+                  >
+                    {{ 'orders.customerNotFound' | t }}
+                  </p>
+                </ng-container>
+
+                <ng-template #selectedCustomerCard>
+                  <div class="order-customer__selected" [class.order-customer__selected--blocked]="selectedCustomerCashBlocked">
+                    <span class="order-customer__avatar order-customer__avatar--lg" aria-hidden="true">
+                      {{ selectedCustomer!.fullName.charAt(0) }}
+                    </span>
+                    <div class="order-customer__selected-copy">
+                      <strong>{{ selectedCustomer!.fullName }}</strong>
+                      <span>{{ selectedCustomer!.mobileNumber }}</span>
+                      <span class="order-customer__badges">
+                        <span class="order-form__chip order-form__chip--muted">{{ customerStateLabel(selectedCustomer!.state) }}</span>
+                        <span *ngIf="selectedCustomerCashBlocked" class="order-form__chip order-form__chip--warn">{{ 'orders.cashBlockedBadge' | t }}</span>
+                      </span>
+                    </div>
+                    <button type="button" class="order-customer__change" (click)="clearSelectedCustomer()">
+                      {{ 'orders.changeCustomer' | t }}
+                    </button>
+                  </div>
+                </ng-template>
+              </div>
+
+              <p *ngIf="orderForm.get('customerId')?.invalid && orderForm.get('customerId')?.touched" class="entity-form__error">
+                {{ 'common.required' | t }}
+              </p>
+              <p *ngIf="selectedCustomerCashBlocked" class="entity-form__error">
+                {{ 'orders.cashBlockedHint' | t }}
+              </p>
+            </div>
+
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'common.city' | t }}<span class="entity-form__req">*</span>
+                <span *ngIf="cityAutoFilled && selectedCustomer" class="order-form__auto-chip">
+                  {{ 'orders.cityFromCustomer' | t }}
+                </span>
+              </label>
+              <app-multi-select
+                formControlName="cityId"
+                [multiple]="false"
+                [options]="cityOptions"
+                [placeholder]="'orders.selectCity' | t"
+              ></app-multi-select>
+              <p *ngIf="orderForm.get('cityId')?.invalid && orderForm.get('cityId')?.touched" class="entity-form__error">
+                {{ 'common.required' | t }}
+              </p>
+              <p *ngIf="selectedCustomer?.cityName" class="order-form__field-hint">
+                {{ 'orders.customerCityHint' | t:{ city: selectedCustomer!.cityName } }}
+              </p>
+            </div>
+
+            <label class="order-form__urgent" [class.order-form__urgent--on]="orderForm.get('isUrgent')?.value">
+              <span class="order-form__urgent-copy">
+                <span class="order-form__urgent-title">{{ 'orders.urgentDelivery' | t }}</span>
+                <span class="order-form__urgent-text">{{ 'orders.urgentDeliveryHint' | t }}</span>
+              </span>
+              <input type="checkbox" formControlName="isUrgent" class="order-form__switch-input" />
+              <span class="order-form__switch" aria-hidden="true"></span>
+            </label>
+          </div>
+        </section>
+
+        <!-- Fleet shopping — category → subcategory → calendar → vehicles -->
+        <section class="entity-form__card order-form__card order-form__fleet-card">
+          <div class="entity-form__card-head">
+            <p class="entity-form__card-kicker">{{ 'orders.fleetKicker' | t }}</p>
+            <h2 class="entity-form__card-title">{{ 'orders.fleetTitle' | t }}</h2>
+            <p class="entity-form__card-text">{{ 'orders.fleetSubtitleLive' | t }}</p>
+          </div>
+
+          <div class="entity-form__card-body order-form__fleet-body">
+
+            <div *ngIf="!orderForm.get('cityId')?.value" class="order-form__fleet-hint">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <p>{{ 'orders.selectCityFirstHint' | t }}</p>
+            </div>
+
+            <ng-container *ngIf="orderForm.get('cityId')?.value">
+
+              <!-- Breadcrumb -->
+              <nav class="order-form__breadcrumb" [attr.aria-label]="'orders.fleetTitle' | t">
+                <button type="button" class="order-form__crumb" [class.order-form__crumb--active]="browseStep === 'categories'" (click)="goToCategories()">
+                  {{ 'orders.allCategories' | t }}
+                </button>
+                <ng-container *ngIf="selectedCategory">
+                  <span class="order-form__crumb-sep" aria-hidden="true">›</span>
+                  <button type="button" class="order-form__crumb" [class.order-form__crumb--active]="browseStep === 'subcategories'" (click)="goToSubCategories()">
+                    {{ selectedCategory.name }}
+                  </button>
+                </ng-container>
+                <ng-container *ngIf="selectedSubCategory">
+                  <span class="order-form__crumb-sep" aria-hidden="true">›</span>
+                  <button type="button" class="order-form__crumb order-form__crumb--active" disabled>
+                    {{ selectedSubCategory.name }}
+                  </button>
+                </ng-container>
+              </nav>
+
+              <!-- Categories -->
+              <div *ngIf="browseStep === 'categories'">
+                <div *ngIf="isLoadingCategories" class="order-form__fleet-loading">
+                  <div class="entity-form__spinner" aria-hidden="true"></div>
+                </div>
+                <div *ngIf="!isLoadingCategories && categories.length === 0" class="order-form__fleet-empty">
+                  {{ 'orders.categoriesEmpty' | t }}
+                </div>
+                <div *ngIf="!isLoadingCategories && categories.length > 0" class="categories__gallery order-form__gallery">
+                  <article
+                    class="categories__tile order-form__pick-tile"
+                    *ngFor="let category of categories; trackBy: trackByCategoryId"
+                    (click)="selectCategory(category)"
+                  >
+                    <div class="categories__tile-media">
+                      <img *ngIf="category.imageUrl" [src]="category.imageUrl" [alt]="category.name" class="categories__tile-img" />
+                      <div *ngIf="!category.imageUrl" class="categories__tile-fallback" aria-hidden="true">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                      </div>
+                    </div>
+                    <div class="categories__tile-body">
+                      <h3 class="categories__tile-title">{{ category.name }}</h3>
+                      <p class="categories__tile-desc" [class.categories__tile-desc--empty]="!category.description">
+                        {{ category.description || ('common.noData' | t) }}
+                      </p>
+                    </div>
+                    <div class="order-form__pick-footer">
+                      <span>{{ 'orders.viewSubCategories' | t }}</span>
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </div>
+                  </article>
+                </div>
+              </div>
+
+              <!-- Subcategories -->
+              <div *ngIf="browseStep === 'subcategories'">
+                <div *ngIf="isLoadingSubCategories" class="order-form__fleet-loading">
+                  <div class="entity-form__spinner" aria-hidden="true"></div>
+                </div>
+                <div *ngIf="!isLoadingSubCategories && subCategories.length === 0" class="order-form__fleet-empty">
+                  {{ 'orders.subCategoriesEmpty' | t }}
+                </div>
+                <div *ngIf="!isLoadingSubCategories && subCategories.length > 0" class="subcategories__gallery order-form__gallery">
+                  <article
+                    class="subcategories__tile order-form__pick-tile"
+                    *ngFor="let sub of subCategories; trackBy: trackBySubCategoryId"
+                    [class.order-form__pick-tile--selected]="selectedSubCategory?.subCategoryId === sub.subCategoryId"
+                    (click)="selectSubCategory(sub)"
+                  >
+                    <div class="subcategories__tile-media">
+                      <img *ngIf="sub.imageUrl" [src]="sub.imageUrl" [alt]="sub.name" class="subcategories__tile-img" />
+                      <div *ngIf="!sub.imageUrl" class="subcategories__tile-fallback" aria-hidden="true">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                      </div>
+                      <span *ngIf="sub.isOffer" class="subcategories__tile-offer">{{ 'subcategories.offer' | t }}</span>
+                    </div>
+                    <div class="subcategories__tile-body">
+                      <h3 class="subcategories__tile-title">{{ sub.name }}</h3>
+                      <div class="order-form__price-row">
+                        <strong>{{ sub.price | number:'1.2-2' }} {{ 'common.currency' | t }}</strong>
+                        <span>{{ 'orders.eachVehicle' | t }}</span>
+                      </div>
+                    </div>
+                    <div class="order-form__pick-footer">
+                      <span>{{ 'orders.viewVehicles' | t }}</span>
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </div>
+                  </article>
+                </div>
+              </div>
+
+              <!-- Vehicles + date range calendar -->
+              <div *ngIf="browseStep === 'vehicles'" class="order-form__availability">
+                <div class="order-cal">
+                  <div class="order-cal__head">
+                    <div class="order-cal__intro">
+                      <p class="order-cal__kicker">{{ 'orders.rangeKicker' | t }}</p>
+                      <h3 class="order-cal__title">{{ 'orders.rangeTitle' | t }}</h3>
+                      <p class="order-cal__hint">{{ 'orders.rangeHint' | t }}</p>
+                    </div>
+                    <div class="order-cal__summary" *ngIf="hasCompleteRange; else pickingRange">
+                      <div class="order-cal__summary-dates">
+                        <span>{{ orderForm.get('reservationDateFrom')?.value }}</span>
+                        <span class="order-cal__summary-arrow" aria-hidden="true">→</span>
+                        <span>{{ orderForm.get('reservationDateTo')?.value }}</span>
+                      </div>
+                      <span class="order-cal__summary-days">
+                        {{ 'orders.daysCount' | t:{ n: reservationDays } }}
+                      </span>
+                      <button type="button" class="order-cal__clear" (click)="clearDateRange()">
+                        {{ 'orders.clearRange' | t }}
+                      </button>
+                    </div>
+                    <ng-template #pickingRange>
+                      <div class="order-cal__summary order-cal__summary--pending">
+                        <ng-container *ngIf="rangeFrom; else pickStart">
+                          <div class="order-cal__summary-dates">
+                            <span>{{ orderForm.get('reservationDateFrom')?.value }}</span>
+                            <span class="order-cal__summary-arrow" aria-hidden="true">→</span>
+                            <span>?</span>
+                          </div>
+                          <span>{{ 'orders.pickEndDate' | t }}</span>
+                        </ng-container>
+                        <ng-template #pickStart>
+                          <span>{{ 'orders.pickStartDate' | t }}</span>
+                        </ng-template>
+                      </div>
+                    </ng-template>
+                  </div>
+
+                  <div class="order-cal__nav">
+                    <button type="button" class="order-cal__nav-btn" (click)="shiftCalendar(-1)" [attr.aria-label]="'common.previous' | t">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+                      </svg>
+                    </button>
+                    <div class="order-cal__months">
+                      <span>{{ calendarTitle }}</span>
+                      <span class="order-cal__months-next">{{ nextCalendarTitle }}</span>
+                    </div>
+                    <button type="button" class="order-cal__nav-btn" (click)="shiftCalendar(1)" [attr.aria-label]="'common.next' | t">
+                      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5l7 7-7 7"/>
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div class="order-cal__grid-wrap">
+                    <div class="order-cal__month">
+                      <div class="order-cal__weekdays">
+                        <span *ngFor="let label of weekdayLabels">{{ label }}</span>
+                      </div>
+                      <div class="order-cal__grid" (mouseleave)="onCalendarLeave()">
+                        <ng-container *ngFor="let day of calendarDays; trackBy: trackByCalendarDay">
+                          <span *ngIf="!day.inMonth" class="order-cal__day order-cal__day--empty" aria-hidden="true"></span>
+                          <button
+                            *ngIf="day.inMonth"
+                            type="button"
+                            class="order-cal__day"
+                            [class.order-cal__day--disabled]="day.disabled"
+                            [class.order-cal__day--today]="day.isToday"
+                            [class.order-cal__day--start]="day.isStart"
+                            [class.order-cal__day--end]="day.isEnd"
+                            [class.order-cal__day--range]="day.inRange"
+                            [attr.aria-disabled]="day.disabled"
+                            (click)="onCalendarDayClick(day, $event)"
+                            (mouseenter)="onCalendarDayHover(day)"
+                          >
+                            {{ day.day }}
+                          </button>
+                        </ng-container>
+                      </div>
+                    </div>
+
+                    <div class="order-cal__month order-cal__month--next">
+                      <div class="order-cal__weekdays">
+                        <span *ngFor="let label of weekdayLabels">{{ label }}</span>
+                      </div>
+                      <div class="order-cal__grid" (mouseleave)="onCalendarLeave()">
+                        <ng-container *ngFor="let day of nextCalendarDays; trackBy: trackByCalendarDay">
+                          <span *ngIf="!day.inMonth" class="order-cal__day order-cal__day--empty" aria-hidden="true"></span>
+                          <button
+                            *ngIf="day.inMonth"
+                            type="button"
+                            class="order-cal__day"
+                            [class.order-cal__day--disabled]="day.disabled"
+                            [class.order-cal__day--today]="day.isToday"
+                            [class.order-cal__day--start]="day.isStart"
+                            [class.order-cal__day--end]="day.isEnd"
+                            [class.order-cal__day--range]="day.inRange"
+                            [attr.aria-disabled]="day.disabled"
+                            (click)="onCalendarDayClick(day, $event)"
+                            (mouseenter)="onCalendarDayHover(day)"
+                          >
+                            {{ day.day }}
+                          </button>
+                        </ng-container>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="order-form__fleet-panel" *ngIf="hasCompleteRange">
+                  <div class="order-form__fleet-stats" *ngIf="availableFleet && !isLoadingVehicles">
+                    <div class="order-form__stat order-form__stat--ok">
+                      <strong>{{ availableFleet.availableCount }}</strong>
+                      <span>{{ 'orders.availableNow' | t }}</span>
+                    </div>
+                    <div class="order-form__stat order-form__stat--busy">
+                      <strong>{{ availableFleet.unavailableCount }}</strong>
+                      <span>{{ 'orders.unavailableNow' | t }}</span>
+                    </div>
+                    <div class="order-form__stat">
+                      <strong>{{ selectedVehicleCount }}</strong>
+                      <span>{{ 'orders.selectedNow' | t }}</span>
+                    </div>
+                  </div>
+
+                  <div *ngIf="isLoadingVehicles" class="order-form__fleet-loading">
+                    <div class="entity-form__spinner" aria-hidden="true"></div>
+                    <p>{{ 'orders.loadingAvailability' | t }}</p>
+                  </div>
+
+                  <div *ngIf="!isLoadingVehicles && fleetVehicles.length === 0" class="order-form__fleet-empty">
+                    {{ 'orders.vehiclesEmpty' | t }}
+                  </div>
+
+                  <div *ngIf="!isLoadingVehicles && availableVehiclesList.length > 0" class="order-form__fleet-section">
+                    <h4 class="order-form__fleet-section-title">{{ 'orders.availableVehicles' | t }}</h4>
+                    <div class="vehicles__gallery order-form__gallery">
+                      <article
+                        class="vehicles__tile order-form__pick-tile order-form__vehicle-tile"
+                        *ngFor="let vehicle of availableVehiclesList; trackBy: trackByVehicleId"
+                        [class.order-form__pick-tile--selected]="isVehicleSelected(vehicle.vehicleId)"
+                        (click)="toggleVehicle(vehicle)"
+                      >
+                        <div class="vehicles__tile-media">
+                          <img *ngIf="vehicle.imageUrl" [src]="vehicle.imageUrl" [alt]="vehicle.name" class="vehicles__tile-img" />
+                          <div *ngIf="!vehicle.imageUrl" class="vehicles__tile-fallback" aria-hidden="true">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                          </div>
+                          <span class="order-form__badge order-form__badge--ok">{{ 'orders.availableBadge' | t }}</span>
+                          <span class="order-form__check" [class.order-form__check--on]="isVehicleSelected(vehicle.vehicleId)" aria-hidden="true">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M5 13l4 4L19 7"/>
+                            </svg>
+                          </span>
+                        </div>
+                        <div class="vehicles__tile-body">
+                          <h3 class="vehicles__tile-title">{{ vehicle.name }}</h3>
+                          <span class="order-form__vehicle-code">{{ vehicle.vehicleCode }}</span>
+                        </div>
+                      </article>
+                    </div>
+                  </div>
+
+                  <div *ngIf="!isLoadingVehicles && unavailableVehiclesList.length > 0" class="order-form__fleet-section">
+                    <h4 class="order-form__fleet-section-title order-form__fleet-section-title--muted">
+                      {{ 'orders.unavailableVehicles' | t }}
+                    </h4>
+                    <div class="vehicles__gallery order-form__gallery">
+                      <article
+                        class="vehicles__tile order-form__pick-tile order-form__vehicle-tile order-form__vehicle-tile--busy"
+                        *ngFor="let vehicle of unavailableVehiclesList; trackBy: trackByVehicleId"
+                      >
+                        <div class="vehicles__tile-media">
+                          <img *ngIf="vehicle.imageUrl" [src]="vehicle.imageUrl" [alt]="vehicle.name" class="vehicles__tile-img" />
+                          <div *ngIf="!vehicle.imageUrl" class="vehicles__tile-fallback" aria-hidden="true">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                          </div>
+                          <span class="order-form__badge order-form__badge--busy">
+                            {{ unavailableReasonLabel(vehicle.unavailableReason) }}
+                          </span>
+                          <button
+                            *ngIf="hasBookedDays(vehicle)"
+                            type="button"
+                            class="order-form__booked-btn"
+                            (click)="openBookedDaysCalendar(vehicle, $event)"
+                            [attr.title]="'orders.viewBookedDays' | t"
+                            [attr.aria-label]="'orders.viewBookedDays' | t"
+                          >
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                          </button>
+                        </div>
+                        <div class="vehicles__tile-body">
+                          <h3 class="vehicles__tile-title">{{ vehicle.name }}</h3>
+                          <span class="order-form__vehicle-code">{{ vehicle.vehicleCode }}</span>
+                          <button
+                            *ngIf="hasBookedDays(vehicle)"
+                            type="button"
+                            class="order-form__booked-link"
+                            (click)="openBookedDaysCalendar(vehicle, $event)"
+                          >
+                            {{ 'orders.viewBookedDays' | t }}
+                          </button>
+                        </div>
+                      </article>
+                    </div>
+                  </div>
+                </div>
+
+                <div *ngIf="!hasCompleteRange" class="order-form__fleet-hint order-form__fleet-hint--soft">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <p>{{ 'orders.selectRangeFirstHint' | t }}</p>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </section>
+
+        <!-- Hotel -->
+        <section class="entity-form__card order-form__card">
+          <div class="entity-form__card-head">
+            <p class="entity-form__card-kicker">{{ 'orders.delivery' | t }}</p>
+            <h2 class="entity-form__card-title">{{ 'orders.hotelInfo' | t }}</h2>
+            <p class="entity-form__card-text">{{ 'orders.hotelSubtitle' | t }}</p>
+          </div>
+          <div class="entity-form__card-body">
+            <div class="entity-form__row">
+              <div class="entity-form__field">
+                <label class="entity-form__label">
+                  {{ 'orders.hotelName' | t }}<span class="entity-form__req">*</span>
+                </label>
+                <input type="text" class="entity-form__input" formControlName="hotelName" [placeholder]="'orders.hotelNamePlaceholder' | t" />
+              </div>
+              <div class="entity-form__field">
+                <label class="entity-form__label">{{ 'orders.hotelPhone' | t }}</label>
+                <input type="text" class="entity-form__input" formControlName="hotelPhone" [placeholder]="'orders.hotelPhonePlaceholder' | t" />
+              </div>
+            </div>
+
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.hotelAddress' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <textarea
+                class="entity-form__textarea"
+                formControlName="hotelAddress"
+                rows="3"
+                [placeholder]="'orders.hotelAddressPlaceholder' | t"
+              ></textarea>
+            </div>
+
+            <div class="entity-form__field">
+              <label class="entity-form__label">{{ 'common.notes' | t }}</label>
+              <textarea
+                class="entity-form__textarea"
+                formControlName="notes"
+                rows="3"
+                [placeholder]="'orders.notesPlaceholder' | t"
+              ></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Passport & cash -->
+        <section class="entity-form__card order-form__card">
+          <div class="entity-form__card-head">
+            <p class="entity-form__card-kicker">{{ 'orders.paymentDetails' | t }}</p>
+            <h2 class="entity-form__card-title">{{ 'orders.paymentAndDocs' | t }}</h2>
+            <p class="entity-form__card-text">{{ 'orders.paymentAndDocsCashSubtitle' | t }}</p>
+          </div>
+          <div class="entity-form__card-body">
+            <div class="order-form__cash-only" role="status">
+              <span class="order-form__cash-only-icon" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+              </span>
+              <div class="order-form__cash-only-copy">
+                <strong>{{ 'orders.cashOnlyTitle' | t }}</strong>
+                <p>{{ 'orders.cashOnlyHint' | t }}</p>
+              </div>
+              <span class="order-form__cash-badge">{{ 'common.cash' | t }}</span>
+            </div>
+
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.passportImage' | t }}<span class="entity-form__req">*</span>
+              </label>
+
+              <div class="order-form__passport" [class.order-form__passport--filled]="!!passportPreview">
+                <img *ngIf="passportPreview" [src]="passportPreview" alt="" class="order-form__passport-img" />
+                <div *ngIf="!passportPreview" class="order-form__passport-empty">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                  <p>{{ 'orders.passportHint' | t }}</p>
+                </div>
+
+                <div class="order-form__passport-actions">
+                  <label class="order-form__upload-btn">
+                    <input
+                      #passportInput
+                      type="file"
+                      accept="image/*"
+                      hidden
+                      (change)="onPassportSelect($event)"
+                    />
+                    <span>{{ (passportPreview ? 'orders.changePassport' : 'orders.uploadPassport') | t }}</span>
+                  </label>
+                  <button
+                    *ngIf="passportPreview"
+                    type="button"
+                    class="order-form__clear-btn"
+                    (click)="clearPassport()"
+                  >
+                    {{ 'common.clear' | t }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </form>
+
+    <!-- Sticky checkout bar -->
+    <div class="order-form__checkoutbar" *ngIf="!isEditMode">
+      <div class="order-form__checkoutbar-info">
+        <ng-container *ngIf="selectedSubCategory; else noSelection">
+          <span class="order-form__checkoutbar-sub">{{ selectedSubCategory.name }}</span>
+          <span class="order-form__checkoutbar-meta" *ngIf="hasCompleteRange">
+            {{ orderForm.get('reservationDateFrom')?.value }}
+            →
+            {{ orderForm.get('reservationDateTo')?.value }}
+            · {{ 'orders.daysCount' | t:{ n: reservationDays } }}
+          </span>
+          <span class="order-form__checkoutbar-count">
+            {{ 'orders.vehiclesSelected' | t:{ count: selectedVehicleCount } }}
+          </span>
+        </ng-container>
+        <ng-template #noSelection>
+          <span class="order-form__checkoutbar-count order-form__checkoutbar-count--muted">
+            {{ 'orders.noVehiclesSelected' | t }}
+          </span>
+        </ng-template>
+      </div>
+      <button
+        type="button"
+        class="entity-form__btn entity-form__btn--primary order-form__checkout-btn"
+        (click)="onReviewOrder()"
+        [disabled]="!canReview"
+      >
+        <svg *ngIf="isCalculating" class="order-form__btn-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+          <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span>{{ (isCalculating ? 'orders.calculating' : 'orders.reviewOrder') | t }}</span>
+      </button>
+    </div>
+
+    <!-- ============================= EDIT MODE — SIMPLE FORM ============================= -->
+    <form *ngIf="isEditMode" [formGroup]="editForm" class="order-form__edit" (ngSubmit)="onSubmitEdit()">
+      <div class="order-form__edit-notice" role="note">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <p>{{ 'orders.editSimpleNotice' | t }}</p>
+      </div>
+
+      <section class="entity-form__card order-form__card">
+        <div class="entity-form__card-head">
+          <p class="entity-form__card-kicker">{{ 'orders.bookingKicker' | t }}</p>
+          <h2 class="entity-form__card-title">{{ 'orders.bookingTitle' | t }}</h2>
+          <p class="entity-form__card-text">{{ 'orders.bookingSubtitle' | t }}</p>
+        </div>
+        <div class="entity-form__card-body">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'orders.customer' | t }}<span class="entity-form__req">*</span>
+            </label>
+
+            <div class="order-customer">
+              <ng-container *ngIf="!selectedCustomer; else editSelectedCustomerCard">
+                <p class="order-customer__hint">{{ 'orders.customerSearchHint' | t }}</p>
+                <div class="order-customer__search">
+                  <div class="order-customer__input-wrap">
+                    <svg class="order-customer__input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    <input
+                      type="tel"
+                      class="entity-form__input order-customer__input"
+                      [(ngModel)]="customerPhoneQuery"
+                      [ngModelOptions]="{standalone: true}"
+                      [placeholder]="'orders.customerPhonePlaceholder' | t"
+                      (keydown.enter)="$event.preventDefault(); searchCustomerByPhone()"
+                      autocomplete="tel"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    class="entity-form__btn entity-form__btn--primary order-customer__search-btn"
+                    (click)="searchCustomerByPhone()"
+                    [disabled]="!canSearchCustomer"
+                  >
+                    <svg *ngIf="isSearchingCustomer" class="order-form__btn-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+                      <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>{{ (isSearchingCustomer ? 'orders.customerSearching' : 'orders.customerSearch') | t }}</span>
+                  </button>
+                </div>
+
+                <p *ngIf="customerSearchError" class="entity-form__error">{{ customerSearchError }}</p>
+
+                <div *ngIf="customerSearchResults.length > 0" class="order-customer__results" role="listbox">
+                  <button
+                    type="button"
+                    class="order-customer__result"
+                    *ngFor="let customer of customerSearchResults; trackBy: trackByCustomerId"
+                    (click)="selectCustomer(customer)"
+                  >
+                    <span class="order-customer__avatar" aria-hidden="true">{{ customer.fullName.charAt(0) }}</span>
+                    <span class="order-customer__result-copy">
+                      <strong>{{ customer.fullName }}</strong>
+                      <span>{{ customer.mobileNumber }}</span>
+                    </span>
+                    <span class="order-customer__badges">
+                      <span class="order-form__chip order-form__chip--muted">{{ customerStateLabel(customer.state) }}</span>
+                      <span *ngIf="customer.cashBlock" class="order-form__chip order-form__chip--warn">{{ 'orders.cashBlockedBadge' | t }}</span>
+                    </span>
+                  </button>
+                </div>
+
+                <p
+                  *ngIf="customerSearchAttempted && !isSearchingCustomer && !customerSearchError && customerSearchResults.length === 0 && !selectedCustomer"
+                  class="order-customer__empty"
+                >
+                  {{ 'orders.customerNotFound' | t }}
+                </p>
+              </ng-container>
+
+              <ng-template #editSelectedCustomerCard>
+                <div class="order-customer__selected" [class.order-customer__selected--blocked]="selectedCustomerCashBlocked">
+                  <span class="order-customer__avatar order-customer__avatar--lg" aria-hidden="true">
+                    {{ selectedCustomer!.fullName.charAt(0) }}
+                  </span>
+                  <div class="order-customer__selected-copy">
+                    <strong>{{ selectedCustomer!.fullName }}</strong>
+                    <span>{{ selectedCustomer!.mobileNumber }}</span>
+                    <span class="order-customer__badges">
+                      <span class="order-form__chip order-form__chip--muted">{{ customerStateLabel(selectedCustomer!.state) }}</span>
+                      <span *ngIf="selectedCustomerCashBlocked" class="order-form__chip order-form__chip--warn">{{ 'orders.cashBlockedBadge' | t }}</span>
+                    </span>
+                  </div>
+                  <button type="button" class="order-customer__change" (click)="clearSelectedCustomer()">
+                    {{ 'orders.changeCustomer' | t }}
+                  </button>
+                </div>
+              </ng-template>
+            </div>
+
+            <p *ngIf="editForm.get('customerId')?.invalid && editForm.get('customerId')?.touched" class="entity-form__error">
+              {{ 'common.required' | t }}
+            </p>
+            <p *ngIf="selectedCustomerCashBlocked" class="entity-form__error">
+              {{ 'orders.cashBlockedHint' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__row">
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'common.city' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <app-multi-select
+                formControlName="cityId"
+                [multiple]="false"
+                [options]="cityOptions"
+                [placeholder]="'orders.selectCity' | t"
+              ></app-multi-select>
+              <p *ngIf="editForm.get('cityId')?.invalid && editForm.get('cityId')?.touched" class="entity-form__error">
+                {{ 'common.required' | t }}
+              </p>
+            </div>
+
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.subCategory' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <app-multi-select
+                formControlName="subCategoryId"
+                [multiple]="false"
+                [options]="editSubCategoryOptions"
+                [placeholder]="'orders.selectSubCategory' | t"
+                [disabled]="!editForm.get('cityId')?.value"
+              ></app-multi-select>
+              <p *ngIf="editForm.get('subCategoryId')?.invalid && editForm.get('subCategoryId')?.touched" class="entity-form__error">
+                {{ 'common.required' | t }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="entity-form__card order-form__card">
+        <div class="entity-form__card-head">
+          <p class="entity-form__card-kicker">{{ 'orders.scheduleKicker' | t }}</p>
+          <h2 class="entity-form__card-title">{{ 'orders.scheduleTitle' | t }}</h2>
+          <p class="entity-form__card-text">{{ 'orders.scheduleSubtitle' | t }}</p>
+        </div>
+        <div class="entity-form__card-body">
+          <div class="entity-form__row entity-form__row--3">
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.reservationFrom' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <input type="date" class="entity-form__input" formControlName="reservationDateFrom" [attr.min]="minDate" />
+            </div>
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.reservationTo' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <input
+                type="date"
+                class="entity-form__input"
+                formControlName="reservationDateTo"
+                [attr.min]="editForm.get('reservationDateFrom')?.value || minDate"
+              />
+            </div>
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.vehiclesCount' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <input type="number" class="entity-form__input" formControlName="vehiclesCount" min="1" step="1" />
+            </div>
+          </div>
+
+          <label class="order-form__urgent" [class.order-form__urgent--on]="editForm.get('isUrgent')?.value">
+            <span class="order-form__urgent-copy">
+              <span class="order-form__urgent-title">{{ 'orders.urgentDelivery' | t }}</span>
+              <span class="order-form__urgent-text">{{ 'orders.urgentDeliveryHint' | t }}</span>
+            </span>
+            <input type="checkbox" formControlName="isUrgent" class="order-form__switch-input" />
+            <span class="order-form__switch" aria-hidden="true"></span>
+          </label>
+        </div>
+      </section>
+
+      <section class="entity-form__card order-form__card">
+        <div class="entity-form__card-head">
+          <p class="entity-form__card-kicker">{{ 'orders.delivery' | t }}</p>
+          <h2 class="entity-form__card-title">{{ 'orders.hotelInfo' | t }}</h2>
+          <p class="entity-form__card-text">{{ 'orders.hotelSubtitle' | t }}</p>
+        </div>
+        <div class="entity-form__card-body">
+          <div class="entity-form__row">
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.hotelName' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <input type="text" class="entity-form__input" formControlName="hotelName" [placeholder]="'orders.hotelNamePlaceholder' | t" />
+            </div>
+            <div class="entity-form__field">
+              <label class="entity-form__label">{{ 'orders.hotelPhone' | t }}</label>
+              <input type="text" class="entity-form__input" formControlName="hotelPhone" [placeholder]="'orders.hotelPhonePlaceholder' | t" />
+            </div>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'orders.hotelAddress' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <textarea class="entity-form__textarea" formControlName="hotelAddress" rows="3" [placeholder]="'orders.hotelAddressPlaceholder' | t"></textarea>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'common.notes' | t }}</label>
+            <textarea class="entity-form__textarea" formControlName="notes" rows="3" [placeholder]="'orders.notesPlaceholder' | t"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <section class="entity-form__card order-form__card">
+        <div class="entity-form__card-head">
+          <p class="entity-form__card-kicker">{{ 'orders.paymentDetails' | t }}</p>
+          <h2 class="entity-form__card-title">{{ 'orders.paymentAndDocs' | t }}</h2>
+          <p class="entity-form__card-text">{{ 'orders.paymentAndDocsCashSubtitle' | t }}</p>
+        </div>
+        <div class="entity-form__card-body">
+          <div class="order-form__cash-only" role="status">
+            <span class="order-form__cash-only-icon" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+            </span>
+            <div class="order-form__cash-only-copy">
+              <strong>{{ 'orders.cashOnlyTitle' | t }}</strong>
+              <p>{{ 'orders.cashOnlyHint' | t }}</p>
+            </div>
+            <span class="order-form__cash-badge">{{ 'common.cash' | t }}</span>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">{{ 'orders.passportImage' | t }}</label>
+
+            <div class="order-form__passport" [class.order-form__passport--filled]="!!passportPreview">
+              <img *ngIf="passportPreview" [src]="passportPreview" alt="" class="order-form__passport-img" />
+              <div *ngIf="!passportPreview" class="order-form__passport-empty">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <p>{{ 'orders.passportHint' | t }}</p>
+              </div>
+
+              <div class="order-form__passport-actions">
+                <label class="order-form__upload-btn">
+                  <input #passportInput type="file" accept="image/*" hidden (change)="onPassportSelect($event)" />
+                  <span>{{ (passportPreview ? 'orders.changePassport' : 'orders.uploadPassport') | t }}</span>
+                </label>
+                <button *ngIf="passportPreview && passportDirty" type="button" class="order-form__clear-btn" (click)="clearPassport()">
+                  {{ 'common.clear' | t }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </form>
+  </ng-container>
+
+  <!-- ============================= REVIEW & TOTALS MODAL ============================= -->
+  <div class="order-review__overlay" *ngIf="isPreviewOpen" (click)="onClosePreview()">
+    <div class="order-review__dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+      <div class="order-review__header">
+        <div>
+          <p class="order-review__kicker">{{ 'orders.reviewModalTitle' | t }}</p>
+          <h2 class="order-review__title">{{ previewData?.subCategoryName }}</h2>
+          <p class="order-review__subtitle">{{ 'orders.reviewModalSubtitle' | t }}</p>
+        </div>
+        <button type="button" class="order-review__close" (click)="onClosePreview()" [attr.aria-label]="'common.close' | t">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="order-review__body" *ngIf="previewData">
+        <div class="order-review__chips">
+          <span class="order-form__chip">{{ previewData.cityName }}</span>
+          <span class="order-form__chip order-form__chip--muted">{{ 'orders.daysCount' | t:{ n: previewData.days } }}</span>
+          <span *ngIf="previewData.isUrgent" class="order-form__chip order-form__chip--warn">{{ 'orders.urgentDelivery' | t }}</span>
+        </div>
+
+        <div class="order-review__vehicles">
+          <p class="order-review__section-label">
+            {{ 'orders.selectedVehiclesLabel' | t:{ count: previewData.vehiclesCount } }}
+          </p>
+          <div class="order-review__vehicle-strip">
+            <div class="order-review__vehicle-chip" *ngFor="let v of previewData.vehicles">
+              <img *ngIf="v.imageUrl" [src]="v.imageUrl" [alt]="v.name" />
+              <div *ngIf="!v.imageUrl" class="order-review__vehicle-chip-fallback" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <div class="order-review__vehicle-chip-info">
+                <strong>{{ v.name }}</strong>
+                <span>{{ v.vehicleCode }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="order-review__lines">
+          <li>
+            <span>{{ 'orders.unitPrice' | t }}</span>
+            <strong>{{ previewData.unitPrice | number:'1.2-2' }} {{ 'common.currency' | t }}</strong>
+          </li>
+          <li>
+            <span>{{ 'orders.subTotal' | t }}</span>
+            <strong>{{ previewData.subTotal | number:'1.2-2' }} {{ 'common.currency' | t }}</strong>
+          </li>
+          <li>
+            <span>{{ 'orders.deliveryFees' | t }}</span>
+            <strong>{{ previewData.deliveryFees | number:'1.2-2' }} {{ 'common.currency' | t }}</strong>
+          </li>
+          <li>
+            <span>{{ 'orders.serviceFees' | t }}</span>
+            <strong>{{ previewData.serviceFees | number:'1.2-2' }} {{ 'common.currency' | t }}</strong>
+          </li>
+          <li *ngIf="previewData.urgentFees > 0">
+            <span>{{ 'orders.urgentFees' | t }}</span>
+            <strong>{{ previewData.urgentFees | number:'1.2-2' }} {{ 'common.currency' | t }}</strong>
+          </li>
+          <li *ngIf="previewData.tieredDiscountAmount > 0" class="order-review__discount">
+            <span>{{ 'orders.tieredDiscount' | t }} ({{ previewData.tieredDiscountPercentage }}%)</span>
+            <strong>-{{ previewData.tieredDiscountAmount | number:'1.2-2' }} {{ 'common.currency' | t }}</strong>
+          </li>
+        </ul>
+
+        <div class="order-review__total">
+          <span>{{ 'orders.orderTotal' | t }}</span>
+          <strong>{{ previewData.total | number:'1.2-2' }} {{ 'common.currency' | t }}</strong>
+        </div>
+
+        <div class="order-review__cash">
+          <span>{{ 'orders.paymentMethod' | t }}</span>
+          <strong class="order-form__cash-badge order-form__cash-badge--sm">{{ 'orders.cashOnlyBadge' | t }}</strong>
+        </div>
+      </div>
+
+      <div *ngIf="modalError" class="entity-form__alert order-review__error" role="alert">{{ modalError }}</div>
+
+      <div class="order-review__footer">
+        <button type="button" class="entity-form__btn entity-form__btn--ghost" (click)="onClosePreview()" [disabled]="isSaving">
+          {{ 'common.cancel' | t }}
+        </button>
+        <button type="button" class="entity-form__btn entity-form__btn--primary" (click)="onConfirmCreate()" [disabled]="isSaving">
+          <svg *ngIf="isSaving" class="order-form__btn-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" opacity="0.25"/>
+            <path d="M21 12a9 9 0 00-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span>{{ (isSaving ? 'orders.creatingOrder' : 'orders.confirmCreateOrder') | t }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Booked days mini calendar -->
+<div *ngIf="bookedDaysVehicle" class="order-booked" (click)="closeBookedDaysCalendar()">
+  <div
+    class="order-booked__dialog"
+    (click)="$event.stopPropagation()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'orders.bookedDaysTitle' | t"
+  >
+    <header class="order-booked__header">
+      <div>
+        <p class="order-booked__kicker">{{ 'orders.bookedDaysTitle' | t }}</p>
+        <h3 class="order-booked__title">{{ bookedDaysVehicle.name }}</h3>
+        <p class="order-booked__code">{{ bookedDaysVehicle.vehicleCode }}</p>
+      </div>
+      <button type="button" class="order-booked__close" (click)="closeBookedDaysCalendar()" [attr.aria-label]="'common.close' | t">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </header>
+
+    <p class="order-booked__months" *ngIf="bookedMonthsLabel">
+      {{ 'orders.bookedInMonths' | t }}
+      <strong>{{ bookedMonthsLabel }}</strong>
+    </p>
+
+    <div class="order-booked__nav">
+      <button type="button" class="order-booked__nav-btn" (click)="shiftBookedMonth(-1)" [disabled]="!canShiftBookedMonth(-1)" [attr.aria-label]="'common.previous' | t">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <strong class="order-booked__month">{{ bookedMonthTitle }}</strong>
+      <button type="button" class="order-booked__nav-btn" (click)="shiftBookedMonth(1)" [disabled]="!canShiftBookedMonth(1)" [attr.aria-label]="'common.next' | t">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="order-booked__weekdays" aria-hidden="true">
+      <span *ngFor="let w of weekdayLabels">{{ w }}</span>
+    </div>
+
+    <div class="order-booked__grid">
+      <span
+        *ngFor="let day of bookedCalendarDays"
+        class="order-booked__day"
+        [class.order-booked__day--muted]="!day.inMonth"
+        [class.order-booked__day--booked]="day.isBooked"
+      >{{ day.inMonth ? day.day : '' }}</span>
+    </div>
+
+    <p class="order-booked__legend">
+      <span class="order-booked__swatch" aria-hidden="true"></span>
+      {{ 'orders.bookedDaysCount' | t:{ n: bookedDaysCount } }}
+    </p>
+  </div>
+</div>

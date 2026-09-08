@@ -1,0 +1,308 @@
+<div class="vehicles">
+  <header class="vehicles__header">
+    <div class="vehicles__header-text">
+      <h1 class="vehicles__title">{{ 'vehicles.title' | t }}</h1>
+      <p class="vehicles__subtitle">{{ 'vehicles.subtitle' | t }}</p>
+    </div>
+    <div class="vehicles__header-actions">
+      <div class="vehicles__view-toggle" role="group" [attr.aria-label]="'vehicles.viewTable' | t">
+        <button
+          type="button"
+          class="vehicles__view-btn"
+          [class.vehicles__view-btn--active]="viewMode === 'table'"
+          (click)="setViewMode('table')"
+          [attr.title]="'vehicles.viewTable' | t"
+          [attr.aria-label]="'vehicles.viewTable' | t"
+          [attr.aria-pressed]="viewMode === 'table'"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="vehicles__view-btn"
+          [class.vehicles__view-btn--active]="viewMode === 'gallery'"
+          (click)="setViewMode('gallery')"
+          [attr.title]="'vehicles.viewGallery' | t"
+          [attr.aria-label]="'vehicles.viewGallery' | t"
+          [attr.aria-pressed]="viewMode === 'gallery'"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2h-4a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zm10 0a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2h-4a2 2 0 01-2-2v-4z"/>
+          </svg>
+        </button>
+      </div>
+
+      <button type="button" class="vehicles__add-btn" (click)="onAddNew()">
+        <svg class="vehicles__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>{{ 'vehicles.add' | t }}</span>
+      </button>
+    </div>
+  </header>
+
+  <section class="list-filters" aria-label="filters">
+    <div class="list-filters__search">
+      <span class="list-filters__search-icon-wrap" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </span>
+      <input
+        type="search"
+        class="list-filters__search-input"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="applyFilters()"
+        [placeholder]="'vehicles.searchPlaceholder' | t"
+        [attr.aria-label]="'common.search' | t"
+      />
+    </div>
+
+    <div class="list-filters__field">
+      <app-multi-select
+        [placeholder]="'vehicles.filterCategoriesPlaceholder' | t"
+        [options]="categoryOptions"
+        [values]="selectedCategoryIds"
+        (valuesChange)="onCategoryIdsChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <div class="list-filters__field">
+      <app-multi-select
+        [placeholder]="'vehicles.filterSubCategoriesPlaceholder' | t"
+        [options]="subCategoryOptions"
+        [values]="selectedSubCategoryIds"
+        (valuesChange)="onSubCategoryIdsChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <div class="list-filters__field">
+      <app-multi-select
+        [placeholder]="'vehicles.filterCitiesPlaceholder' | t"
+        [options]="cityOptions"
+        [values]="selectedCityIds"
+        (valuesChange)="onCityIdsChange($event)"
+      ></app-multi-select>
+    </div>
+
+    <button type="button" class="list-filters__search-btn" (click)="applyFilters()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <span>{{ 'common.search' | t }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="list-filters__clear"
+      (click)="clearFilters()"
+      [disabled]="activeFilterCount === 0"
+      [attr.title]="'common.clearFilters' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <span>{{ 'common.clear' | t }}</span>
+    </button>
+  </section>
+
+  <div class="vehicles__status-pills" role="group" [attr.aria-label]="'common.status' | t">
+    <button
+      type="button"
+      class="vehicles__pill"
+      [class.vehicles__pill--active]="selectedStatuses.length === 0"
+      (click)="clearStatusFilters()"
+    >
+      {{ 'common.all' | t }}
+    </button>
+    <button
+      *ngFor="let opt of statusOptions"
+      type="button"
+      class="vehicles__pill"
+      [class.vehicles__pill--active]="isStatusSelected(opt.value)"
+      (click)="toggleStatusChip(opt.value)"
+    >
+      {{ opt.label }}
+    </button>
+  </div>
+
+  <div *ngIf="successMessage" class="vehicles__alert vehicles__alert--success" role="status">
+    <svg class="vehicles__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ successMessage }}</span>
+  </div>
+
+  <div *ngIf="errorMessage" class="vehicles__alert vehicles__alert--error" role="alert">
+    <svg class="vehicles__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="isLoading" class="vehicles__loading">
+    <div class="vehicles__spinner" aria-hidden="true"></div>
+    <p>{{ 'common.loading' | t }}</p>
+  </div>
+
+  <ng-container *ngIf="!isLoading && vehicles.length > 0">
+    <!-- Gallery -->
+    <div *ngIf="viewMode === 'gallery'" class="vehicles__gallery">
+      <article class="vehicles__tile" *ngFor="let vehicle of vehicles">
+        <div class="vehicles__tile-media">
+          <img
+            *ngIf="vehicle.imageUrl"
+            [src]="vehicle.imageUrl"
+            [alt]="vehicle.name"
+            class="vehicles__tile-img"
+          />
+          <div *ngIf="!vehicle.imageUrl" class="vehicles__tile-fallback" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <span class="vehicles__tile-status" [ngClass]="statusClass(vehicle.status)">
+            {{ statusLabel(vehicle.status) }}
+          </span>
+        </div>
+
+        <div class="vehicles__tile-body">
+          <h3 class="vehicles__tile-title">{{ vehicle.name }}</h3>
+          <p class="vehicles__tile-desc">#{{ vehicle.vehicleCode }}</p>
+          <div class="vehicles__tile-meta">
+            <span class="vehicles__meta-chip">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              {{ vehicle.cityName }}
+            </span>
+            <span class="vehicles__tile-subs">{{ vehicle.subCategoryName }}</span>
+          </div>
+        </div>
+
+        <div class="vehicles__tile-footer">
+          <div class="vehicles__actions">
+            <button
+              type="button"
+              class="vehicles__action"
+              (click)="onEdit(vehicle)"
+              [attr.title]="'vehicles.editVehicle' | t"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </button>
+            <button
+              type="button"
+              class="vehicles__action vehicles__action--danger"
+              (click)="onDelete(vehicle.vehicleId)"
+              [attr.title]="'vehicles.deleteVehicle' | t"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Table view -->
+    <section class="vehicles__panel" *ngIf="viewMode === 'table'">
+      <div class="vehicles__table-scroll">
+        <table class="vehicles__table">
+          <caption class="sr-only">{{ 'vehicles.tableCaption' | t }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{{ 'common.image' | t }}</th>
+              <th scope="col">{{ 'common.name' | t }}</th>
+              <th scope="col">{{ 'vehicles.code' | t }}</th>
+              <th scope="col">{{ 'vehicles.subCategory' | t }}</th>
+              <th scope="col">{{ 'common.city' | t }}</th>
+              <th scope="col">{{ 'common.status' | t }}</th>
+              <th scope="col">{{ 'common.actions' | t }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let vehicle of vehicles">
+              <td>
+                <div class="vehicles__thumb">
+                  <img *ngIf="vehicle.imageUrl" [src]="vehicle.imageUrl" [alt]="vehicle.name" class="vehicles__thumb-img" />
+                  <div *ngIf="!vehicle.imageUrl" class="vehicles__thumb-fallback" aria-hidden="true">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </div>
+                </div>
+              </td>
+              <td><span class="vehicles__name">{{ vehicle.name }}</span></td>
+              <td><span class="vehicles__code">#{{ vehicle.vehicleCode }}</span></td>
+              <td>{{ vehicle.subCategoryName }}</td>
+              <td>{{ vehicle.cityName }}</td>
+              <td>
+                <span class="vehicles__status" [ngClass]="statusClass(vehicle.status)">
+                  {{ statusLabel(vehicle.status) }}
+                </span>
+              </td>
+              <td>
+                <div class="vehicles__actions">
+                  <button type="button" class="vehicles__action" (click)="onEdit(vehicle)">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button type="button" class="vehicles__action vehicles__action--danger" (click)="onDelete(vehicle.vehicleId)">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="vehicles__pager">
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [totalCount]="totalCount"
+        [pageSize]="pageSize"
+        (pageChange)="onPageChange($event)"
+      ></app-pagination>
+    </div>
+  </ng-container>
+
+  <div *ngIf="!isLoading && vehicles.length === 0" class="vehicles__empty">
+    <div class="vehicles__empty-icon" aria-hidden="true">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/>
+      </svg>
+    </div>
+    <h2 class="vehicles__empty-title">{{ 'vehicles.empty' | t }}</h2>
+    <p class="vehicles__empty-text">{{ 'vehicles.emptyHint' | t }}</p>
+    <button type="button" class="vehicles__add-btn" (click)="onAddNew()">
+      <svg class="vehicles__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+      </svg>
+      <span>{{ 'vehicles.add' | t }}</span>
+    </button>
+  </div>
+</div>
+
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog"
+  [title]="confirmDialogTitle"
+  [message]="confirmDialogMessage"
+  [type]="confirmDialogType"
+  [isLoading]="confirmDialogLoading"
+  [confirmText]="'common.delete' | t"
+  [cancelText]="'common.cancel' | t"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
+></app-confirm-dialog>

@@ -1,0 +1,294 @@
+<div class="orders">
+  <header class="orders__header">
+    <div class="orders__header-text">
+      <h1 class="orders__title">{{ 'orders.title' | t }}</h1>
+      <p class="orders__subtitle">{{ 'orders.subtitle' | t }}</p>
+    </div>
+    <div class="orders__header-actions">
+      <div class="orders__mode-toggle" role="group" [attr.aria-label]="'orders.viewModeAria' | t">
+        <button
+          type="button"
+          class="orders__mode-btn"
+          [class.orders__mode-btn--active]="viewMode === 'table'"
+          (click)="setViewMode('table')"
+          [attr.title]="'orders.viewTable' | t"
+          [attr.aria-label]="'orders.viewTable' | t"
+          [attr.aria-pressed]="viewMode === 'table'"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="orders__mode-btn"
+          [class.orders__mode-btn--active]="viewMode === 'cards'"
+          (click)="setViewMode('cards')"
+          [attr.title]="'orders.viewCards' | t"
+          [attr.aria-label]="'orders.viewCards' | t"
+          [attr.aria-pressed]="viewMode === 'cards'"
+        >
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 6a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2h-4a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zm10 0a2 2 0 012-2h4a2 2 0 012 2v4a2 2 0 01-2 2h-4a2 2 0 01-2-2v-4z"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="orders__header-stat">
+        <span class="orders__header-stat-value">{{ totalCount }}</span>
+        <span class="orders__header-stat-label">{{ 'orders.totalOrders' | t }}</span>
+      </div>
+      <button type="button" class="orders__add-btn" (click)="onAddNew()">
+        <svg class="orders__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+        <span>{{ 'orders.add' | t }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Status Pipeline Strip -->
+  <nav class="orders__pipeline" [attr.aria-label]="'orders.pipelineAria' | t">
+    <button
+      *ngFor="let step of pipelineStates"
+      type="button"
+      class="orders__pipe"
+      [class]="'orders__pipe orders__pipe--' + step.dot"
+      [class.orders__pipe--active]="selectedState === step.state"
+      (click)="onStateFilter(step.state)"
+      [attr.aria-pressed]="selectedState === step.state"
+    >
+      <span class="orders__pipe-dot" aria-hidden="true"></span>
+      <span class="orders__pipe-label">{{ step.key | t }}</span>
+      <span class="orders__pipe-count">{{ getPipelineCount(step.state) }}</span>
+    </button>
+  </nav>
+
+  <!-- Messages -->
+  <div *ngIf="successMessage" class="orders__alert orders__alert--success" role="status">
+    <svg class="orders__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ successMessage }}</span>
+  </div>
+
+  <div *ngIf="errorMessage" class="orders__alert orders__alert--error" role="alert">
+    <svg class="orders__alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <!-- Toolbar -->
+  <section class="list-filters" [attr.aria-label]="'common.filtersTitle' | t">
+    <div class="list-filters__search">
+      <span class="list-filters__search-icon-wrap" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </span>
+      <input
+        type="search"
+        class="list-filters__search-input"
+        [(ngModel)]="searchOrderCode"
+        (input)="onSearchTermChange()"
+        [placeholder]="'orders.searchPlaceholder' | t"
+        [attr.aria-label]="'common.search' | t"
+      />
+    </div>
+
+    <div class="list-filters__field">
+      <app-multi-select
+        [(ngModel)]="searchFilters.cityId"
+        (ngModelChange)="onFilterChange()"
+        [multiple]="false"
+        [options]="cityOptions"
+        [disabled]="isLoadingCities"
+        [placeholder]="'orders.filterCityPlaceholder' | t"
+      ></app-multi-select>
+    </div>
+
+    <button type="button" class="list-filters__search-btn" (click)="onAdvancedSearch()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <span>{{ 'common.search' | t }}</span>
+    </button>
+
+    <button
+      type="button"
+      class="list-filters__clear"
+      (click)="onClearSearch()"
+      [disabled]="!hasActiveFilters()"
+      [attr.title]="'common.clearFilters' | t"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      <span>{{ 'common.clear' | t }}</span>
+    </button>
+  </section>
+
+  <!-- Orders Panel -->
+  <section class="orders__panel" [class.orders__panel--cards]="viewMode === 'cards'">
+    <div *ngIf="isLoading" class="orders__loading">
+      <div class="orders__spinner" aria-hidden="true"></div>
+      <p>{{ 'common.loading' | t }}</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading && orders.length > 0">
+      <!-- Table view -->
+      <ng-container *ngIf="viewMode === 'table'">
+        <div class="orders__row orders__row--head" aria-hidden="true">
+          <span class="orders__col orders__col--order">{{ 'orders.colOrder' | t }}</span>
+          <span class="orders__col orders__col--customer">{{ 'orders.colCustomer' | t }}</span>
+          <span class="orders__col orders__col--sub">{{ 'orders.colSubcategory' | t }}</span>
+          <span class="orders__col orders__col--total">{{ 'common.total' | t }}</span>
+          <span class="orders__col orders__col--status">{{ 'common.status' | t }}</span>
+          <span class="orders__col orders__col--date">{{ 'orders.colDate' | t }}</span>
+          <span class="orders__col orders__col--action">{{ 'common.actions' | t }}</span>
+        </div>
+
+        <div class="orders__list">
+          <article
+            *ngFor="let order of orders"
+            class="orders__row"
+            [class.orders__row--urgent]="order.isUrgent"
+            (click)="onView(order.orderId)"
+          >
+            <div class="orders__col orders__col--order">
+              <span class="orders__order-code">{{ order.orderCode }}</span>
+              <span *ngIf="order.isUrgent" class="orders__urgent-badge">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                {{ 'orders.urgent' | t }}
+              </span>
+            </div>
+
+            <div class="orders__col orders__col--customer">
+              <span class="orders__customer-name">{{ order.customerName }}</span>
+              <span class="orders__customer-city">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                {{ order.cityName }}
+              </span>
+            </div>
+
+            <div class="orders__col orders__col--sub">
+              <span class="orders__sub-name">{{ order.subCategoryName }}</span>
+              <span class="orders__vehicles-chip">
+                {{ 'orders.vehiclesCount' | t }}: {{ order.vehiclesCount }}
+              </span>
+            </div>
+
+            <div class="orders__col orders__col--total">
+              <span class="orders__total-amount">{{ order.orderTotal | number : '1.2-2' }} {{ 'common.currency' | t }}</span>
+              <span [class]="'orders__payment ' + getPaymentMethodClass(order.paymentMethod)">
+                {{ getPaymentMethodLabel(order.paymentMethod) }}
+              </span>
+            </div>
+
+            <div class="orders__col orders__col--status">
+              <span [class]="'orders__state ' + getStateClass(order.orderState)">
+                <span class="orders__state-dot" aria-hidden="true"></span>
+                {{ getStateLabel(order.orderState) }}
+              </span>
+            </div>
+
+            <div class="orders__col orders__col--date">
+              <span class="orders__date">{{ order.createdDate | date : 'MMM d, y' }}</span>
+              <span class="orders__time">{{ order.createdDate | date : 'h:mm a' }}</span>
+            </div>
+
+            <div class="orders__col orders__col--action">
+              <button
+                type="button"
+                (click)="onView(order.orderId); $event.stopPropagation()"
+                class="orders__view-btn"
+                [attr.title]="'common.view' | t"
+                [attr.aria-label]="'common.view' | t"
+              >
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </button>
+            </div>
+          </article>
+        </div>
+      </ng-container>
+
+      <!-- Cards view -->
+      <div *ngIf="viewMode === 'cards'" class="orders__cards">
+        <article
+          *ngFor="let order of orders"
+          class="oc"
+          [class.oc--urgent]="order.isUrgent"
+          (click)="onView(order.orderId)"
+          role="button"
+          tabindex="0"
+          (keydown.enter)="onView(order.orderId)"
+        >
+          <div class="oc__top">
+            <span class="oc__code">{{ order.orderCode }}</span>
+            <div class="oc__tags">
+              <span *ngIf="order.isUrgent" class="oc__urgent">{{ 'orders.urgent' | t }}</span>
+              <span [class]="'orders__state ' + getStateClass(order.orderState)">
+                <span class="orders__state-dot" aria-hidden="true"></span>
+                {{ getStateLabel(order.orderState) }}
+              </span>
+            </div>
+          </div>
+
+          <h3 class="oc__title">{{ order.customerName }}</h3>
+          <p class="oc__meta">{{ order.cityName }} · {{ order.subCategoryName }} · {{ order.vehiclesCount }} {{ 'orders.vehiclesShort' | t }}</p>
+
+          <p class="oc__dates">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            <span>{{ order.reservationDateFrom | date:'MMM d' }} – {{ order.reservationDateTo | date:'MMM d, y' }}</span>
+          </p>
+
+          <div class="oc__bottom">
+            <div class="oc__price">
+              <strong>{{ order.orderTotal | number:'1.0-0' }}</strong>
+              <span>{{ 'common.currency' | t }}</span>
+              <span [class]="'orders__payment ' + getPaymentMethodClass(order.paymentMethod)">
+                {{ getPaymentMethodLabel(order.paymentMethod) }}
+              </span>
+            </div>
+            <span class="oc__go" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+            </span>
+          </div>
+        </article>
+      </div>
+
+      <div class="orders__pager">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          [totalCount]="totalCount"
+          [pageSize]="pageSize"
+          (pageChange)="onPageChange($event)"
+        ></app-pagination>
+      </div>
+    </ng-container>
+
+    <div *ngIf="!isLoading && orders.length === 0" class="orders__empty">
+      <div class="orders__empty-icon" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <h2 class="orders__empty-title">{{ 'orders.empty' | t }}</h2>
+      <p class="orders__empty-text">{{ 'orders.emptyHint' | t }}</p>
+    </div>
+  </section>
+</div>

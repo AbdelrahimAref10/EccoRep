@@ -1,0 +1,429 @@
+.roles {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  color: var(--volt-text-primary);
+}
+
+.roles__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.roles__title {
+  margin: 0;
+  font-size: 1.7rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.roles__subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+  color: var(--volt-text-secondary);
+}
+
+.roles__add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--volt-accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 0 8px 18px var(--volt-accent-muted);
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.roles__add-btn:hover {
+  background: var(--volt-accent-strong);
+}
+
+.roles__add-btn:active {
+  transform: scale(0.98);
+}
+
+.roles__add-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.roles__alert {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.roles__alert svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+}
+
+.roles__alert--success {
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+}
+
+.roles__alert--error {
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+}
+
+.roles__loading,
+.roles__empty {
+  display: grid;
+  place-items: center;
+  gap: 0.75rem;
+  min-height: 16rem;
+  padding: 2rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-surface);
+  box-shadow: var(--volt-shadow);
+  text-align: center;
+  color: var(--volt-text-secondary);
+}
+
+.roles__spinner {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  border: 3px solid var(--volt-border);
+  border-top-color: var(--volt-accent);
+  animation: roles-spin 0.7s linear infinite;
+}
+
+@keyframes roles-spin {
+  to { transform: rotate(360deg); }
+}
+
+.roles__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+  gap: 0.9rem;
+}
+
+.roles__card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.15rem;
+  border-radius: 1.1rem;
+  border: 1px solid var(--volt-border);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--volt-accent) 8%, transparent), transparent 50%),
+    var(--volt-surface);
+  box-shadow: var(--volt-shadow);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.roles__card:hover {
+  transform: translateY(-2px);
+  border-color: var(--volt-accent-muted);
+}
+
+.roles__card-icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.85rem;
+  background: var(--volt-accent-soft);
+  color: var(--volt-accent-strong);
+}
+
+.roles__card-icon svg {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.roles__card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.roles__card-meta {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--volt-text-muted);
+}
+
+.roles__card-actions {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: auto;
+  padding-top: 0.35rem;
+}
+
+.roles__icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-bg);
+  color: var(--volt-text-secondary);
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.roles__icon-btn svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.roles__icon-btn:hover {
+  border-color: var(--volt-accent-muted);
+  background: var(--volt-accent-soft);
+  color: var(--volt-accent-strong);
+}
+
+.roles__icon-btn--danger:hover {
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.roles__empty-icon {
+  display: grid;
+  place-items: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background: var(--volt-accent-soft);
+  color: var(--volt-accent-strong);
+}
+
+.roles__empty-icon svg {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.roles__empty-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--volt-text-primary);
+}
+
+.roles__empty-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--volt-text-muted);
+}
+
+/* Modal */
+.roles-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgba(15, 26, 23, 0.45);
+  backdrop-filter: blur(4px);
+  animation: roles-fade 0.18s ease;
+}
+
+@keyframes roles-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.roles-modal__dialog {
+  width: min(28rem, 100%);
+  border-radius: 1.25rem;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-surface);
+  box-shadow: 0 24px 64px rgba(15, 26, 23, 0.22);
+  overflow: hidden;
+  animation: roles-pop 0.22s ease;
+}
+
+@keyframes roles-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.roles-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.35rem;
+  border-bottom: 1px solid var(--volt-border);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--volt-accent) 10%, transparent), transparent 60%),
+    var(--volt-surface);
+}
+
+.roles-modal__kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--volt-accent-strong);
+}
+
+.roles-modal__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.roles-modal__subtitle {
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+  color: var(--volt-text-secondary);
+}
+
+.roles-modal__close {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid var(--volt-border);
+  border-radius: 0.75rem;
+  background: var(--volt-bg);
+  color: var(--volt-text-secondary);
+  cursor: pointer;
+}
+
+.roles-modal__close svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.roles-modal__close:hover {
+  background: var(--volt-accent-soft);
+  color: var(--volt-accent-strong);
+}
+
+.roles-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  padding: 1.35rem;
+}
+
+.roles-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.roles-modal__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--volt-text-secondary);
+}
+
+.roles-modal__req {
+  color: #dc2626;
+  margin-inline-start: 0.15rem;
+}
+
+.roles-modal__input {
+  width: 100%;
+  height: 3rem;
+  padding: 0 0.95rem;
+  border: 1px solid var(--volt-border);
+  border-radius: 0.8rem;
+  background: var(--volt-bg);
+  color: var(--volt-text-primary);
+  font: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.roles-modal__input:focus {
+  border-color: var(--volt-accent);
+  box-shadow: 0 0 0 3px var(--volt-accent-soft);
+  background: var(--volt-surface);
+}
+
+.roles-modal__input--error {
+  border-color: #ef4444;
+}
+
+.roles-modal__error {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.roles-modal__hint {
+  font-size: 0.75rem;
+  color: var(--volt-text-muted);
+}
+
+.roles-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  padding-top: 0.25rem;
+}
+
+.roles-modal__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.65rem;
+  padding: 0 1.15rem;
+  border-radius: 0.8rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+
+.roles-modal__btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.roles-modal__btn--ghost {
+  border: 1px solid var(--volt-border);
+  background: var(--volt-surface);
+  color: var(--volt-text-secondary);
+}
+
+.roles-modal__btn--ghost:hover:not(:disabled) {
+  background: var(--volt-surface-hover);
+  color: var(--volt-text-primary);
+}
+
+.roles-modal__btn--primary {
+  border: none;
+  background: var(--volt-accent);
+  color: #fff;
+  box-shadow: 0 8px 18px var(--volt-accent-muted);
+}
+
+.roles-modal__btn--primary:hover:not(:disabled) {
+  background: var(--volt-accent-strong);
+}

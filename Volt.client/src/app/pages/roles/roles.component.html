@@ -1,0 +1,129 @@
+<div class="roles">
+  <header class="roles__header">
+    <div class="roles__header-text">
+      <h1 class="roles__title">{{ 'roles.title' | t }}</h1>
+      <p class="roles__subtitle">{{ 'roles.subtitle' | t }}</p>
+    </div>
+    <button type="button" class="roles__add-btn" (click)="onAddNew()">
+      <svg class="roles__add-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.5v15m7.5-7.5h-15"/>
+      </svg>
+      <span>{{ 'roles.add' | t }}</span>
+    </button>
+  </header>
+
+  <div *ngIf="successMessage" class="roles__alert roles__alert--success" role="status">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ successMessage }}</span>
+  </div>
+
+  <div *ngIf="errorMessage" class="roles__alert roles__alert--error" role="alert">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <span>{{ errorMessage }}</span>
+  </div>
+
+  <div *ngIf="isLoading" class="roles__loading">
+    <div class="roles__spinner" aria-hidden="true"></div>
+    <p>{{ 'common.loading' | t }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && roles.length > 0" class="roles__grid">
+    <article *ngFor="let role of roles" class="roles__card">
+      <div class="roles__card-icon" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+        </svg>
+      </div>
+      <div class="roles__card-body">
+        <h2 class="roles__card-title">{{ role.roleName }}</h2>
+        <p class="roles__card-meta">{{ 'roles.id' | t }}: {{ role.roleId }}</p>
+      </div>
+      <div class="roles__card-actions">
+        <button type="button" class="roles__icon-btn" (click)="onEdit(role)" [attr.title]="'common.edit' | t" [attr.aria-label]="'common.edit' | t">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"/>
+          </svg>
+        </button>
+        <button type="button" class="roles__icon-btn roles__icon-btn--danger" (click)="onDelete(role.roleId, role.roleName || '')" [attr.title]="'common.delete' | t" [attr.aria-label]="'common.delete' | t">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/>
+          </svg>
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <div *ngIf="!isLoading && roles.length === 0" class="roles__empty">
+    <div class="roles__empty-icon" aria-hidden="true">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/>
+      </svg>
+    </div>
+    <p class="roles__empty-title">{{ 'roles.empty' | t }}</p>
+    <p class="roles__empty-text">{{ 'roles.emptyHint' | t }}</p>
+    <button type="button" class="roles__add-btn" (click)="onAddNew()">
+      <span>{{ 'roles.add' | t }}</span>
+    </button>
+  </div>
+</div>
+
+<div *ngIf="showModal" class="roles-modal" (click)="onCloseModal()">
+  <div class="roles-modal__dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+    <header class="roles-modal__header">
+      <div>
+        <p class="roles-modal__kicker">{{ 'roles.permissions' | t }}</p>
+        <h2 class="roles-modal__title">{{ (isEditing ? 'roles.editTitle' : 'roles.createTitle') | t }}</h2>
+        <p class="roles-modal__subtitle">{{ (isEditing ? 'roles.editSubtitle' : 'roles.createSubtitle') | t }}</p>
+      </div>
+      <button type="button" class="roles-modal__close" (click)="onCloseModal()" [attr.aria-label]="'common.close' | t">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </header>
+
+    <form [formGroup]="roleForm" (ngSubmit)="onSubmit()" class="roles-modal__body">
+      <label class="roles-modal__field">
+        <span class="roles-modal__label">{{ 'roles.name' | t }}<span class="roles-modal__req">*</span></span>
+        <input
+          type="text"
+          formControlName="name"
+          class="roles-modal__input"
+          [class.roles-modal__input--error]="roleForm.get('name')?.invalid && roleForm.get('name')?.touched"
+          [placeholder]="'roles.namePlaceholder' | t"
+        />
+        <span *ngIf="roleForm.get('name')?.invalid && roleForm.get('name')?.touched" class="roles-modal__error">
+          <ng-container *ngIf="roleForm.get('name')?.errors?.['required']">{{ 'roles.nameRequired' | t }}</ng-container>
+          <ng-container *ngIf="roleForm.get('name')?.errors?.['minlength']">{{ 'roles.nameMinLength' | t }}</ng-container>
+          <ng-container *ngIf="roleForm.get('name')?.errors?.['pattern']">{{ 'roles.namePattern' | t }}</ng-container>
+        </span>
+        <span class="roles-modal__hint">{{ 'roles.nameHint' | t }}</span>
+      </label>
+
+      <div class="roles-modal__actions">
+        <button type="button" class="roles-modal__btn roles-modal__btn--ghost" (click)="onCloseModal()" [disabled]="isSubmitting">
+          {{ 'common.cancel' | t }}
+        </button>
+        <button type="submit" class="roles-modal__btn roles-modal__btn--primary" [disabled]="roleForm.invalid || isSubmitting">
+          {{ isSubmitting ? ('common.loading' | t) : ((isEditing ? 'common.update' : 'common.create') | t) }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog"
+  [title]="confirmDialogTitle"
+  [message]="confirmDialogMessage"
+  [type]="confirmDialogType"
+  [isLoading]="confirmDialogLoading"
+  [confirmText]="'common.delete' | t"
+  [cancelText]="'common.cancel' | t"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
+></app-confirm-dialog>

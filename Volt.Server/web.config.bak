@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+	<location path="." inheritInChildApplications="false">
+		<system.webServer>
+			<rewrite>
+				<rules>
+					<rule name="Angular Routes" stopProcessing="true">
+						<match url="^[^.]+$" />
+						<conditions logicalGrouping="MatchAll">
+							<add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
+							<add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
+							<add input="{REQUEST_URI}" pattern="^/(api)" negate="true" />
+							<add input="{REQUEST_URI}" pattern="^/(login)" negate="true" />
+							<add input="{REQUEST_URI}" pattern="^/(refresh)" negate="true" />
+						</conditions>
+						<action type="Rewrite" url="/index.html" />
+					</rule>
+				</rules>
+			</rewrite>
+			<modules runAllManagedModulesForAllRequests="false">
+				<remove name="WebDAVModule" />
+			</modules>
+			<handlers>
+				<remove name="WebDAV" />
+				<add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+			</handlers>
+			<aspNetCore processPath="dotnet" arguments=".\IRecycleB2B.API.dll" stdoutLogEnabled="false" stdoutLogFile=".\logs\stdout" hostingModel="inprocess" />
+		</system.webServer>
+	</location>
+</configuration>
+<!--ProjectGuid: DD251D52-BD11-4B6D-9F7A-7425A7B19F2A-->
+<!--ProjectGuid: 8FB576F0-5EF6-425A-B1B3-4A05DF3AB1FE-->
