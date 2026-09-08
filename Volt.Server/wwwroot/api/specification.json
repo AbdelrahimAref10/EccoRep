@@ -10208,6 +10208,10 @@
               "type": "string"
             }
           },
+          "role": {
+            "type": "integer",
+            "format": "int32"
+          },
           "customerId": {
             "type": "integer",
             "format": "int32",
@@ -10255,7 +10259,8 @@
           },
           "role": {
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           }
         }
       },

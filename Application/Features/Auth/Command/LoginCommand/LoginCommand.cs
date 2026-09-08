@@ -19,9 +19,9 @@ namespace Application.Features.Auth.Command.LoginCommand
         public string Password { get; set; } = string.Empty;
         /// <summary>
         /// Optional AppRole enum int from client: 1=Customer, 2=SuperAdmin, 3=Merchant, 4=Delivery.
-        /// When 0/omitted, role is resolved from the user's Identity roles.
+        /// When null/0/omitted, role is resolved from the user's Identity roles.
         /// </summary>
-        public int Role { get; set; }
+        public int? Role { get; set; }
     }
 
     public class LoginCommandHandler : IRequestHandler<LoginCommand, Result<AuthResponse>>
@@ -73,9 +73,9 @@ namespace Application.Features.Auth.Command.LoginCommand
                 return Result.Failure<AuthResponse>("Invalid user name or password");
 
             AppRole appRole;
-            if (request.Role > 0)
+            if (request.Role is > 0)
             {
-                if (!AppRoleNames.TryFromInt(request.Role, out appRole))
+                if (!AppRoleNames.TryFromInt(request.Role.Value, out appRole))
                     return Result.Failure<AuthResponse>("Invalid role");
 
                 if (!await _userManager.IsInRoleAsync(user, AppRoleNames.ToRoleName(appRole)))

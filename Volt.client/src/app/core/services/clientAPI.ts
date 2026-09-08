@@ -12537,7 +12537,7 @@ export class AuthResponse {
 export class LoginCommand {
     userName!: string;
     password!: string;
-    role!: number;
+    role!: number | null;
 
     init(_data?: any) {
         if (_data) {

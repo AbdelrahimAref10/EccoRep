@@ -68,7 +68,7 @@ export class AdminLoginComponent implements OnInit {
     const credentials = new LoginCommand();
     credentials.userName = this.loginForm.value.userName;
     credentials.password = this.loginForm.value.password;
-    // Role resolved by backend from Identity roles (web: Super Admin / Merchant).
+    credentials.role = 0; // let backend resolve role from Identity
 
     this.authService.login(credentials).subscribe({
       next: () => {
@@ -84,8 +84,8 @@ export class AdminLoginComponent implements OnInit {
       error: (error) => {
         this.isLoading = false;
         const extractedMessage =
-          error?.errorMessage ||
           error?.result?.errorMessage ||
+          error?.errorMessage ||
           error?.message ||
           '';
 
@@ -95,14 +95,16 @@ export class AdminLoginComponent implements OnInit {
           (errorMsgLower.includes('user') || errorMsgLower.includes('password') || errorMsgLower.includes('name'))
         ) {
           this.errorMessage = this.localeService.translate('login.wrongCredentials');
-        } else if (error?.status === 400) {
-          this.errorMessage = this.localeService.translate('login.wrongCredentials');
+        } else if (errorMsgLower.includes('not active') || errorMsgLower.includes('not authorized') || errorMsgLower.includes('no valid')) {
+          this.errorMessage = extractedMessage;
         } else if (error?.status === 0) {
           this.errorMessage = this.localeService.translate('login.serverUnreachable');
         } else if (error?.status === 500) {
           this.errorMessage = this.localeService.translate('login.serverError');
-        } else if (extractedMessage) {
+        } else if (extractedMessage && extractedMessage !== 'A server side error occurred.') {
           this.errorMessage = extractedMessage;
+        } else if (error?.status === 400) {
+          this.errorMessage = this.localeService.translate('login.wrongCredentials');
         } else {
           this.errorMessage = this.localeService.translate('login.wrongCredentials');
         }
