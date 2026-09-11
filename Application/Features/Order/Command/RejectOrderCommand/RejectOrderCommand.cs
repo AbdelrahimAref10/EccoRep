@@ -57,15 +57,15 @@ namespace Application.Features.Order.Command.RejectOrderCommand
                 return Result.Failure<bool>($"Order with ID {request.OrderId} not found");
             }
 
-            if (order.OrderState == OrderState.Completed)
-            {
-                return Result.Failure<bool>("Cannot reject a completed order");
-            }
-
             if (order.OrderState == OrderState.Cancelled
                 || await CancellationDebtHelper.IsOrderCancelledAsync(_context, order, cancellationToken))
             {
                 return Result.Failure<bool>("Order is already cancelled");
+            }
+
+            if (!Domain.Models.Order.CanCancelInState(order.OrderState))
+            {
+                return Result.Failure<bool>($"Cannot reject order in {order.OrderState} state. Reject is only allowed before Confirmed.");
             }
 
             // Prior debt attached but not yet paid → release back to Pending

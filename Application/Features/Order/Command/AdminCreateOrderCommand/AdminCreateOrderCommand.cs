@@ -139,7 +139,6 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                 cancellationToken);
             var previousDebt = CancellationDebtHelper.SumWithdraw(pendingCancellationFees);
 
-            // Same pricing method used by CalculateTotals preview / mobile create (includes previousDebt)
             var pricing = Domain.Models.Order.CalculatePricing(
                 subCategory.Price,
                 vehicleIds.Count,
@@ -215,9 +214,7 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                 await _context.OrderTotals.AddAsync(orderTotals, cancellationToken);
                 await _context.OrderPayments.AddAsync(orderPayment, cancellationToken);
 
-                // Assign selected vehicles and confirm immediately (admin shopping checkout)
-                order.Confirm(actor);
-
+                // Vehicles at create — stay Pending (no auto-confirm)
                 foreach (var vehicleId in vehicleIds)
                 {
                     _context.OrderVehicles.Add(Domain.Models.OrderVehicle.Create(order.OrderId, vehicleId, actor));
@@ -326,7 +323,7 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                 var notificationBody = new NotificationBodyForMultipleDevices
                 {
                     Title = "Order Created",
-                    Body = $"Your order #{order.OrderCode} has been created and confirmed.",
+                    Body = $"Your order #{order.OrderCode} has been created and is pending.",
                     FireBaseTokens = firebaseTokens,
                     PayLoad = new Dictionary<string, string>
                     {
@@ -341,7 +338,6 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
             }
             catch (Exception)
             {
-                // Notification failures should not affect order creation
             }
         }
     }

@@ -704,6 +704,14 @@
   font-weight: 650;
 }
 
+.order-form__merchant {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--volt-text-secondary);
+}
+
 .order-form__check {
   position: absolute;
   top: 0.7rem;

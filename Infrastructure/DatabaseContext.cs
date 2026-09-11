@@ -43,7 +43,13 @@ namespace Infrastructure
         public DbSet<OrderTotals> OrderTotals { get; set; }
         public DbSet<CustomerLocation> CustomerLocations { get; set; }
         public DbSet<AdminNotification> AdminNotifications { get; set; }
+        public DbSet<MerchantNotification> MerchantNotifications { get; set; }
         public DbSet<Support> Supports { get; set; }
+        public DbSet<MerchantOrder> MerchantOrders { get; set; }
+        public DbSet<MerchantOrderPaymentDetail> MerchantOrderPaymentDetails { get; set; }
+        public DbSet<DeliveryMenOrder> DeliveryMenOrders { get; set; }
+        public DbSet<DeliveryOrderPaymentDetail> DeliveryOrderPaymentDetails { get; set; }
+        public DbSet<OrderJournal> OrderJournals { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

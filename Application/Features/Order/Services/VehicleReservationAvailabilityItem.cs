@@ -9,6 +9,8 @@ namespace Application.Features.Order.Services
         public string VehicleCode { get; init; } = string.Empty;
         public string? ImagePath { get; init; }
         public VehicleStatus VehicleStatus { get; init; }
+        public int MerchantId { get; init; }
+        public string MerchantName { get; init; } = string.Empty;
         public VehicleAvailabilityStatus AvailabilityStatus { get; init; }
         public IReadOnlyList<DateTime> ConflictingDates { get; init; } = Array.Empty<DateTime>();
     }

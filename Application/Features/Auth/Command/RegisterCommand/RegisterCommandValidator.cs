@@ -73,16 +73,26 @@ namespace Application.Features.Auth.Command.RegisterCommand
                     return Result.Failure("Customer with this mobile number already exists");
             }
 
+            if (appRole == AppRole.Merchant || appRole == AppRole.Delivery)
+            {
+                if (!request.CityId.HasValue || request.CityId <= 0)
+                    return Result.Failure("Valid city is required");
+
+                var cityExists = await _context.Cities.AnyAsync(c => c.CityId == request.CityId && c.IsActive, cancellationToken);
+                if (!cityExists)
+                    return Result.Failure("Invalid or inactive city");
+            }
+
             if (appRole == AppRole.Merchant)
             {
-                var exists = await _context.Merchants.AnyAsync(m => m.MobileNumber == request.MobileNumber, cancellationToken);
+                var exists = await _context.Merchants.AnyAsync(m => m.MobileNumber == request.MobileNumber && !m.IsDeleted, cancellationToken);
                 if (exists)
                     return Result.Failure("Merchant with this mobile number already exists");
             }
 
             if (appRole == AppRole.Delivery)
             {
-                var exists = await _context.Deliveries.AnyAsync(d => d.MobileNumber == request.MobileNumber, cancellationToken);
+                var exists = await _context.Deliveries.AnyAsync(d => d.MobileNumber == request.MobileNumber && !d.IsDeleted, cancellationToken);
                 if (exists)
                     return Result.Failure("Delivery with this mobile number already exists");
             }

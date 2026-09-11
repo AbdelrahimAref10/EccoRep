@@ -1,0 +1,26 @@
+:host {
+  display: block;
+}
+
+.entity-form__field--checkbox {
+  justify-content: flex-start;
+}
+
+.entity-form__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.entity-form__check input {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.entity-form__hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  color: var(--volt-text-muted);
+}

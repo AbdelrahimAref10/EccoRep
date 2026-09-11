@@ -1,0 +1,27 @@
+.home-kpi--link {
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-kpi--link:hover {
+  transform: translateY(-2px);
+}
+
+.home-link {
+  color: var(--volt-accent-strong, #0f766e);
+  font-weight: 700;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.home-kpi__value--sm {
+  font-size: 1.25rem !important;
+}
+
+.home-panel--error {
+  color: #991b1b;
+  border-color: #fecaca;
+  background: #fef2f2;
+}

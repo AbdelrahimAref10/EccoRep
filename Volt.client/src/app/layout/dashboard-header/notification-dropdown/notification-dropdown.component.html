@@ -63,7 +63,7 @@
   </div>
 
   <div *ngIf="notifications.length > 0" class="notification-dropdown__footer">
-    <a routerLink="/main/orders" class="notification-dropdown__view-all">
+    <a [routerLink]="viewAllOrdersRoute" class="notification-dropdown__view-all">
       {{ 'notifications.viewAllOrders' | t }}
     </a>
   </div>

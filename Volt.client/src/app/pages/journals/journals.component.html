@@ -1,0 +1,126 @@
+<div class="journals">
+  <header class="journals__header">
+    <div>
+      <h1 class="journals__title">{{ 'journals.title' | t }}</h1>
+      <p class="journals__subtitle">{{ 'journals.subtitle' | t }}</p>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" class="journals__alert journals__alert--err" role="alert">{{ errorMessage }}</div>
+
+  <section class="journals__filters" aria-label="filters">
+    <div class="journals__field">
+      <label>{{ 'settlements.orderId' | t }}</label>
+      <input type="number" class="entity-form__input" [(ngModel)]="filterOrderId" min="1" />
+    </div>
+
+    <div class="journals__field">
+      <label>{{ 'settlements.delivery' | t }}</label>
+      <select
+        class="entity-form__select"
+        [(ngModel)]="filterDeliveryId"
+        [disabled]="isLoadingLookups"
+        (ngModelChange)="onDeliveryChange()"
+      >
+        <option [ngValue]="null">{{ 'common.all' | t }}</option>
+        <option *ngFor="let d of deliveries" [ngValue]="d.deliveryId">{{ d.fullName }} — {{ d.mobileNumber }}</option>
+      </select>
+    </div>
+
+    <div class="journals__field">
+      <label>{{ 'settlements.merchant' | t }}</label>
+      <select
+        class="entity-form__select"
+        [(ngModel)]="filterMerchantId"
+        [disabled]="isLoadingLookups"
+        (ngModelChange)="onMerchantChange()"
+      >
+        <option [ngValue]="null">{{ 'common.all' | t }}</option>
+        <option *ngFor="let m of merchants" [ngValue]="m.merchantId">
+          {{ m.fullName }}<ng-container *ngIf="m.mobileNumber"> — {{ m.mobileNumber }}</ng-container>
+        </option>
+      </select>
+    </div>
+
+    <div class="journals__actions">
+      <button type="button" class="journals__btn journals__btn--primary" (click)="loadJournals()" [disabled]="isLoading">
+        {{ 'common.search' | t }}
+      </button>
+      <button type="button" class="journals__btn" (click)="clearFilters()" [disabled]="isLoading">
+        {{ 'common.clearFilters' | t }}
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="isLoading" class="journals__loading">{{ 'common.loading' | t }}</div>
+
+  <section *ngIf="!isLoading" class="journals__panel">
+    <div class="journals__table-scroll">
+      <table class="journals__table">
+        <thead>
+          <tr>
+            <th>{{ 'journals.colDate' | t }}</th>
+            <th>{{ 'settlements.orderId' | t }}</th>
+            <th>{{ 'orders.journalParty' | t }}</th>
+            <th>{{ 'orders.journalKindCol' | t }}</th>
+            <th>{{ 'orders.journalDirection' | t }}</th>
+            <th>{{ 'common.amount' | t }}</th>
+            <th>{{ 'common.notes' | t }}</th>
+            <th>{{ 'orders.journalCreatedBy' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="entries.length === 0">
+            <td colspan="8" class="journals__empty">{{ 'journals.empty' | t }}</td>
+          </tr>
+          <tr *ngFor="let row of entries">
+            <td>{{ row.createdDate | date:'yyyy-MM-dd HH:mm' }}</td>
+            <td>{{ row.orderId || '—' }}</td>
+            <td>
+              <div class="journals__party">
+                <span class="journals__party-type">{{ getPartyTypeLabel(row.partyType) }}</span>
+                <strong *ngIf="row.partyName">{{ row.partyName }}</strong>
+                <span *ngIf="row.partyId" class="journals__party-id">#{{ row.partyId }}</span>
+              </div>
+            </td>
+            <td>{{ getJournalKindLabel(row.entryKind) }}</td>
+            <td>
+              <span
+                class="journals__dir"
+                [class.journals__dir--credit]="row.direction === JournalDirection.Credit"
+                [class.journals__dir--debit]="row.direction === JournalDirection.Debit"
+              >
+                {{ getJournalDirectionLabel(row.direction) }}
+              </span>
+            </td>
+            <td>{{ formatMoney(row.amount) }}</td>
+            <td>{{ row.note || '—' }}</td>
+            <td>{{ row.createdBy || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="journals__totals" *ngIf="entries.length > 0">
+      <div class="journals__total">
+        <span>{{ 'journals.totalCredit' | t }}</span>
+        <strong>{{ formatMoney(totalCredit) }}</strong>
+      </div>
+      <div class="journals__total">
+        <span>{{ 'journals.totalDebit' | t }}</span>
+        <strong>{{ formatMoney(totalDebit) }}</strong>
+      </div>
+      <div
+        class="journals__total journals__total--balance"
+        [class.journals__total--positive]="balance > 0"
+        [class.journals__total--negative]="balance < 0"
+      >
+        <span>{{ 'journals.balance' | t }}</span>
+        <strong>{{ formatMoney(balance) }}</strong>
+        <small *ngIf="balance > 0">{{ 'journals.owedByCompany' | t }}</small>
+        <small *ngIf="balance < 0">{{ 'journals.owedToCompany' | t }}</small>
+        <small *ngIf="balance === 0">{{ 'journals.balanced' | t }}</small>
+      </div>
+    </footer>
+  </section>
+</div>

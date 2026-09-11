@@ -10,7 +10,11 @@ using System.Threading.Tasks;
 
 namespace Application.Features.Category.Query.GetCategoriesLookupQuery
 {
-    public record GetCategoriesLookupQuery : IRequest<Result<List<CategoryLookupDto>>>;
+    public record GetCategoriesLookupQuery : IRequest<Result<List<CategoryLookupDto>>>
+    {
+        /// <summary>When set, returns only active categories for this city.</summary>
+        public int? CityId { get; set; }
+    }
 
     public class GetCategoriesLookupQueryHandler : IRequestHandler<GetCategoriesLookupQuery, Result<List<CategoryLookupDto>>>
     {
@@ -23,8 +27,12 @@ namespace Application.Features.Category.Query.GetCategoriesLookupQuery
 
         public async Task<Result<List<CategoryLookupDto>>> Handle(GetCategoriesLookupQuery request, CancellationToken cancellationToken)
         {
-            var categories = await _context.Categories
-                .Where(c => c.IsActive)
+            var query = _context.Categories.AsNoTracking().Where(c => c.IsActive);
+
+            if (request.CityId is > 0)
+                query = query.Where(c => c.CityId == request.CityId.Value);
+
+            var categories = await query
                 .OrderBy(c => c.Name)
                 .Select(c => new CategoryLookupDto
                 {
@@ -37,5 +45,3 @@ namespace Application.Features.Category.Query.GetCategoriesLookupQuery
         }
     }
 }
-
-

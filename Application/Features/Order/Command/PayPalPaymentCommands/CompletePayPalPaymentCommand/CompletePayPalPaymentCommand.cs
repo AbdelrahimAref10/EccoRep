@@ -1,5 +1,6 @@
 using Application.Features.Order.Command.PayPalPaymentCommands.CompletePayPalPaymentCommand.DTOs;
 using Application.Features.Order.Common;
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
@@ -26,15 +27,18 @@ namespace Application.Features.Order.Command.PayPalPaymentCommands.CompletePayPa
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
         private readonly IPayPalService _payPalService;
+        private readonly IOrderJournalService _journal;
 
         public CompletePayPalPaymentCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IPayPalService payPalService)
+            IPayPalService payPalService,
+            IOrderJournalService journal)
         {
             _context = context;
             _userSession = userSession;
             _payPalService = payPalService;
+            _journal = journal;
         }
 
         public async Task<Result<CompletePayPalPaymentResponseDto>> Handle(
@@ -100,11 +104,35 @@ namespace Application.Features.Order.Command.PayPalPaymentCommands.CompletePayPa
                     cancellationToken);
 
                 // Create treasury record for successful PayPal payment
+                var actor = _userSession.UserName ?? "System";
                 var treasuryRecord = TreasuryService.CreatePayPalPaymentRecord(
                     orderPayment.Total,
                     order.OrderCode,
-                    _userSession.UserName ?? "System");
+                    actor);
                 _context.CompanyTreasuries.Add(treasuryRecord);
+
+                var orderTotals = await _context.OrderTotals
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(t => t.OrderId == order.OrderId, cancellationToken);
+
+                if (orderTotals != null && orderTotals.ServiceFees > 0)
+                {
+                    var servicePost = await _journal.PostCreditAsync(
+                        order.OrderId,
+                        LedgerPartyType.Company,
+                        null,
+                        orderTotals.ServiceFees,
+                        OrderJournalEntryKind.CompanyServiceFeeAccrued,
+                        OrderJournalKeys.Build(order.OrderId, "company-service-fee-paypal"),
+                        note: "Company service fee on PayPal payment",
+                        createdBy: actor,
+                        cancellationToken: cancellationToken);
+
+                    if (servicePost.IsFailure)
+                    {
+                        return Result.Failure<CompletePayPalPaymentResponseDto>(servicePost.Error);
+                    }
+                }
 
                 await _context.SaveChangesAsync(cancellationToken);
 

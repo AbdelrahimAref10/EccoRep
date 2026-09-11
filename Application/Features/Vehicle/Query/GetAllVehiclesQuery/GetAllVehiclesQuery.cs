@@ -24,6 +24,7 @@ namespace Application.Features.Vehicle.Query.GetAllVehiclesQuery
         public int? SubCategoryId { get; set; }
         public List<int>? SubCategoryIds { get; set; }
         public List<int>? CityIds { get; set; }
+        public int? MerchantId { get; set; }
         /// <summary>VehicleStatus as int. Prefer Statuses for multi-select.</summary>
         public int? Status { get; set; }
         public List<int>? Statuses { get; set; }
@@ -62,6 +63,11 @@ namespace Application.Features.Vehicle.Query.GetAllVehiclesQuery
                 query = query.Where(v => cityIds.Contains(v.SubCategory.Category.CityId));
             }
 
+            if (request.MerchantId.HasValue)
+            {
+                query = query.Where(v => v.MerchantId == request.MerchantId.Value);
+            }
+
             var statuses = ResolveStatuses(request);
             if (statuses is { Count: > 0 })
             {
@@ -74,6 +80,7 @@ namespace Application.Features.Vehicle.Query.GetAllVehiclesQuery
                 query = query.Where(v =>
                     v.Name.ToLower().Contains(searchTerm) ||
                     v.VehicleCode.ToLower().Contains(searchTerm) ||
+                    v.Merchant.FullName.ToLower().Contains(searchTerm) ||
                     v.SubCategory.Name.ToLower().Contains(searchTerm) ||
                     v.SubCategory.Category.Name.ToLower().Contains(searchTerm) ||
                     v.SubCategory.Category.City.Name.ToLower().Contains(searchTerm));
@@ -99,7 +106,9 @@ namespace Application.Features.Vehicle.Query.GetAllVehiclesQuery
                     CategoryId = v.SubCategory.CategoryId,
                     CategoryName = v.SubCategory.Category.Name,
                     CityId = v.SubCategory.Category.CityId,
-                    CityName = v.SubCategory.Category.City.Name
+                    CityName = v.SubCategory.Category.City.Name,
+                    v.MerchantId,
+                    MerchantName = v.Merchant.FullName
                 })
                 .ToListAsync(cancellationToken);
 
@@ -116,7 +125,9 @@ namespace Application.Features.Vehicle.Query.GetAllVehiclesQuery
                 CategoryId = v.CategoryId,
                 CategoryName = v.CategoryName,
                 CityId = v.CityId,
-                CityName = v.CityName
+                CityName = v.CityName,
+                MerchantId = v.MerchantId,
+                MerchantName = v.MerchantName
             }).ToList();
 
             return Result.Success(new PagedResult<VehicleDto>

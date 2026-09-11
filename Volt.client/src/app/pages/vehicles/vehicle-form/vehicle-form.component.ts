@@ -2,8 +2,16 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { VehicleClient, VehicleDto, CreateVehicleCommand, UpdateVehicleCommand } from '../../../core/services/clientAPI';
-import { SubCategoryClient, SubCategoryLookupDto } from '../../../core/services/clientAPI';
+import {
+  VehicleClient,
+  VehicleDto,
+  CreateVehicleCommand,
+  UpdateVehicleCommand,
+  SubCategoryClient,
+  SubCategoryLookupDto,
+  MerchantClient,
+  MerchantLookupDto
+} from '../../../core/services/clientAPI';
 import {
   MultiSelectComponent,
   MultiSelectOption
@@ -28,6 +36,7 @@ export class VehicleFormComponent implements OnInit {
   isSaving = false;
   errorMessage = '';
   subCategories: SubCategoryLookupDto[] = [];
+  merchants: MerchantLookupDto[] = [];
   imagePreview: string | null = null;
   selectedImageFile: File | null = null;
 
@@ -42,6 +51,7 @@ export class VehicleFormComponent implements OnInit {
   constructor(
     private vehicleClient: VehicleClient,
     private subCategoryClient: SubCategoryClient,
+    private merchantClient: MerchantClient,
     private route: ActivatedRoute,
     private router: Router,
     private fb: FormBuilder
@@ -50,6 +60,7 @@ export class VehicleFormComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       vehicleCode: ['', [Validators.required, Validators.minLength(1)]],
       subCategoryId: [null, [Validators.required]],
+      merchantId: [null, [Validators.required]],
       status: [VehicleStatus.Available, [Validators.required]],
       imageUrl: [null]
     });
@@ -64,6 +75,7 @@ export class VehicleFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadSubCategories();
+    this.loadMerchants();
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id && id !== 'new') {
@@ -96,16 +108,46 @@ export class VehicleFormComponent implements OnInit {
     });
   }
 
+  loadMerchants(): void {
+    this.merchantClient.getActive().subscribe({
+      next: (result) => {
+        this.merchants = result || [];
+      },
+      error: (error) => {
+        console.error('Error loading merchants:', error);
+      }
+    });
+  }
+
+  private ensureMerchantOption(vehicle: VehicleDto): void {
+    if (!vehicle.merchantId) {
+      return;
+    }
+
+    const exists = this.merchants.some(m => m.merchantId === vehicle.merchantId);
+    if (exists) {
+      return;
+    }
+
+    const fallback = new MerchantLookupDto();
+    fallback.merchantId = vehicle.merchantId;
+    fallback.fullName = vehicle.merchantName || String(vehicle.merchantId);
+    fallback.mobileNumber = '';
+    this.merchants = [...this.merchants, fallback];
+  }
+
   loadVehicle(): void {
     if (!this.vehicleId) return;
 
     this.isLoading = true;
     this.vehicleClient.getById(this.vehicleId).subscribe({
       next: (vehicle: VehicleDto) => {
+        this.ensureMerchantOption(vehicle);
         this.vehicleForm.patchValue({
           name: vehicle.name,
           vehicleCode: vehicle.vehicleCode,
           subCategoryId: vehicle.subCategoryId,
+          merchantId: vehicle.merchantId,
           status: vehicle.status as VehicleStatus,
           imageUrl: vehicle.imageUrl
         });
@@ -151,6 +193,14 @@ export class VehicleFormComponent implements OnInit {
       return;
     }
 
+    const merchantId = Number(this.vehicleForm.value.merchantId);
+    if (!merchantId || merchantId <= 0) {
+      this.vehicleForm.get('merchantId')?.setErrors({ required: true });
+      this.vehicleForm.get('merchantId')?.markAsTouched();
+      this.errorMessage = this.localeService.translate('vehicles.merchantRequired');
+      return;
+    }
+
     this.isSaving = true;
     this.errorMessage = '';
 
@@ -162,6 +212,7 @@ export class VehicleFormComponent implements OnInit {
       command.name = formValue.name;
       command.vehicleCode = formValue.vehicleCode;
       command.subCategoryId = formValue.subCategoryId;
+      command.merchantId = merchantId;
       command.status = Number(formValue.status);
       // Only send imageUrl if it's a new base64 image (starts with data:image/), otherwise send null
       command.imageUrl = this.selectedImageFile ? formValue.imageUrl : null;
@@ -181,6 +232,7 @@ export class VehicleFormComponent implements OnInit {
       command.name = formValue.name;
       command.vehicleCode = formValue.vehicleCode;
       command.subCategoryId = formValue.subCategoryId;
+      command.merchantId = merchantId;
       command.status = Number(formValue.status);
       command.imageUrl = formValue.imageUrl;
 
@@ -201,4 +253,3 @@ export class VehicleFormComponent implements OnInit {
     this.router.navigate(['/main/vehicles']);
   }
 }
-

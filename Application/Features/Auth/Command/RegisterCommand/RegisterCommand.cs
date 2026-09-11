@@ -186,8 +186,9 @@ namespace Application.Features.Auth.Command.RegisterCommand
                 }
                 case AppRole.Merchant:
                 {
-                    var merchant = Merchant.Create(
+                    var merchant = Domain.Models.Merchant.Create(
                         user.Id,
+                        request.CityId!.Value,
                         request.FullName,
                         request.MobileNumber,
                         invitationCode,
@@ -217,6 +218,7 @@ namespace Application.Features.Auth.Command.RegisterCommand
                 {
                     var delivery = Domain.Models.Delivery.Create(
                         user.Id,
+                        request.CityId!.Value,
                         request.FullName,
                         request.MobileNumber,
                         invitationCode,

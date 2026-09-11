@@ -18,6 +18,10 @@ namespace Application.Features.User.Command.CreateUserCommand
         public string Password { get; set; } = string.Empty;
         /// <summary>AppRole enum int: Customer=1, SuperAdmin=2, Merchant=3, Delivery=4.</summary>
         public int Role { get; set; }
+        /// <summary>Required when Role is Merchant or Delivery.</summary>
+        public int? CityId { get; set; }
+        /// <summary>Optional; applied when Role is Merchant.</summary>
+        public bool? CashOnReceive { get; set; }
     }
 
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand, Result<int>>
@@ -61,6 +65,17 @@ namespace Application.Features.User.Command.CreateUserCommand
 
             if (!AppRoleNames.TryFromInt(request.Role, out var appRole))
                 return Result.Failure<int>("Invalid role");
+
+            if (appRole is AppRole.Merchant or AppRole.Delivery)
+            {
+                if (!request.CityId.HasValue || request.CityId <= 0)
+                    return Result.Failure<int>("City is required for merchant/delivery");
+
+                var cityExists = await _context.Cities
+                    .AnyAsync(c => c.CityId == request.CityId && c.IsActive, cancellationToken);
+                if (!cityExists)
+                    return Result.Failure<int>("Invalid or inactive city");
+            }
 
             var roleName = AppRoleNames.ToRoleName(appRole);
             if (!await _roleManager.RoleExistsAsync(roleName))
@@ -116,13 +131,14 @@ namespace Application.Features.User.Command.CreateUserCommand
                     _context.Employees.Add(Employee.Create(user.Id, request.FullName, createdBy));
                     break;
                 case AppRole.Merchant:
-                    _context.Merchants.Add(Merchant.Create(
-                        user.Id, request.FullName, request.PhoneNumber, invitationCode,
-                        request.Email, createdBy: createdBy, isActive: true));
+                    _context.Merchants.Add(Domain.Models.Merchant.Create(
+                        user.Id, request.CityId!.Value, request.FullName, request.PhoneNumber, invitationCode,
+                        request.Email, createdBy: createdBy, isActive: true,
+                        cashOnReceive: request.CashOnReceive ?? false));
                     break;
                 case AppRole.Delivery:
                     _context.Deliveries.Add(Domain.Models.Delivery.Create(
-                        user.Id, request.FullName, request.PhoneNumber, invitationCode,
+                        user.Id, request.CityId!.Value, request.FullName, request.PhoneNumber, invitationCode,
                         request.Email, createdBy: createdBy, isActive: true));
                     break;
                 case AppRole.Customer:

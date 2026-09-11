@@ -75,6 +75,7 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
             }
 
             var vehicles = await _context.Vehicles
+                .Include(v => v.Merchant)
                 .Where(v => distinctVehicleIds.Contains(v.VehicleId))
                 .ToListAsync(cancellationToken);
 
@@ -145,7 +146,9 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
                     VehicleId = v.VehicleId,
                     Name = v.Name,
                     VehicleCode = v.VehicleCode,
-                    ImageUrl = !string.IsNullOrWhiteSpace(v.ImageUrl) ? _imageService.GetImageUrl(v.ImageUrl) : null
+                    ImageUrl = !string.IsNullOrWhiteSpace(v.ImageUrl) ? _imageService.GetImageUrl(v.ImageUrl) : null,
+                    MerchantId = v.MerchantId,
+                    MerchantName = v.Merchant?.FullName ?? string.Empty
                 }).ToList(),
                 UnitPrice = pricing.UnitPrice,
                 SubTotal = pricing.SubTotal,

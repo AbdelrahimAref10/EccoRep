@@ -125,6 +125,38 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/orders/order-detail/order-detail.component').then(m => m.OrderDetailComponent)
       },
       {
+        path: 'settlements',
+        loadComponent: () => import('./pages/settlements/settlements.component').then(m => m.SettlementsComponent)
+      },
+      {
+        path: 'journals',
+        loadComponent: () => import('./pages/journals/journals.component').then(m => m.JournalsComponent)
+      },
+      {
+        path: 'merchants',
+        loadComponent: () => import('./pages/merchants/merchants.component').then(m => m.MerchantsComponent)
+      },
+      {
+        path: 'merchants/new',
+        loadComponent: () => import('./pages/merchants/merchant-form/merchant-form.component').then(m => m.MerchantFormComponent)
+      },
+      {
+        path: 'merchants/:id/edit',
+        loadComponent: () => import('./pages/merchants/merchant-form/merchant-form.component').then(m => m.MerchantFormComponent)
+      },
+      {
+        path: 'deliveries',
+        loadComponent: () => import('./pages/deliveries/deliveries.component').then(m => m.DeliveriesComponent)
+      },
+      {
+        path: 'deliveries/new',
+        loadComponent: () => import('./pages/deliveries/delivery-form/delivery-form.component').then(m => m.DeliveryFormComponent)
+      },
+      {
+        path: 'deliveries/:id/edit',
+        loadComponent: () => import('./pages/deliveries/delivery-form/delivery-form.component').then(m => m.DeliveryFormComponent)
+      },
+      {
         path: 'reports',
         loadComponent: () => import('./pages/reports/reports.component').then(m => m.ReportsComponent)
       },
@@ -168,6 +200,46 @@ export const routes: Routes = [
         path: 'home',
         loadComponent: () =>
           import('./pages/merchant/merchant-home.component').then(m => m.MerchantHomeComponent)
+      },
+      {
+        path: 'orders',
+        loadComponent: () =>
+          import('./pages/merchant/merchant-orders/merchant-orders.component').then(m => m.MerchantOrdersComponent)
+      },
+      {
+        path: 'orders/:id',
+        loadComponent: () =>
+          import('./pages/merchant/merchant-order-detail/merchant-order-detail.component').then(
+            m => m.MerchantOrderDetailComponent
+          )
+      },
+      {
+        path: 'payments',
+        loadComponent: () =>
+          import('./pages/merchant/merchant-payments/merchant-payments.component').then(
+            m => m.MerchantPaymentsComponent
+          )
+      },
+      {
+        path: 'vehicles',
+        loadComponent: () =>
+          import('./pages/merchant/merchant-vehicles/merchant-vehicles.component').then(
+            m => m.MerchantVehiclesComponent
+          )
+      },
+      {
+        path: 'vehicles/new',
+        loadComponent: () =>
+          import('./pages/merchant/merchant-vehicles/merchant-vehicle-form/merchant-vehicle-form.component').then(
+            m => m.MerchantVehicleFormComponent
+          )
+      },
+      {
+        path: 'vehicles/:id/edit',
+        loadComponent: () =>
+          import('./pages/merchant/merchant-vehicles/merchant-vehicle-form/merchant-vehicle-form.component').then(
+            m => m.MerchantVehicleFormComponent
+          )
       }
     ]
   },

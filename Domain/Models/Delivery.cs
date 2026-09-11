@@ -6,6 +6,7 @@ namespace Domain.Models
     {
         public int DeliveryId { get; private set; }
         public int UserId { get; private set; }
+        public int CityId { get; private set; }
         public string FullName { get; private set; } = string.Empty;
         public string MobileNumber { get; private set; } = string.Empty;
         public string? Email { get; private set; }
@@ -14,17 +15,20 @@ namespace Domain.Models
         public DateTime? InvitationCodeExpiry { get; private set; }
         public bool IsInvitationCodeUsed { get; private set; }
         public bool IsActive { get; private set; }
+        public bool IsDeleted { get; private set; }
         public string? CreatedBy { get; set; }
         public DateTime CreatedDate { get; set; }
         public string? LastModifiedBy { get; set; }
         public DateTime LastModifiedDate { get; set; }
 
         public ApplicationUser User { get; private set; } = null!;
+        public City City { get; private set; } = null!;
 
         private Delivery() { }
 
         public static Delivery Create(
             int userId,
+            int cityId,
             string fullName,
             string mobileNumber,
             string invitationCode,
@@ -35,6 +39,9 @@ namespace Domain.Models
         {
             if (userId <= 0)
                 throw new ArgumentException("User ID must be greater than zero", nameof(userId));
+
+            if (cityId <= 0)
+                throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
 
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new ArgumentException("Full name cannot be empty", nameof(fullName));
@@ -48,6 +55,7 @@ namespace Domain.Models
             return new Delivery
             {
                 UserId = userId,
+                CityId = cityId,
                 FullName = fullName.Trim(),
                 MobileNumber = mobileNumber.Trim(),
                 Email = email,
@@ -56,6 +64,49 @@ namespace Domain.Models
                 InvitationCodeExpiry = DateTime.UtcNow.AddHours(24),
                 IsInvitationCodeUsed = false,
                 IsActive = isActive,
+                IsDeleted = false,
+                CreatedBy = createdBy,
+                CreatedDate = DateTime.UtcNow,
+                LastModifiedDate = DateTime.UtcNow
+            };
+        }
+
+        /// <summary>Admin-created delivery: no invitation/OTP codes. Active flag set by admin.</summary>
+        public static Delivery CreateByAdmin(
+            int userId,
+            int cityId,
+            string fullName,
+            string mobileNumber,
+            string? email = null,
+            string? personalImage = null,
+            string? createdBy = null,
+            bool isActive = true)
+        {
+            if (userId <= 0)
+                throw new ArgumentException("User ID must be greater than zero", nameof(userId));
+
+            if (cityId <= 0)
+                throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
+
+            if (string.IsNullOrWhiteSpace(fullName))
+                throw new ArgumentException("Full name cannot be empty", nameof(fullName));
+
+            if (string.IsNullOrWhiteSpace(mobileNumber))
+                throw new ArgumentException("Mobile number cannot be empty", nameof(mobileNumber));
+
+            return new Delivery
+            {
+                UserId = userId,
+                CityId = cityId,
+                FullName = fullName.Trim(),
+                MobileNumber = mobileNumber.Trim(),
+                Email = email,
+                PersonalImage = personalImage,
+                InvitationCode = null,
+                InvitationCodeExpiry = null,
+                IsInvitationCodeUsed = true,
+                IsActive = isActive,
+                IsDeleted = false,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
@@ -91,14 +142,38 @@ namespace Domain.Models
             IsInvitationCodeUsed = false;
         }
 
-        public void UpdateProfile(string fullName, string? email = null, string? personalImage = null, string? modifiedBy = null)
+        public void UpdateProfile(
+            string fullName,
+            string? email = null,
+            string? personalImage = null,
+            string? modifiedBy = null,
+            bool? isActive = null,
+            int? cityId = null)
         {
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new ArgumentException("Full name cannot be empty", nameof(fullName));
 
+            if (cityId is <= 0)
+                throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
+
             FullName = fullName.Trim();
             Email = email;
             PersonalImage = personalImage;
+            if (isActive.HasValue)
+                IsActive = isActive.Value;
+            if (cityId.HasValue)
+                CityId = cityId.Value;
+            LastModifiedBy = modifiedBy;
+            LastModifiedDate = DateTime.UtcNow;
+        }
+
+        public void SoftDelete(string? modifiedBy = null)
+        {
+            if (IsDeleted)
+                return;
+
+            IsDeleted = true;
+            IsActive = false;
             LastModifiedBy = modifiedBy;
             LastModifiedDate = DateTime.UtcNow;
         }

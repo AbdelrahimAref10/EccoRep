@@ -45,6 +45,9 @@ export class AuthService {
         if (response.token && this.isSuperAdmin()) {
           this.signalRService.StartNotificationConnection(response.token);
         }
+        if (response.token && this.isMerchant()) {
+          this.signalRService.StartMerchantNotificationConnection(response.token);
+        }
       }),
       catchError((error) => {
         console.error('Login error:', error);

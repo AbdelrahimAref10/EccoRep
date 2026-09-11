@@ -244,17 +244,32 @@ export class CustomerFormComponent implements OnInit {
       return;
     }
 
+    if (this.isEditMode) {
+      this.errorMessage = this.localeService.translate('customers.updateNotSupported');
+      return;
+    }
+
     this.isSaving = true;
     this.errorMessage = '';
-    const formValue = this.customerForm.value;
+    const formValue = this.customerForm.getRawValue();
 
-    if (formValue.verificationBy === 1 && !formValue.email) {
+    const cityId = Number(formValue.cityId);
+    const registerAs = Number(formValue.registerAs);
+    const verificationBy = Number(formValue.verificationBy);
+
+    if (!cityId || Number.isNaN(cityId)) {
+      this.errorMessage = this.localeService.translate('customers.cityRequired');
+      this.isSaving = false;
+      return;
+    }
+
+    if (verificationBy === 1 && !formValue.email) {
       this.errorMessage = this.localeService.translate('customers.emailRequired');
       this.isSaving = false;
       return;
     }
 
-    if (formValue.registerAs === 1 && !this.selectedCommercialImage && !this.commercialImagePreview) {
+    if (registerAs === 1 && !this.selectedCommercialImage && !this.commercialImagePreview) {
       this.showCommercialImageError = true;
       this.errorMessage = this.localeService.translate('customers.commercialImageRequired');
       this.isSaving = false;
@@ -262,32 +277,28 @@ export class CustomerFormComponent implements OnInit {
     }
     this.showCommercialImageError = false;
 
-    let personalImageBase64 = null;
-    let commercialRegisterImageBase64 = null;
+    let personalImageBase64: string | null = null;
+    let commercialRegisterImageBase64: string | null = null;
 
     if (this.selectedPersonalImage) {
       personalImageBase64 = await this.convertImageToBase64(this.selectedPersonalImage);
     }
 
-    if (formValue.registerAs === 1) {
-      if (this.selectedCommercialImage) {
-        commercialRegisterImageBase64 = await this.convertImageToBase64(this.selectedCommercialImage);
-      }
-    } else {
-      commercialRegisterImageBase64 = null;
+    if (registerAs === 1 && this.selectedCommercialImage) {
+      commercialRegisterImageBase64 = await this.convertImageToBase64(this.selectedCommercialImage);
     }
 
     const command = new AdminCreateCustomerCommand();
-    command.mobileNumber = formValue.mobileNumber;
-    command.fullName = formValue.fullName;
-    command.gender = formValue.gender;
-    command.cityId = formValue.cityId;
-    command.email = formValue.email || null;
+    command.mobileNumber = String(formValue.mobileNumber).trim();
+    command.fullName = String(formValue.fullName).trim();
+    command.gender = String(formValue.gender);
+    command.cityId = cityId;
+    command.email = formValue.email ? String(formValue.email).trim() : null;
     command.personalImage = personalImageBase64;
     command.commercialRegisterImage = commercialRegisterImageBase64;
-    command.registerAs = formValue.registerAs;
-    command.verificationBy = formValue.verificationBy;
-    command.password = formValue.password || null;
+    command.registerAs = registerAs;
+    command.verificationBy = verificationBy;
+    command.password = String(formValue.password);
 
     this.customerClient.create(command).subscribe({
       next: () => {
@@ -295,8 +306,10 @@ export class CustomerFormComponent implements OnInit {
       },
       error: (error: any) => {
         this.errorMessage =
-          error.error?.detail ||
-          error.error?.title ||
+          error?.errorMessage ||
+          error?.error?.errorMessage ||
+          error?.error?.detail ||
+          error?.error?.title ||
           this.localeService.translate('customers.failedToCreate');
         this.isSaving = false;
         console.error('Error creating customer:', error);

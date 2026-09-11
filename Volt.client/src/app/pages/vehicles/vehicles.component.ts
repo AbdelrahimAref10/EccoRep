@@ -191,6 +191,7 @@ export class VehiclesComponent implements OnInit {
       subCategoryIds.length ? subCategoryIds : undefined,
       cityIds.length ? cityIds : undefined,
       undefined,
+      undefined,
       statuses.length ? statuses : undefined
     ).subscribe({
       next: (result: PagedResultOfVehicleDto) => {

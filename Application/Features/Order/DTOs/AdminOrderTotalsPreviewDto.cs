@@ -30,5 +30,7 @@ namespace Application.Features.Order.DTOs
         public string Name { get; set; } = string.Empty;
         public string VehicleCode { get; set; } = string.Empty;
         public string? ImageUrl { get; set; }
+        public int MerchantId { get; set; }
+        public string MerchantName { get; set; } = string.Empty;
     }
 }

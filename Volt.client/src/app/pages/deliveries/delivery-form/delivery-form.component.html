@@ -1,0 +1,158 @@
+<div class="entity-form">
+  <header class="entity-form__header">
+    <div>
+      <p class="entity-form__kicker">{{ 'deliveries.title' | t }}</p>
+      <h1 class="entity-form__title">{{ (isEditMode ? 'deliveries.edit' : 'deliveries.add') | t }}</h1>
+      <p class="entity-form__subtitle">{{ 'deliveries.formSubtitle' | t }}</p>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+  <div *ngIf="isLoading" class="entity-form__alert">{{ 'common.loading' | t }}</div>
+
+  <form *ngIf="!isLoading" [formGroup]="deliveryForm" (ngSubmit)="onSubmit()">
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.details' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'deliveries.profile' | t }}</h2>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.name' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input type="text" formControlName="fullName" class="entity-form__input" />
+            <p *ngIf="deliveryForm.get('fullName')?.invalid && deliveryForm.get('fullName')?.touched" class="entity-form__error">
+              {{ 'common.required' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'login.username' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="userName"
+              class="entity-form__input"
+              [placeholder]="'deliveries.userNamePlaceholder' | t"
+              autocomplete="username"
+            />
+            <p *ngIf="deliveryForm.get('userName')?.invalid && deliveryForm.get('userName')?.touched" class="entity-form__error">
+              {{ 'users.userNameRequired' | t }}
+            </p>
+            <p class="entity-form__hint">{{ 'deliveries.userNameHint' | t }}</p>
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.phone' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input type="text" formControlName="mobileNumber" class="entity-form__input" [readonly]="isEditMode" />
+            <p *ngIf="deliveryForm.get('mobileNumber')?.invalid && deliveryForm.get('mobileNumber')?.touched" class="entity-form__error">
+              {{ 'common.required' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.email' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <input type="email" formControlName="email" class="entity-form__input" />
+            <p *ngIf="deliveryForm.get('email')?.invalid && deliveryForm.get('email')?.touched" class="entity-form__error">
+              {{ 'common.required' | t }}
+            </p>
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'customers.password' | t }}
+              <span *ngIf="!isEditMode" class="entity-form__req">*</span>
+            </label>
+            <input
+              type="password"
+              formControlName="password"
+              class="entity-form__input"
+              [placeholder]="(isEditMode ? 'customers.passwordOptionalHint' : 'customers.passwordPlaceholder') | t"
+            />
+            <p *ngIf="deliveryForm.get('password')?.invalid && deliveryForm.get('password')?.touched" class="entity-form__error">
+              {{ 'customers.passwordRequired' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.city' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="cityId"
+              [multiple]="false"
+              [options]="cityOptions"
+              [placeholder]="'deliveries.selectCity' | t"
+            ></app-multi-select>
+            <p *ngIf="deliveryForm.get('cityId')?.invalid && deliveryForm.get('cityId')?.touched" class="entity-form__error">
+              {{ 'deliveries.cityRequired' | t }}
+            </p>
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field entity-form__field--checkbox">
+            <label class="entity-form__check">
+              <input type="checkbox" formControlName="isActive" />
+              <span>{{ 'deliveries.isActive' | t }}</span>
+            </label>
+            <p class="entity-form__hint">{{ 'deliveries.isActiveHint' | t }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'common.media' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'customers.personalImage' | t }}</h2>
+      </div>
+
+      <div class="entity-form__card-body">
+        <div class="entity-form__media">
+          <div *ngIf="personalImagePreview" class="entity-form__preview">
+            <img [src]="personalImagePreview" [alt]="'customers.imagePreviewAlt' | t" />
+            <button type="button" class="entity-form__remove" (click)="removePersonalImage()">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <label class="entity-form__upload" for="delivery-personal-image">
+            <input
+              #personalImageInput
+              id="delivery-personal-image"
+              type="file"
+              accept="image/*"
+              (change)="onPersonalImageSelect()"
+            />
+            <strong>{{ personalImagePreview ? ('customers.changeImage' | t) : ('customers.uploadHint' | t) }}</strong>
+            <small>{{ 'customers.imageFormats' | t }}</small>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <div class="entity-form__footer">
+      <button type="button" class="entity-form__btn entity-form__btn--ghost" (click)="onCancel()" [disabled]="isSaving">
+        {{ 'common.cancel' | t }}
+      </button>
+      <button type="submit" class="entity-form__btn entity-form__btn--primary" [disabled]="isSaving">
+        {{ isSaving ? ('common.saving' | t) : ('common.save' | t) }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs';
 import { AdminOrderClient, OrderDto, PagedResultOfOrderDto, OrderState, PaymentMethod, CityClient, CityDto, PagedResultOfCityDto } from '../../core/services/clientAPI';
+import { AdminNotificationService } from '../../core/services/admin-notification.service';
 import { LocaleService } from '../../core/services/locale.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
@@ -21,6 +22,7 @@ import {
 })
 export class OrdersComponent implements OnInit, OnDestroy {
   private readonly localeService = inject(LocaleService);
+  private readonly adminNotifications = inject(AdminNotificationService);
 
   /** Full list from API (before state/city client filters). */
   private allOrders: OrderDto[] = [];
@@ -51,9 +53,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
   readonly pipelineStates: Array<{ state: OrderState | null; key: string; dot: string }> = [
     { state: null, key: 'common.all', dot: 'all' },
     { state: OrderState.Pending, key: 'common.pending', dot: 'pending' },
+    { state: OrderState.MerchantPending, key: 'common.merchantPending', dot: 'merchant-pending' },
+    { state: OrderState.MerchantConfirmed, key: 'common.merchantConfirmed', dot: 'merchant-confirmed' },
     { state: OrderState.Confirmed, key: 'common.confirmed', dot: 'confirmed' },
+    { state: OrderState.DeliveryAssigned, key: 'common.deliveryAssigned', dot: 'delivery-assigned' },
     { state: OrderState.OnWay, key: 'common.onWay', dot: 'onway' },
     { state: OrderState.CustomerReceived, key: 'common.received', dot: 'received' },
+    { state: OrderState.CustomerRejectedReceipt, key: 'common.rejectedReceipt', dot: 'rejected-receipt' },
     { state: OrderState.Completed, key: 'common.completed', dot: 'completed' },
     { state: OrderState.Cancelled, key: 'orders.cancelled', dot: 'cancelled' }
   ];
@@ -61,9 +67,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
   get stateOptions(): MultiSelectOption[] {
     return [
       { value: OrderState.Pending, label: this.localeService.translate('common.pending') },
+      { value: OrderState.MerchantPending, label: this.localeService.translate('common.merchantPending') },
+      { value: OrderState.MerchantConfirmed, label: this.localeService.translate('common.merchantConfirmed') },
       { value: OrderState.Confirmed, label: this.localeService.translate('common.confirmed') },
+      { value: OrderState.DeliveryAssigned, label: this.localeService.translate('common.deliveryAssigned') },
       { value: OrderState.OnWay, label: this.localeService.translate('common.onWay') },
       { value: OrderState.CustomerReceived, label: this.localeService.translate('common.received') },
+      { value: OrderState.CustomerRejectedReceipt, label: this.localeService.translate('common.rejectedReceipt') },
       { value: OrderState.Completed, label: this.localeService.translate('common.completed') },
       { value: OrderState.Cancelled, label: this.localeService.translate('orders.cancelled') }
     ];
@@ -86,6 +96,14 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.loadCities();
     this.setupLiveSearch();
     this.triggerSearch();
+
+    this.adminNotifications.incoming$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(notification => {
+        if (notification) {
+          this.triggerSearch();
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -250,12 +268,20 @@ export class OrdersComponent implements OnInit, OnDestroy {
     switch (state) {
       case OrderState.Pending:
         return this.localeService.translate('common.pending');
+      case OrderState.MerchantPending:
+        return this.localeService.translate('common.merchantPending');
+      case OrderState.MerchantConfirmed:
+        return this.localeService.translate('common.merchantConfirmed');
       case OrderState.Confirmed:
         return this.localeService.translate('common.confirmed');
+      case OrderState.DeliveryAssigned:
+        return this.localeService.translate('common.deliveryAssigned');
       case OrderState.OnWay:
         return this.localeService.translate('common.onWay');
       case OrderState.CustomerReceived:
         return this.localeService.translate('common.received');
+      case OrderState.CustomerRejectedReceipt:
+        return this.localeService.translate('common.rejectedReceipt');
       case OrderState.Completed:
         return this.localeService.translate('common.completed');
       case OrderState.Cancelled:
@@ -269,12 +295,20 @@ export class OrdersComponent implements OnInit, OnDestroy {
     switch (state) {
       case OrderState.Pending:
         return 'orders__state--pending';
+      case OrderState.MerchantPending:
+        return 'orders__state--merchant-pending';
+      case OrderState.MerchantConfirmed:
+        return 'orders__state--merchant-confirmed';
       case OrderState.Confirmed:
         return 'orders__state--confirmed';
+      case OrderState.DeliveryAssigned:
+        return 'orders__state--delivery-assigned';
       case OrderState.OnWay:
         return 'orders__state--onway';
       case OrderState.CustomerReceived:
         return 'orders__state--received';
+      case OrderState.CustomerRejectedReceipt:
+        return 'orders__state--rejected-receipt';
       case OrderState.Completed:
         return 'orders__state--completed';
       case OrderState.Cancelled:

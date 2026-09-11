@@ -471,6 +471,7 @@
                         <div class="vehicles__tile-body">
                           <h3 class="vehicles__tile-title">{{ vehicle.name }}</h3>
                           <span class="order-form__vehicle-code">{{ vehicle.vehicleCode }}</span>
+                          <span class="order-form__merchant" *ngIf="vehicle.merchantName">{{ vehicle.merchantName }}</span>
                         </div>
                       </article>
                     </div>
@@ -511,6 +512,7 @@
                         <div class="vehicles__tile-body">
                           <h3 class="vehicles__tile-title">{{ vehicle.name }}</h3>
                           <span class="order-form__vehicle-code">{{ vehicle.vehicleCode }}</span>
+                          <span class="order-form__merchant" *ngIf="vehicle.merchantName">{{ vehicle.merchantName }}</span>
                           <button
                             *ngIf="hasBookedDays(vehicle)"
                             type="button"

@@ -4,10 +4,16 @@ import { RouterModule } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { AdminNotificationService, AdminNotification } from '../../core/services/admin-notification.service';
+import {
+  MerchantNotificationService,
+  MerchantNotification
+} from '../../core/services/merchant-notification.service';
 import { NotificationDropdownComponent, Notification } from './notification-dropdown/notification-dropdown.component';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { LangSwitcherComponent } from '../../shared/components/lang-switcher/lang-switcher.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+
+export type DashboardNotificationSource = 'admin' | 'merchant';
 
 @Component({
   selector: 'app-dashboard-header',
@@ -25,6 +31,10 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 })
 export class DashboardHeaderComponent implements OnInit, OnDestroy {
   @Input() isMobileNavOpen = false;
+  @Input() showNotifications = true;
+  @Input() notificationSource: DashboardNotificationSource = 'admin';
+  @Input() profileRoute = '/main/profile';
+  @Input() ordersBaseRoute = '/main/orders';
   @Output() toggleSidebar = new EventEmitter<void>();
 
   isUserMenuOpen = false;
@@ -37,7 +47,8 @@ export class DashboardHeaderComponent implements OnInit, OnDestroy {
 
   constructor(
     private authService: AuthService,
-    private notificationService: AdminNotificationService
+    private adminNotificationService: AdminNotificationService,
+    private merchantNotificationService: MerchantNotificationService
   ) {
     this.userData = this.authService.getUserData();
   }
@@ -47,18 +58,39 @@ export class DashboardHeaderComponent implements OnInit, OnDestroy {
     return String(name).charAt(0).toUpperCase();
   }
 
+  private get isMerchantMode(): boolean {
+    return this.notificationSource === 'merchant';
+  }
+
   ngOnInit(): void {
+    if (!this.showNotifications) {
+      return;
+    }
+
     this.loadNotifications();
     this.loadUnreadCount();
 
-    this.subscriptions.add(
-      this.notificationService.notifications$.subscribe(notifications => {
-        this.notifications = notifications.map(n => this.mapToNotification(n));
-      })
-    );
+    if (this.isMerchantMode) {
+      this.subscriptions.add(
+        this.merchantNotificationService.notifications$.subscribe(notifications => {
+          this.notifications = notifications.map(n => this.mapMerchantNotification(n));
+        })
+      );
+      this.subscriptions.add(
+        this.merchantNotificationService.unreadCount$.subscribe(count => {
+          this.unreadCount = count;
+        })
+      );
+      return;
+    }
 
     this.subscriptions.add(
-      this.notificationService.unreadCount$.subscribe(count => {
+      this.adminNotificationService.notifications$.subscribe(notifications => {
+        this.notifications = notifications.map(n => this.mapAdminNotification(n));
+      })
+    );
+    this.subscriptions.add(
+      this.adminNotificationService.unreadCount$.subscribe(count => {
         this.unreadCount = count;
       })
     );
@@ -69,14 +101,22 @@ export class DashboardHeaderComponent implements OnInit, OnDestroy {
   }
 
   loadNotifications(): void {
-    this.notificationService.loadNotifications(false, 0, 50).subscribe();
+    if (this.isMerchantMode) {
+      this.merchantNotificationService.loadNotifications(undefined, 0, 50).subscribe();
+      return;
+    }
+    this.adminNotificationService.loadNotifications(false, 0, 50).subscribe();
   }
 
   loadUnreadCount(): void {
-    this.notificationService.updateUnreadCount();
+    if (this.isMerchantMode) {
+      this.merchantNotificationService.updateUnreadCount();
+      return;
+    }
+    this.adminNotificationService.updateUnreadCount();
   }
 
-  mapToNotification(adminNotification: AdminNotification): Notification {
+  mapAdminNotification(adminNotification: AdminNotification): Notification {
     return {
       id: adminNotification.adminNotificationId.toString(),
       type: this.getNotificationType(adminNotification.notificationType),
@@ -84,7 +124,19 @@ export class DashboardHeaderComponent implements OnInit, OnDestroy {
       message: adminNotification.message,
       timestamp: adminNotification.createdDate,
       isRead: adminNotification.isRead,
-      actionUrl: adminNotification.orderId ? `/main/orders/${adminNotification.orderId}` : undefined
+      actionUrl: adminNotification.orderId ? `${this.ordersBaseRoute}/${adminNotification.orderId}` : undefined
+    };
+  }
+
+  mapMerchantNotification(notification: MerchantNotification): Notification {
+    return {
+      id: notification.merchantNotificationId.toString(),
+      type: this.getNotificationType(notification.notificationType),
+      title: notification.title,
+      message: notification.message,
+      timestamp: notification.createdDate,
+      isRead: notification.isRead,
+      actionUrl: notification.orderId ? `${this.ordersBaseRoute}/${notification.orderId}` : undefined
     };
   }
 
@@ -96,6 +148,7 @@ export class DashboardHeaderComponent implements OnInit, OnDestroy {
       case 4:
       case 5:
       case 6:
+      case 7:
         return 'order';
       default:
         return 'info';
@@ -137,14 +190,22 @@ export class DashboardHeaderComponent implements OnInit, OnDestroy {
 
   onMarkAsRead(notificationId: string): void {
     const id = parseInt(notificationId, 10);
-    this.notificationService.markAsRead(id).subscribe({
+    const request$ = this.isMerchantMode
+      ? this.merchantNotificationService.markAsRead(id)
+      : this.adminNotificationService.markAsRead(id);
+
+    request$.subscribe({
       next: () => undefined,
       error: (error) => console.error('Error marking notification as read:', error)
     });
   }
 
   onMarkAllAsRead(): void {
-    this.notificationService.markAllAsRead().subscribe({
+    const request$ = this.isMerchantMode
+      ? this.merchantNotificationService.markAllAsRead()
+      : this.adminNotificationService.markAllAsRead();
+
+    request$.subscribe({
       next: () => undefined,
       error: (error) => console.error('Error marking all notifications as read:', error)
     });

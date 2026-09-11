@@ -693,6 +693,10 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DeliveryId"));
 
+                    b.Property<int>("CityId")
+                        .HasColumnType("int")
+                        .HasColumnName("CityId");
+
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)")
@@ -728,6 +732,12 @@ namespace Infrastructure.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("IsActive");
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
                     b.Property<bool>("IsInvitationCodeUsed")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -759,6 +769,9 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("DeliveryId");
 
+                    b.HasIndex("CityId")
+                        .HasDatabaseName("IX_Delivery_CityId");
+
                     b.HasIndex("MobileNumber")
                         .HasDatabaseName("IX_Delivery_MobileNumber");
 
@@ -767,6 +780,122 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("IX_Delivery_UserId");
 
                     b.ToTable("VO_Delivery", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Models.DeliveryMenOrder", b =>
+                {
+                    b.Property<int>("DeliveryMenOrderId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("DeliveryMenOrderId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DeliveryMenOrderId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedDate");
+
+                    b.Property<int>("DeliveryId")
+                        .HasColumnType("int")
+                        .HasColumnName("DeliveryId");
+
+                    b.Property<bool>("DeliveryReceivedFromMerchant")
+                        .HasColumnType("bit")
+                        .HasColumnName("DeliveryReceivedFromMerchant");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("LastModifiedBy");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifiedDate");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int")
+                        .HasColumnName("OrderId");
+
+                    b.Property<DateTime?>("ReceivedFromMerchantAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("ReceivedFromMerchantAt");
+
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("int")
+                        .HasColumnName("VehicleId");
+
+                    b.HasKey("DeliveryMenOrderId");
+
+                    b.HasIndex("DeliveryId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("OrderId", "VehicleId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_VO_DeliveryMenOrder_Order_Vehicle");
+
+                    b.ToTable("VO_DeliveryMenOrder", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Models.DeliveryOrderPaymentDetail", b =>
+                {
+                    b.Property<int>("DeliveryOrderPaymentDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("DeliveryOrderPaymentDetailId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DeliveryOrderPaymentDetailId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedDate");
+
+                    b.Property<decimal>("DeliveryFeeShare")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("DeliveryFeeShare");
+
+                    b.Property<int>("DeliveryId")
+                        .HasColumnType("int")
+                        .HasColumnName("DeliveryId");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("LastModifiedBy");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifiedDate");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int")
+                        .HasColumnName("OrderId");
+
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("int")
+                        .HasColumnName("VehicleId");
+
+                    b.HasKey("DeliveryOrderPaymentDetailId");
+
+                    b.HasIndex("DeliveryId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("OrderId", "VehicleId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_VO_DeliveryOrderPaymentDetail_Order_Vehicle");
+
+                    b.ToTable("VO_DeliveryOrderPaymentDetail", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Employee", b =>
@@ -824,6 +953,16 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MerchantId"));
 
+                    b.Property<bool>("CashOnReceive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("CashOnReceive");
+
+                    b.Property<int>("CityId")
+                        .HasColumnType("int")
+                        .HasColumnName("CityId");
+
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)")
@@ -859,6 +998,12 @@ namespace Infrastructure.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("IsActive");
 
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false)
+                        .HasColumnName("IsDeleted");
+
                     b.Property<bool>("IsInvitationCodeUsed")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bit")
@@ -890,6 +1035,9 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("MerchantId");
 
+                    b.HasIndex("CityId")
+                        .HasDatabaseName("IX_Merchant_CityId");
+
                     b.HasIndex("MobileNumber")
                         .HasDatabaseName("IX_Merchant_MobileNumber");
 
@@ -898,6 +1046,191 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("IX_Merchant_UserId");
 
                     b.ToTable("VO_Merchant", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Models.MerchantNotification", b =>
+                {
+                    b.Property<int>("MerchantNotificationId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MerchantNotificationId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MerchantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<int>("NotificationType")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("MerchantNotificationId");
+
+                    b.HasIndex("CreatedDate");
+
+                    b.HasIndex("IsRead");
+
+                    b.HasIndex("MerchantId");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("VO_MerchantNotification", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Models.MerchantOrder", b =>
+                {
+                    b.Property<int>("MerchantOrderId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("MerchantOrderId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MerchantOrderId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedDate");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("LastModifiedBy");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifiedDate");
+
+                    b.Property<int>("MerchantId")
+                        .HasColumnType("int")
+                        .HasColumnName("MerchantId");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int")
+                        .HasColumnName("OrderId");
+
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("RejectReason");
+
+                    b.Property<DateTime?>("RespondedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("RespondedAt");
+
+                    b.Property<int>("ResponseStatus")
+                        .HasColumnType("int")
+                        .HasColumnName("ResponseStatus");
+
+                    b.HasKey("MerchantOrderId");
+
+                    b.HasIndex("MerchantId");
+
+                    b.HasIndex("OrderId", "MerchantId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_VO_MerchantOrder_Order_Merchant");
+
+                    b.ToTable("VO_MerchantOrder", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Models.MerchantOrderPaymentDetail", b =>
+                {
+                    b.Property<int>("MerchantOrderPaymentDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("MerchantOrderPaymentDetailId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MerchantOrderPaymentDetailId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedDate");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("LastModifiedBy");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifiedDate");
+
+                    b.Property<int>("MerchantId")
+                        .HasColumnType("int")
+                        .HasColumnName("MerchantId");
+
+                    b.Property<decimal>("NetAmount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("NetAmount");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int")
+                        .HasColumnName("OrderId");
+
+                    b.Property<decimal>("ServiceFeeShare")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("ServiceFeeShare");
+
+                    b.Property<int>("VehicleId")
+                        .HasColumnType("int")
+                        .HasColumnName("VehicleId");
+
+                    b.Property<decimal>("VehicleRental")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("VehicleRental");
+
+                    b.HasKey("MerchantOrderPaymentDetailId");
+
+                    b.HasIndex("MerchantId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("OrderId", "VehicleId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_VO_MerchantOrderPaymentDetail_Order_Vehicle");
+
+                    b.ToTable("VO_MerchantOrderPaymentDetail", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.Order", b =>
@@ -1002,6 +1335,15 @@ namespace Infrastructure.Migrations
                         .HasDefaultValue(0m)
                         .HasColumnName("PreviousDebt");
 
+                    b.Property<int?>("ReceiptFaultParty")
+                        .HasColumnType("int")
+                        .HasColumnName("ReceiptFaultParty");
+
+                    b.Property<string>("ReceiptRejectNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("ReceiptRejectNote");
+
                     b.Property<DateTime>("ReservationDateFrom")
                         .HasColumnType("datetime2")
                         .HasColumnName("ReservationDateFrom");
@@ -1038,6 +1380,87 @@ namespace Infrastructure.Migrations
                     b.HasIndex("SubCategoryId");
 
                     b.ToTable("VO_Order", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Models.OrderJournal", b =>
+                {
+                    b.Property<int>("OrderJournalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("OrderJournalId");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("OrderJournalId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("Amount");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("CreatedBy");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreatedDate");
+
+                    b.Property<int>("Direction")
+                        .HasColumnType("int")
+                        .HasColumnName("Direction");
+
+                    b.Property<int>("EntryKind")
+                        .HasColumnType("int")
+                        .HasColumnName("EntryKind");
+
+                    b.Property<int?>("FaultParty")
+                        .HasColumnType("int")
+                        .HasColumnName("FaultParty");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)")
+                        .HasColumnName("IdempotencyKey");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)")
+                        .HasColumnName("LastModifiedBy");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModifiedDate");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("Note");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("int")
+                        .HasColumnName("OrderId");
+
+                    b.Property<int?>("PartyId")
+                        .HasColumnType("int")
+                        .HasColumnName("PartyId");
+
+                    b.Property<int>("PartyType")
+                        .HasColumnType("int")
+                        .HasColumnName("PartyType");
+
+                    b.HasKey("OrderJournalId");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("IX_VO_OrderJournal_IdempotencyKey");
+
+                    b.HasIndex("OrderId", "PartyType", "PartyId")
+                        .HasDatabaseName("IX_VO_OrderJournal_Order_Party");
+
+                    b.HasIndex("PartyType", "PartyId", "CreatedDate")
+                        .HasDatabaseName("IX_VO_OrderJournal_Party_Created");
+
+                    b.ToTable("VO_OrderJournal", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Models.OrderPayment", b =>
@@ -1770,6 +2193,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("LastModifiedDate");
 
+                    b.Property<int>("MerchantId")
+                        .HasColumnType("int")
+                        .HasColumnName("MerchantId");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -1793,6 +2220,9 @@ namespace Infrastructure.Migrations
                         .HasColumnName("VehicleCode");
 
                     b.HasKey("VehicleId");
+
+                    b.HasIndex("MerchantId")
+                        .HasDatabaseName("IX_VO_Vehicle_MerchantId");
 
                     b.HasIndex("Status")
                         .HasDatabaseName("IX_VO_Vehicle_Status");
@@ -2007,13 +2437,75 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Models.Delivery", b =>
                 {
+                    b.HasOne("Domain.Models.City", "City")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Models.ApplicationUser", "User")
                         .WithOne("Delivery")
                         .HasForeignKey("Domain.Models.Delivery", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("City");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Models.DeliveryMenOrder", b =>
+                {
+                    b.HasOne("Domain.Models.Delivery", "Delivery")
+                        .WithMany()
+                        .HasForeignKey("DeliveryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Order", "Order")
+                        .WithMany("DeliveryMenOrders")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Delivery");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("Domain.Models.DeliveryOrderPaymentDetail", b =>
+                {
+                    b.HasOne("Domain.Models.Delivery", "Delivery")
+                        .WithMany()
+                        .HasForeignKey("DeliveryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Order", "Order")
+                        .WithMany("DeliveryOrderPaymentDetails")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Delivery");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Vehicle");
                 });
 
             modelBuilder.Entity("Domain.Models.Employee", b =>
@@ -2029,13 +2521,85 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Models.Merchant", b =>
                 {
+                    b.HasOne("Domain.Models.City", "City")
+                        .WithMany()
+                        .HasForeignKey("CityId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Models.ApplicationUser", "User")
                         .WithOne("Merchant")
                         .HasForeignKey("Domain.Models.Merchant", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("City");
+
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Models.MerchantNotification", b =>
+                {
+                    b.HasOne("Domain.Models.Merchant", "Merchant")
+                        .WithMany()
+                        .HasForeignKey("MerchantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Merchant");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Domain.Models.MerchantOrder", b =>
+                {
+                    b.HasOne("Domain.Models.Merchant", "Merchant")
+                        .WithMany()
+                        .HasForeignKey("MerchantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Order", "Order")
+                        .WithMany("MerchantOrders")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Merchant");
+
+                    b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Domain.Models.MerchantOrderPaymentDetail", b =>
+                {
+                    b.HasOne("Domain.Models.Merchant", "Merchant")
+                        .WithMany()
+                        .HasForeignKey("MerchantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Order", "Order")
+                        .WithMany("MerchantOrderPaymentDetails")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Merchant");
+
+                    b.Navigation("Order");
+
+                    b.Navigation("Vehicle");
                 });
 
             modelBuilder.Entity("Domain.Models.Order", b =>
@@ -2063,6 +2627,16 @@ namespace Infrastructure.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("SubCategory");
+                });
+
+            modelBuilder.Entity("Domain.Models.OrderJournal", b =>
+                {
+                    b.HasOne("Domain.Models.Order", "Order")
+                        .WithMany("OrderJournals")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("Domain.Models.OrderPayment", b =>
@@ -2206,11 +2780,19 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Models.Vehicle", b =>
                 {
+                    b.HasOne("Domain.Models.Merchant", "Merchant")
+                        .WithMany("Vehicles")
+                        .HasForeignKey("MerchantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Models.SubCategory", "SubCategory")
                         .WithMany("Vehicles")
                         .HasForeignKey("SubCategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Merchant");
 
                     b.Navigation("SubCategory");
                 });
@@ -2294,8 +2876,23 @@ namespace Infrastructure.Migrations
                     b.Navigation("CustomerLocation");
                 });
 
+            modelBuilder.Entity("Domain.Models.Merchant", b =>
+                {
+                    b.Navigation("Vehicles");
+                });
+
             modelBuilder.Entity("Domain.Models.Order", b =>
                 {
+                    b.Navigation("DeliveryMenOrders");
+
+                    b.Navigation("DeliveryOrderPaymentDetails");
+
+                    b.Navigation("MerchantOrderPaymentDetails");
+
+                    b.Navigation("MerchantOrders");
+
+                    b.Navigation("OrderJournals");
+
                     b.Navigation("OrderPayments");
 
                     b.Navigation("OrderVehicles");

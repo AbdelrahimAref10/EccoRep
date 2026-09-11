@@ -108,6 +108,13 @@ namespace Infrastructure.MappingConfiguration
                 .HasColumnName("MoneyRefunded")
                 .IsRequired();
 
+            builder.Property(o => o.ReceiptFaultParty)
+                .HasColumnName("ReceiptFaultParty");
+
+            builder.Property(o => o.ReceiptRejectNote)
+                .HasColumnName("ReceiptRejectNote")
+                .HasMaxLength(1000);
+
             // Configure audit properties
             builder.Property(o => o.CreatedBy)
                 .HasColumnName("CreatedBy")

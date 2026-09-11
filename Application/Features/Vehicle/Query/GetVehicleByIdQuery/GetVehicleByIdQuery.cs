@@ -28,6 +28,7 @@ namespace Application.Features.Vehicle.Query.GetVehicleByIdQuery
         public async Task<Result<VehicleDto>> Handle(GetVehicleByIdQuery request, CancellationToken cancellationToken)
         {
             var vehicle = await _context.Vehicles
+                .Include(v => v.Merchant)
                 .Include(v => v.SubCategory)
                     .ThenInclude(sc => sc.Category)
                         .ThenInclude(c => c.City)
@@ -42,6 +43,7 @@ namespace Application.Features.Vehicle.Query.GetVehicleByIdQuery
             {
                 VehicleId = vehicle.VehicleId,
                 Name = vehicle.Name,
+                VehicleCode = vehicle.VehicleCode,
                 ImageUrl = _imageService.GetImageUrl(vehicle.ImageUrl),
                 Status = (int)vehicle.Status,
                 SubCategoryId = vehicle.SubCategoryId,
@@ -50,7 +52,9 @@ namespace Application.Features.Vehicle.Query.GetVehicleByIdQuery
                 CategoryId = vehicle.SubCategory.CategoryId,
                 CategoryName = vehicle.SubCategory.Category.Name,
                 CityId = vehicle.SubCategory.Category.CityId,
-                CityName = vehicle.SubCategory.Category.City.Name
+                CityName = vehicle.SubCategory.Category.City.Name,
+                MerchantId = vehicle.MerchantId,
+                MerchantName = vehicle.Merchant.FullName
             };
 
             return Result.Success(vehicleDto);

@@ -180,6 +180,7 @@
               {{ vehicle.cityName }}
             </span>
             <span class="vehicles__tile-subs">{{ vehicle.subCategoryName }}</span>
+            <span class="vehicles__tile-subs" *ngIf="vehicle.merchantName">{{ vehicle.merchantName }}</span>
           </div>
         </div>
 
@@ -221,6 +222,7 @@
               <th scope="col">{{ 'common.name' | t }}</th>
               <th scope="col">{{ 'vehicles.code' | t }}</th>
               <th scope="col">{{ 'vehicles.subCategory' | t }}</th>
+              <th scope="col">{{ 'vehicles.merchant' | t }}</th>
               <th scope="col">{{ 'common.city' | t }}</th>
               <th scope="col">{{ 'common.status' | t }}</th>
               <th scope="col">{{ 'common.actions' | t }}</th>
@@ -241,6 +243,7 @@
               <td><span class="vehicles__name">{{ vehicle.name }}</span></td>
               <td><span class="vehicles__code">#{{ vehicle.vehicleCode }}</span></td>
               <td>{{ vehicle.subCategoryName }}</td>
+              <td>{{ vehicle.merchantName || '—' }}</td>
               <td>{{ vehicle.cityName }}</td>
               <td>
                 <span class="vehicles__status" [ngClass]="statusClass(vehicle.status)">

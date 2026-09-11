@@ -181,7 +181,7 @@ namespace Application.Features.Auth.Command.LoginCommand
                     var merchant = await _context.Merchants.FirstOrDefaultAsync(m => m.UserId == userId, cancellationToken);
                     if (merchant == null)
                         return Result.Failure("Merchant profile not found");
-                    if (!merchant.IsActive)
+                    if (merchant.IsDeleted || !merchant.IsActive)
                         return Result.Failure("Not Verified");
                     break;
                 }
@@ -190,7 +190,7 @@ namespace Application.Features.Auth.Command.LoginCommand
                     var delivery = await _context.Deliveries.FirstOrDefaultAsync(d => d.UserId == userId, cancellationToken);
                     if (delivery == null)
                         return Result.Failure("Delivery profile not found");
-                    if (!delivery.IsActive)
+                    if (delivery.IsDeleted || !delivery.IsActive)
                         return Result.Failure("Not Verified");
                     break;
                 }

@@ -102,6 +102,30 @@
           </div>
 
           <div class="entity-form__field">
+            <label class="entity-form__label" for="vehicle-merchant">
+              {{ 'vehicles.merchant' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <select
+              id="vehicle-merchant"
+              class="entity-form__select"
+              formControlName="merchantId"
+              required
+            >
+              <option [ngValue]="null" disabled>
+                {{ 'vehicles.selectMerchant' | t }}
+              </option>
+              <option *ngFor="let merchant of merchants" [ngValue]="merchant.merchantId">
+                {{ merchant.fullName }}{{ merchant.mobileNumber ? ' (' + merchant.mobileNumber + ')' : '' }}
+              </option>
+            </select>
+            <p *ngIf="vehicleForm.get('merchantId')?.invalid && vehicleForm.get('merchantId')?.touched" class="entity-form__error">
+              {{ 'vehicles.merchantRequired' | t }}
+            </p>
+          </div>
+        </div>
+
+        <div class="entity-form__row">
+          <div class="entity-form__field">
             <label class="entity-form__label">
               {{ 'common.status' | t }}<span class="entity-form__req">*</span>
             </label>

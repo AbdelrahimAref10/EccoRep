@@ -18,6 +18,7 @@ namespace Volt.Server
 
             // Register Admin Notification Hub Service (must be here as it requires Presentation layer)
             builder.Services.AddScoped<Infrastructure.Services.IAdminNotificationHubService, Presentation.Services.AdminNotificationHubService>();
+            builder.Services.AddScoped<Infrastructure.Services.IMerchantNotificationHubService, Presentation.Services.MerchantNotificationHubService>();
 
             builder.Services.AddControllers();
             // Configure CORS
@@ -68,6 +69,7 @@ namespace Volt.Server
 
             // Map SignalR Hub
             app.MapHub<Presentation.Hubs.AdminNotificationHub>("/AdminNotificationHub");
+            app.MapHub<Presentation.Hubs.MerchantNotificationHub>("/MerchantNotificationHub");
 
             app.MapFallbackToFile("/index.html");
             return app;

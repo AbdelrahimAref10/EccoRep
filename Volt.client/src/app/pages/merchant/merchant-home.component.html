@@ -1,0 +1,75 @@
+<section class="home">
+  <header class="home__header">
+    <div class="home__intro">
+      <h1 class="home__title">{{ 'merchant.homeTitle' | t }}</h1>
+      <p class="home__subtitle" *ngIf="summary">
+        {{ 'merchant.welcome' | t }} {{ summary.fullName }}
+      </p>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" class="home-panel home-panel--error" role="alert">{{ errorMessage }}</div>
+  <div *ngIf="isLoading" class="home-panel">{{ 'common.loading' | t }}</div>
+
+  <ng-container *ngIf="!isLoading && summary">
+    <section class="home-panel home-panel--kpis">
+      <header class="home-panel__head">
+        <div>
+          <h2>{{ 'dashboard.summary' | t }}</h2>
+        </div>
+      </header>
+
+      <div class="home-kpis">
+        <a class="home-kpi home-kpi--accent home-kpi--link" routerLink="/merchant/orders" [queryParams]="{ pendingOnly: true }">
+          <div class="home-kpi__label">{{ 'merchant.pendingInvites' | t }}</div>
+          <div class="home-kpi__value">{{ summary.pendingInvitationsCount }}</div>
+        </a>
+
+        <a class="home-kpi home-kpi--warn home-kpi--link" routerLink="/merchant/orders" [queryParams]="{ awaitingHandover: true }">
+          <div class="home-kpi__label">{{ 'merchant.awaitingHandover' | t }}</div>
+          <div class="home-kpi__value">{{ summary.awaitingHandoverCount }}</div>
+        </a>
+
+        <a class="home-kpi home-kpi--link" routerLink="/merchant/orders">
+          <div class="home-kpi__label">{{ 'merchant.activeOrders' | t }}</div>
+          <div class="home-kpi__value">{{ summary.activeOrdersCount }}</div>
+        </a>
+
+        <a class="home-kpi home-kpi--link" routerLink="/merchant/vehicles">
+          <div class="home-kpi__label">{{ 'merchant.myVehicles' | t }}</div>
+          <div class="home-kpi__value">{{ summary.myVehiclesCount }}</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="home-panel">
+      <header class="home-panel__head">
+        <div>
+          <h2>{{ 'merchant.accountBalance' | t }}</h2>
+        </div>
+        <a class="home-link" routerLink="/merchant/payments">{{ 'merchant.viewPayments' | t }}</a>
+      </header>
+
+      <div class="home-kpis">
+        <article class="home-kpi">
+          <div class="home-kpi__label">{{ 'settlements.owedByCompany' | t }}</div>
+          <div class="home-kpi__value">{{ formatMoney(summary.amountOwedByCompany) }}</div>
+        </article>
+        <article class="home-kpi">
+          <div class="home-kpi__label">{{ 'settlements.owedToCompany' | t }}</div>
+          <div class="home-kpi__value">{{ formatMoney(summary.amountOwedToCompany) }}</div>
+        </article>
+        <article class="home-kpi home-kpi--accent">
+          <div class="home-kpi__label">{{ 'settlements.balance' | t }}</div>
+          <div class="home-kpi__value">{{ formatMoney(summary.balance) }}</div>
+        </article>
+        <article class="home-kpi">
+          <div class="home-kpi__label">{{ 'merchant.cashOnReceive' | t }}</div>
+          <div class="home-kpi__value home-kpi__value--sm">
+            {{ (summary.cashOnReceive ? 'common.yes' : 'common.no') | t }}
+          </div>
+        </article>
+      </div>
+    </section>
+  </ng-container>
+</section>

@@ -20,6 +20,8 @@ namespace Application.Features.Order.Query.GetAdminAvailableVehiclesQuery
         public int CityId { get; set; }
         public DateTime ReservationDateFrom { get; set; }
         public DateTime ReservationDateTo { get; set; }
+        /// <summary>When set, reservations for this order are ignored (for replace-vehicle on existing order).</summary>
+        public int? ExcludeOrderId { get; set; }
     }
 
     public class GetAdminAvailableVehiclesQueryHandler
@@ -48,7 +50,8 @@ namespace Application.Features.Order.Query.GetAdminAvailableVehiclesQuery
                 request.CityId,
                 request.ReservationDateFrom,
                 request.ReservationDateTo,
-                cancellationToken);
+                cancellationToken,
+                request.ExcludeOrderId);
 
             if (availability.IsFailure)
             {
@@ -77,6 +80,8 @@ namespace Application.Features.Order.Query.GetAdminAvailableVehiclesQuery
                     ImageUrl = !string.IsNullOrWhiteSpace(v.ImagePath)
                         ? _imageService.GetImageUrl(v.ImagePath)
                         : null,
+                    MerchantId = v.MerchantId,
+                    MerchantName = v.MerchantName,
                     Status = (int)v.VehicleStatus,
                     IsAvailable = isAvailable,
                     UnavailableReason = isAvailable ? null : "Reserved",

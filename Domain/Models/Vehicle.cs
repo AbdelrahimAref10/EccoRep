@@ -12,9 +12,12 @@ namespace Domain.Models
         public string? ImageUrl { get; private set; }
         public VehicleStatus Status { get; private set; }
 
-        // Foreign key and navigation property
+        // Foreign keys and navigation properties
         public int SubCategoryId { get; private set; }
         public SubCategory SubCategory { get; private set; } = null!;
+
+        public int MerchantId { get; private set; }
+        public Merchant Merchant { get; private set; } = null!;
 
         // Audit properties
         public string? CreatedBy { get; set; }
@@ -30,6 +33,7 @@ namespace Domain.Models
             string name,
             string vehicleCode,
             int subCategoryId,
+            int merchantId,
             VehicleStatus status,
             string? imageUrl = null,
             string? createdBy = null)
@@ -43,6 +47,9 @@ namespace Domain.Models
             if (subCategoryId <= 0)
                 throw new ArgumentException("SubCategory ID must be greater than zero", nameof(subCategoryId));
 
+            if (merchantId <= 0)
+                throw new ArgumentException("Merchant ID must be greater than zero", nameof(merchantId));
+
             if (!Enum.IsDefined(typeof(VehicleStatus), status))
                 throw new ArgumentException("Invalid vehicle status", nameof(status));
 
@@ -51,6 +58,7 @@ namespace Domain.Models
                 Name = name.Trim(),
                 VehicleCode = vehicleCode.Trim(),
                 SubCategoryId = subCategoryId,
+                MerchantId = merchantId,
                 Status = status,
                 ImageUrl = imageUrl,
                 CreatedBy = createdBy,
@@ -64,6 +72,7 @@ namespace Domain.Models
             string name,
             string vehicleCode,
             int subCategoryId,
+            int merchantId,
             VehicleStatus status,
             string? imageUrl = null,
             string? modifiedBy = null)
@@ -77,12 +86,16 @@ namespace Domain.Models
             if (subCategoryId <= 0)
                 throw new ArgumentException("SubCategory ID must be greater than zero", nameof(subCategoryId));
 
+            if (merchantId <= 0)
+                throw new ArgumentException("Merchant ID must be greater than zero", nameof(merchantId));
+
             if (!Enum.IsDefined(typeof(VehicleStatus), status))
                 throw new ArgumentException("Invalid vehicle status", nameof(status));
 
             Name = name.Trim();
             VehicleCode = vehicleCode.Trim();
             SubCategoryId = subCategoryId;
+            MerchantId = merchantId;
             Status = status;
             ImageUrl = imageUrl;
             LastModifiedBy = modifiedBy;

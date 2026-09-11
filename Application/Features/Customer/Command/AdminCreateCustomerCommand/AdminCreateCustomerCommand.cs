@@ -10,6 +10,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Customer.Command.AdminCreateCustomerCommand
 {
+    /// <summary>
+    /// Admin creates a customer with full profile. Active immediately — no OTP/invitation.
+    /// VerificationBy is preference only (contact channel), not an activation gate.
+    /// </summary>
     public record AdminCreateCustomerCommand : IRequest<Result<int>>
     {
         public string MobileNumber { get; set; } = string.Empty;
@@ -29,7 +33,6 @@ namespace Application.Features.Customer.Command.AdminCreateCustomerCommand
         private readonly DatabaseContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
-        private readonly IInvitationCodeService _invitationCodeService;
         private readonly IUserSession _userSession;
         private readonly IImageService _imageService;
         private readonly AdminCreateCustomerCommandValidator _validator;
@@ -38,7 +41,6 @@ namespace Application.Features.Customer.Command.AdminCreateCustomerCommand
             DatabaseContext context,
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
-            IInvitationCodeService invitationCodeService,
             IUserSession userSession,
             IImageService imageService,
             AdminCreateCustomerCommandValidator validator)
@@ -46,7 +48,6 @@ namespace Application.Features.Customer.Command.AdminCreateCustomerCommand
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
-            _invitationCodeService = invitationCodeService;
             _userSession = userSession;
             _imageService = imageService;
             _validator = validator;
@@ -61,14 +62,21 @@ namespace Application.Features.Customer.Command.AdminCreateCustomerCommand
             if (!await _roleManager.RoleExistsAsync(AppRoleNames.Customer))
                 return Result.Failure<int>("Customer role is not configured");
 
+            var mobile = request.MobileNumber.Trim();
+            var email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
+
             var existingByPhone = await _userManager.Users
-                .AnyAsync(u => u.PhoneNumber == request.MobileNumber, cancellationToken);
+                .AnyAsync(u => u.PhoneNumber == mobile, cancellationToken);
             if (existingByPhone)
                 return Result.Failure<int>("User with this mobile number already exists");
 
-            if (!string.IsNullOrWhiteSpace(request.Email))
+            var existingByUserName = await _userManager.FindByNameAsync(mobile);
+            if (existingByUserName != null)
+                return Result.Failure<int>("User with this username already exists");
+
+            if (!string.IsNullOrWhiteSpace(email))
             {
-                var existingByEmail = await _userManager.FindByEmailAsync(request.Email);
+                var existingByEmail = await _userManager.FindByEmailAsync(email);
                 if (existingByEmail != null)
                     return Result.Failure<int>("User with this email already exists");
             }
@@ -100,14 +108,13 @@ namespace Application.Features.Customer.Command.AdminCreateCustomerCommand
                 }
             }
 
-            var invitationCode = _invitationCodeService.GenerateInvitationCode();
             var createdBy = _userSession.UserName ?? "Admin";
 
             var user = new ApplicationUser
             {
-                UserName = request.MobileNumber,
-                Email = request.Email,
-                PhoneNumber = request.MobileNumber,
+                UserName = mobile,
+                Email = email,
+                PhoneNumber = mobile,
                 EmailConfirmed = true,
                 PhoneNumberConfirmed = true,
                 Active = true,
@@ -131,21 +138,19 @@ namespace Application.Features.Customer.Command.AdminCreateCustomerCommand
                 return Result.Failure<int>($"Failed to assign role: {errors}");
             }
 
-            var customer = Domain.Models.Customer.Create(
+            var customer = Domain.Models.Customer.CreateByAdmin(
                 user.Id,
-                request.MobileNumber,
+                mobile,
                 request.FullName,
                 request.Gender,
-                invitationCode,
                 request.CityId,
                 request.RegisterAs,
                 request.VerificationBy,
-                request.Email,
+                email,
                 personalImageUrl,
                 commercialRegisterImageUrl,
                 createdBy);
 
-            customer.ActivateWithoutClearingCode(createdBy);
             _context.Customers.Add(customer);
 
             var saveResult = await _context.SaveChangesAsyncWithResult(cancellationToken);

@@ -65,7 +65,9 @@ namespace Application.Features.Vehicle.Query.GetVehiclesBySubCategoryQuery
                     CategoryId = v.SubCategory.CategoryId,
                     CategoryName = v.SubCategory.Category.Name,
                     CityId = v.SubCategory.Category.CityId,
-                    CityName = v.SubCategory.Category.City.Name
+                    CityName = v.SubCategory.Category.City.Name,
+                    v.MerchantId,
+                    MerchantName = v.Merchant.FullName
                 })
                 .ToListAsync(cancellationToken);
 
@@ -82,7 +84,9 @@ namespace Application.Features.Vehicle.Query.GetVehiclesBySubCategoryQuery
                 CategoryId = v.CategoryId,
                 CategoryName = v.CategoryName,
                 CityId = v.CityId,
-                CityName = v.CityName
+                CityName = v.CityName,
+                MerchantId = v.MerchantId,
+                MerchantName = v.MerchantName
             }).ToList();
 
             var result = new PagedResult<VehicleDto>

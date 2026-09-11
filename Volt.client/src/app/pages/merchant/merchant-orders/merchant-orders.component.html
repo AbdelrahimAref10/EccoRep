@@ -1,0 +1,152 @@
+<div class="orders">
+  <header class="orders__header">
+    <div class="orders__header-text">
+      <h1 class="orders__title">{{ 'merchant.ordersTitle' | t }}</h1>
+      <p class="orders__subtitle">{{ 'merchant.ordersSubtitle' | t }}</p>
+    </div>
+    <div class="orders__header-actions">
+      <div class="orders__header-stat">
+        <span class="orders__header-stat-value">{{ totalCount }}</span>
+        <span class="orders__header-stat-label">{{ 'orders.totalOrders' | t }}</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="list-filters" aria-label="filters">
+    <div class="list-filters__search">
+      <span class="list-filters__search-icon-wrap" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+      </span>
+      <input
+        type="search"
+        class="list-filters__search-input"
+        [(ngModel)]="searchOrderCode"
+        (keyup.enter)="onSearch()"
+        [placeholder]="'orders.searchPlaceholder' | t"
+      />
+    </div>
+    <button type="button" class="list-filters__search-btn" (click)="onSearch()">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+      </svg>
+      <span>{{ 'common.search' | t }}</span>
+    </button>
+    <button
+      *ngIf="pendingOnly || awaitingHandoverOnly"
+      type="button"
+      class="list-filters__clear"
+      (click)="clearQuickFilters()"
+    >
+      <span>{{ 'common.clearFilters' | t }}</span>
+    </button>
+  </section>
+
+  <div class="orders__pipeline" role="group">
+    <button
+      *ngFor="let item of pipelineStates"
+      type="button"
+      class="orders__pipe"
+      [class.orders__pipe--active]="selectedState === item.state"
+      (click)="selectState(item.state)"
+    >
+      <span class="orders__pipe-dot" aria-hidden="true"></span>
+      {{ item.key | t }}
+    </button>
+  </div>
+
+  <div *ngIf="pendingOnly" class="orders__alert orders__alert--success">{{ 'merchant.filterPendingHint' | t }}</div>
+  <div *ngIf="awaitingHandoverOnly" class="orders__alert orders__alert--success">{{ 'merchant.filterHandoverHint' | t }}</div>
+  <div *ngIf="errorMessage" class="orders__alert orders__alert--error" role="alert">{{ errorMessage }}</div>
+
+  <section class="orders__panel">
+    <div *ngIf="isLoading" class="orders__loading">
+      <div class="orders__spinner" aria-hidden="true"></div>
+      <p>{{ 'common.loading' | t }}</p>
+    </div>
+
+    <div *ngIf="!isLoading && orders.length === 0" class="orders__empty">
+      <p class="orders__empty-title">{{ 'merchant.ordersEmpty' | t }}</p>
+    </div>
+
+    <ng-container *ngIf="!isLoading && orders.length > 0">
+      <div class="orders__row orders__row--head" aria-hidden="true">
+        <span class="orders__col orders__col--order">{{ 'orders.colOrder' | t }}</span>
+        <span class="orders__col orders__col--customer">{{ 'merchant.myResponse' | t }}</span>
+        <span class="orders__col orders__col--sub">{{ 'common.city' | t }}</span>
+        <span class="orders__col orders__col--total">{{ 'merchant.myNet' | t }}</span>
+        <span class="orders__col orders__col--status">{{ 'common.status' | t }}</span>
+        <span class="orders__col orders__col--date">{{ 'merchant.myVehicles' | t }}</span>
+        <span class="orders__col orders__col--action">{{ 'common.actions' | t }}</span>
+      </div>
+
+      <div class="orders__list">
+        <article
+          *ngFor="let order of orders"
+          class="orders__row"
+          [class.orders__row--urgent]="order.isUrgent"
+          (click)="openOrder(order.orderId)"
+        >
+          <div class="orders__col orders__col--order">
+            <span class="orders__order-code">{{ order.orderCode }}</span>
+            <span *ngIf="order.isUrgent" class="orders__urgent-badge">{{ 'orders.urgent' | t }}</span>
+            <span *ngIf="order.canAccept" class="orders__mini-badge">{{ 'merchant.needsConfirm' | t }}</span>
+            <span *ngIf="order.canHandover" class="orders__mini-badge orders__mini-badge--warn">
+              {{ 'merchant.needsHandover' | t }}
+            </span>
+          </div>
+
+          <div class="orders__col orders__col--customer">
+            <span class="orders__customer-name">{{ getResponseLabel(order.myResponseStatus) }}</span>
+            <span class="orders__customer-city">{{ order.subCategoryName }}</span>
+          </div>
+
+          <div class="orders__col orders__col--sub">
+            <span class="orders__sub-name">{{ order.cityName }}</span>
+          </div>
+
+          <div class="orders__col orders__col--total">
+            <span class="orders__total-amount">
+              {{ order.myNetTotal ? formatMoney(order.myNetTotal) : '—' }}
+            </span>
+          </div>
+
+          <div class="orders__col orders__col--status">
+            <span class="orders__state">
+              <span class="orders__state-dot" aria-hidden="true"></span>
+              {{ getStateLabel(order.orderState) }}
+            </span>
+          </div>
+
+          <div class="orders__col orders__col--date">
+            <span class="orders__date">{{ order.myVehiclesCount }}</span>
+          </div>
+
+          <div class="orders__col orders__col--action">
+            <button
+              type="button"
+              class="orders__view-btn"
+              (click)="openOrder(order.orderId); $event.stopPropagation()"
+              [attr.title]="'common.view' | t"
+            >
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
+        </article>
+      </div>
+    </ng-container>
+  </section>
+
+  <app-pagination
+    *ngIf="!isLoading && totalPages > 1"
+    [currentPage]="currentPage"
+    [totalPages]="totalPages"
+    [totalCount]="totalCount"
+    [pageSize]="pageSize"
+    (pageChange)="onPageChange($event)"
+  ></app-pagination>
+</div>

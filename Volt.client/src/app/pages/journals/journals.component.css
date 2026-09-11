@@ -1,0 +1,222 @@
+:host {
+  display: block;
+}
+
+.journals {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  color: var(--volt-text-primary);
+  font-family: var(--volt-font);
+}
+
+.journals__header {
+  padding: 0.2rem 0.1rem;
+}
+
+.journals__title {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 800;
+}
+
+.journals__subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--volt-text-muted);
+}
+
+.journals__alert {
+  padding: 0.8rem 1rem;
+  border-radius: 0.8rem;
+  font-size: 0.9rem;
+}
+
+.journals__alert--err {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.journals__filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--volt-border);
+  border-radius: var(--volt-radius);
+  background: var(--volt-surface);
+  box-shadow: var(--volt-shadow);
+  align-items: end;
+}
+
+.journals__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.journals__field label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--volt-text-secondary);
+}
+
+.journals__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.journals__btn {
+  min-height: 3rem;
+  padding: 0 1.1rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-surface);
+  color: var(--volt-text-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.journals__btn--primary {
+  border-color: var(--volt-accent);
+  background: var(--volt-accent);
+  color: #fff;
+}
+
+.journals__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.journals__loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--volt-text-muted);
+}
+
+.journals__panel {
+  border-radius: var(--volt-radius);
+  border: 1px solid var(--volt-border);
+  background: var(--volt-surface);
+  box-shadow: var(--volt-shadow);
+  overflow: hidden;
+}
+
+.journals__table-scroll {
+  overflow-x: auto;
+}
+
+.journals__table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.journals__table thead th {
+  padding: 0.85rem 1rem;
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--volt-text-muted);
+  background: var(--volt-surface-muted);
+  border-bottom: 1px solid var(--volt-border);
+}
+
+.journals__table tbody td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  text-align: center;
+  border-bottom: 1px solid var(--volt-border);
+  font-size: 0.875rem;
+}
+
+.journals__table tbody tr:hover td {
+  background: var(--volt-surface-hover);
+}
+
+.journals__empty {
+  padding: 2rem !important;
+  color: var(--volt-text-muted);
+}
+
+.journals__party {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: center;
+}
+
+.journals__party-type {
+  font-size: 0.72rem;
+  color: var(--volt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.journals__party-id {
+  font-size: 0.75rem;
+  color: var(--volt-text-muted);
+}
+
+.journals__dir {
+  display: inline-flex;
+  min-width: 4.5rem;
+  justify-content: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.journals__dir--credit {
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+}
+
+.journals__dir--debit {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+}
+
+.journals__totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.75rem;
+  padding: 1rem 1.1rem;
+  border-top: 1px solid var(--volt-border);
+  background: var(--volt-surface-muted);
+}
+
+.journals__total {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.journals__total span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--volt-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.journals__total strong {
+  font-size: 1.05rem;
+}
+
+.journals__total small {
+  font-size: 0.78rem;
+  color: var(--volt-text-secondary);
+}
+
+.journals__total--positive strong {
+  color: #15803d;
+}
+
+.journals__total--negative strong {
+  color: #b91c1c;
+}

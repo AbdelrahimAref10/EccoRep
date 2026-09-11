@@ -16,96 +16,115 @@ export interface AdminNotificationDto {
   createdDate: Date;
 }
 
+export interface MerchantNotificationDto {
+  merchantNotificationId: number;
+  merchantId: number;
+  title: string;
+  message: string;
+  orderId?: number;
+  orderCode?: string;
+  notificationType: number;
+  isRead: boolean;
+  readAt?: Date;
+  createdDate: Date;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class SignalRService {
   notificationConnection: HubConnection | null = null;
-  isConnected: boolean = false;
+  merchantNotificationConnection: HubConnection | null = null;
+  isConnected = false;
+  isMerchantConnected = false;
 
   private notificationSubject = new BehaviorSubject<AdminNotificationDto | null>(null);
   public notification$: Observable<AdminNotificationDto | null> = this.notificationSubject.asObservable();
+
+  private merchantNotificationSubject = new BehaviorSubject<MerchantNotificationDto | null>(null);
+  public merchantNotification$: Observable<MerchantNotificationDto | null> =
+    this.merchantNotificationSubject.asObservable();
 
   constructor(
     private appConfigService: AppConfigService,
     private ngZone: NgZone
   ) {}
 
-  // Start admin notification connection
   public StartNotificationConnection(accessToken: string): void {
     if (this.notificationConnection) {
       return;
     }
 
-    // Check if config is already loaded
     if (this.appConfigService.loaded$.value) {
-      this.proceedWithConnection(accessToken);
+      this.proceedWithAdminConnection(accessToken);
       return;
     }
 
-    // Wait for config to load from appSettings.json
     this.appConfigService.loaded$
       .pipe(
         filter(loaded => loaded === true),
         take(1)
       )
-      .subscribe(() => {
-        this.proceedWithConnection(accessToken);
-      });
+      .subscribe(() => this.proceedWithAdminConnection(accessToken));
   }
 
-  private proceedWithConnection(accessToken: string): void {
-    var config = this.appConfigService.getConfig();
-    var url = config.apiBaseUrl;
-
-    // Remove trailing slash if present
-    url = (url || '').replace(/\/$/, '');
-
-    // apiBaseUrl must be configured in assets/appSettings.json
-    // For production, update appSettings.json with your production backend URL
-    if (!url || url.trim() === '') {
-      console.error('❌ apiBaseUrl is not configured in appSettings.json');
+  public StartMerchantNotificationConnection(accessToken: string): void {
+    if (this.merchantNotificationConnection) {
       return;
     }
 
-    var hubUrl = `${url}/AdminNotificationHub`;
+    if (this.appConfigService.loaded$.value) {
+      this.proceedWithMerchantConnection(accessToken);
+      return;
+    }
 
-    this.createNotificationConnection(hubUrl, accessToken);
+    this.appConfigService.loaded$
+      .pipe(
+        filter(loaded => loaded === true),
+        take(1)
+      )
+      .subscribe(() => this.proceedWithMerchantConnection(accessToken));
   }
 
-  private createNotificationConnection(hubUrl: string, accessToken: string): void {
-    var connection = new HubConnectionBuilder()
-      .configureLogging(LogLevel.Information)
-      .withUrl(hubUrl, {
-        accessTokenFactory: () => {
-          const token = localStorage.getItem('auth_token') || accessToken;
-          console.log('SignalR access token factory called, token exists:', !!token);
-          console.log('Token length:', token ? token.length : 0);
-          if (!token) {
-            console.error('❌ No access token available for SignalR connection!');
-          }
-          return Promise.resolve(token || '');
-        },
-        skipNegotiation: true,
-        transport: HttpTransportType.WebSockets
-      })
-      .withAutomaticReconnect([0, 2000, 10000, 30000])
-      .build();
+  private proceedWithAdminConnection(accessToken: string): void {
+    const url = this.resolveBaseUrl();
+    if (!url) {
+      return;
+    }
+    this.createAdminConnection(`${url}/AdminNotificationHub`, accessToken);
+  }
 
-    // Register the event handler BEFORE starting the connection
+  private proceedWithMerchantConnection(accessToken: string): void {
+    const url = this.resolveBaseUrl();
+    if (!url) {
+      return;
+    }
+    this.createMerchantConnection(`${url}/MerchantNotificationHub`, accessToken);
+  }
+
+  private resolveBaseUrl(): string | null {
+    const config = this.appConfigService.getConfig();
+    const url = (config.apiBaseUrl || '').replace(/\/$/, '');
+    if (!url || url.trim() === '') {
+      console.error('❌ apiBaseUrl is not configured in appSettings.json');
+      return null;
+    }
+    return url;
+  }
+
+  private createAdminConnection(hubUrl: string, accessToken: string): void {
+    const connection = this.buildConnection(hubUrl, accessToken);
+
     connection.on('NewAdminNotification', (notification: AdminNotificationDto) => {
-      // Use NgZone to ensure Angular change detection runs
       this.ngZone.run(() => {
         console.log('📥 New admin notification received:', notification);
-        // Emit notification to subscribers
         this.notificationSubject.next(notification);
       });
     });
 
-    // Store connection before starting
     this.notificationConnection = connection;
-
-    connection.start()
+    connection
+      .start()
       .then(() => {
         this.isConnected = true;
         console.log('✅ SignalR Admin Notification Connected!');
@@ -116,20 +135,75 @@ export class SignalRService {
         this.notificationConnection = null;
       });
 
+    this.wireLifecycle(connection, 'admin');
+  }
+
+  private createMerchantConnection(hubUrl: string, accessToken: string): void {
+    const connection = this.buildConnection(hubUrl, accessToken);
+
+    connection.on('NewMerchantNotification', (notification: MerchantNotificationDto) => {
+      this.ngZone.run(() => {
+        console.log('📥 New merchant notification received:', notification);
+        this.merchantNotificationSubject.next(notification);
+      });
+    });
+
+    this.merchantNotificationConnection = connection;
+    connection
+      .start()
+      .then(() => {
+        this.isMerchantConnected = true;
+        console.log('✅ SignalR Merchant Notification Connected!');
+      })
+      .catch((err: any) => {
+        console.error('❌ Merchant Notification SignalR connection error:', err);
+        this.isMerchantConnected = false;
+        this.merchantNotificationConnection = null;
+      });
+
+    this.wireLifecycle(connection, 'merchant');
+  }
+
+  private buildConnection(hubUrl: string, accessToken: string): HubConnection {
+    return new HubConnectionBuilder()
+      .configureLogging(LogLevel.Information)
+      .withUrl(hubUrl, {
+        accessTokenFactory: () => {
+          const token = localStorage.getItem('auth_token') || accessToken;
+          return Promise.resolve(token || '');
+        },
+        skipNegotiation: true,
+        transport: HttpTransportType.WebSockets
+      })
+      .withAutomaticReconnect([0, 2000, 10000, 30000])
+      .build();
+  }
+
+  private wireLifecycle(connection: HubConnection, kind: 'admin' | 'merchant'): void {
     connection.onreconnecting(() => {
-      console.log('🔄 Notification SignalR reconnecting...');
-      this.isConnected = false;
+      if (kind === 'admin') {
+        this.isConnected = false;
+      } else {
+        this.isMerchantConnected = false;
+      }
     });
 
     connection.onreconnected(() => {
-      console.log('✅ Notification SignalR reconnected!');
-      this.isConnected = true;
+      if (kind === 'admin') {
+        this.isConnected = true;
+      } else {
+        this.isMerchantConnected = true;
+      }
     });
 
-    connection.onclose((error?: Error) => {
-      console.log('🔴 Notification SignalR connection closed', error);
-      this.isConnected = false;
-      this.notificationConnection = null;
+    connection.onclose(() => {
+      if (kind === 'admin') {
+        this.isConnected = false;
+        this.notificationConnection = null;
+      } else {
+        this.isMerchantConnected = false;
+        this.merchantNotificationConnection = null;
+      }
     });
   }
 
@@ -137,18 +211,29 @@ export class SignalRService {
     return this.notification$;
   }
 
+  public ListenForMerchantNotifications(): Observable<MerchantNotificationDto | null> {
+    return this.merchantNotification$;
+  }
+
   public StopNotificationConnection(): void {
     if (this.notificationConnection) {
-      this.notificationConnection.stop()
+      this.notificationConnection
+        .stop()
         .then(() => {
-          console.log('Notification SignalR connection stopped');
           this.notificationConnection = null;
           this.isConnected = false;
         })
-        .catch((err: any) => {
-          console.error('Error stopping Notification SignalR connection:', err);
-        });
+        .catch((err: any) => console.error('Error stopping Notification SignalR connection:', err));
+    }
+
+    if (this.merchantNotificationConnection) {
+      this.merchantNotificationConnection
+        .stop()
+        .then(() => {
+          this.merchantNotificationConnection = null;
+          this.isMerchantConnected = false;
+        })
+        .catch((err: any) => console.error('Error stopping Merchant Notification SignalR connection:', err));
     }
   }
 }
-

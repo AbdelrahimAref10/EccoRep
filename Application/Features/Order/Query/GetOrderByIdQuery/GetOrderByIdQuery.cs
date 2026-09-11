@@ -2,6 +2,7 @@ using Application.Features.Order.DTOs;
 using CSharpFunctionalExtensions;
 using Domain.Enums;
 using Infrastructure;
+using Infrastructure.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -18,10 +19,12 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
     public class GetOrderByIdQueryHandler : IRequestHandler<GetOrderByIdQuery, Result<OrderDetailDto>>
     {
         private readonly DatabaseContext _context;
+        private readonly IImageService _imageService;
 
-        public GetOrderByIdQueryHandler(DatabaseContext context)
+        public GetOrderByIdQueryHandler(DatabaseContext context, IImageService imageService)
         {
             _context = context;
+            _imageService = imageService;
         }
 
         public async Task<Result<OrderDetailDto>> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
@@ -32,6 +35,7 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                 .Include(o => o.City)
                 .Include(o => o.OrderVehicles)
                     .ThenInclude(ov => ov.Vehicle)
+                        .ThenInclude(v => v.Merchant)
                 .Include(o => o.OrderPayments)
                 .Include(o => o.ReservedVehiclesPerDays)
                 .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
@@ -41,21 +45,52 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                 return Result.Failure<OrderDetailDto>($"Order with ID {request.OrderId} not found");
             }
 
-            // Get RefundablePaypalAmount if exists
             var refundablePaypal = await _context.RefundablePaypalAmounts
                 .FirstOrDefaultAsync(rpa => rpa.OrderId == request.OrderId, cancellationToken);
 
-            // Get OrderTotals if exists
             var orderTotals = await _context.OrderTotals
                 .FirstOrDefaultAsync(ot => ot.OrderId == request.OrderId, cancellationToken);
 
-            // Get cancellation fee wallet entry if order was cancelled with fee (not prior debt UnderPayment)
             var orderCodeMarker = $"Order #{order.OrderCode}";
             var cancellationFeeEntry = await _context.CustomerWallets
                 .Where(cw => cw.OrderId == request.OrderId
                     && cw.Type == WalletType.OrderCancellationFees
                     && cw.Description.Contains(orderCodeMarker))
                 .FirstOrDefaultAsync(cancellationToken);
+
+            var merchantOrders = await _context.MerchantOrders
+                .AsNoTracking()
+                .Include(mo => mo.Merchant)
+                .Where(mo => mo.OrderId == request.OrderId)
+                .ToListAsync(cancellationToken);
+
+            var merchantPaymentDetails = await _context.MerchantOrderPaymentDetails
+                .AsNoTracking()
+                .Include(p => p.Merchant)
+                .Include(p => p.Vehicle)
+                .Where(p => p.OrderId == request.OrderId)
+                .ToListAsync(cancellationToken);
+
+            var deliveryMenOrders = await _context.DeliveryMenOrders
+                .AsNoTracking()
+                .Include(d => d.Delivery)
+                .Include(d => d.Vehicle)
+                .Where(d => d.OrderId == request.OrderId)
+                .ToListAsync(cancellationToken);
+
+            var deliveryPaymentDetails = await _context.DeliveryOrderPaymentDetails
+                .AsNoTracking()
+                .Include(d => d.Delivery)
+                .Include(d => d.Vehicle)
+                .Where(d => d.OrderId == request.OrderId)
+                .ToListAsync(cancellationToken);
+
+            var journals = await _context.OrderJournals
+                .AsNoTracking()
+                .Where(j => j.OrderId == request.OrderId)
+                .OrderBy(j => j.CreatedDate)
+                .ThenBy(j => j.OrderJournalId)
+                .ToListAsync(cancellationToken);
 
             var orderDetailDto = new OrderDetailDto
             {
@@ -85,11 +120,18 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                 PaymentMethod = (PaymentMethod)order.PaymentMethodId,
                 OrderState = order.OrderState,
                 CreatedDate = order.CreatedDate,
+                ReceiptFaultParty = order.ReceiptFaultParty,
+                ReceiptRejectNote = order.ReceiptRejectNote,
                 OrderVehicles = order.OrderVehicles.Select(ov => new OrderVehicleDto
                 {
                     VehicleId = ov.VehicleId,
                     VehicleName = ov.Vehicle.Name,
                     VehicleCode = ov.Vehicle.VehicleCode,
+                    ImageUrl = !string.IsNullOrWhiteSpace(ov.Vehicle.ImageUrl)
+                        ? _imageService.GetImageUrl(ov.Vehicle.ImageUrl)
+                        : null,
+                    MerchantId = ov.Vehicle.MerchantId,
+                    MerchantName = ov.Vehicle.Merchant?.FullName ?? string.Empty,
                     Status = (int)ov.Vehicle.Status
                 }).ToList(),
                 OrderPayments = order.OrderPayments.Select(op => new OrderPaymentDto
@@ -128,11 +170,69 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                     WalletEntryId = cancellationFeeEntry.Id,
                     Amount = cancellationFeeEntry.Withdraw,
                     State = cancellationFeeEntry.State
-                } : null
+                } : null,
+                MerchantOrders = merchantOrders.Select(mo => new MerchantOrderDto
+                {
+                    MerchantOrderId = mo.MerchantOrderId,
+                    OrderId = mo.OrderId,
+                    MerchantId = mo.MerchantId,
+                    MerchantName = mo.Merchant.FullName,
+                    ResponseStatus = mo.ResponseStatus,
+                    RejectReason = mo.RejectReason,
+                    RespondedAt = mo.RespondedAt,
+                    CreatedDate = mo.CreatedDate
+                }).ToList(),
+                MerchantOrderPaymentDetails = merchantPaymentDetails.Select(p => new MerchantOrderPaymentDetailDto
+                {
+                    MerchantOrderPaymentDetailId = p.MerchantOrderPaymentDetailId,
+                    OrderId = p.OrderId,
+                    MerchantId = p.MerchantId,
+                    MerchantName = p.Merchant.FullName,
+                    VehicleId = p.VehicleId,
+                    VehicleCode = p.Vehicle.VehicleCode,
+                    VehicleRental = p.VehicleRental,
+                    ServiceFeeShare = p.ServiceFeeShare,
+                    NetAmount = p.NetAmount
+                }).ToList(),
+                DeliveryMenOrders = deliveryMenOrders.Select(d => new DeliveryMenOrderDto
+                {
+                    DeliveryMenOrderId = d.DeliveryMenOrderId,
+                    OrderId = d.OrderId,
+                    VehicleId = d.VehicleId,
+                    VehicleCode = d.Vehicle.VehicleCode,
+                    DeliveryId = d.DeliveryId,
+                    DeliveryName = d.Delivery.FullName,
+                    DeliveryReceivedFromMerchant = d.DeliveryReceivedFromMerchant,
+                    ReceivedFromMerchantAt = d.ReceivedFromMerchantAt
+                }).ToList(),
+                DeliveryOrderPaymentDetails = deliveryPaymentDetails.Select(d => new DeliveryOrderPaymentDetailDto
+                {
+                    DeliveryOrderPaymentDetailId = d.DeliveryOrderPaymentDetailId,
+                    OrderId = d.OrderId,
+                    DeliveryId = d.DeliveryId,
+                    DeliveryName = d.Delivery.FullName,
+                    VehicleId = d.VehicleId,
+                    VehicleCode = d.Vehicle.VehicleCode,
+                    DeliveryFeeShare = d.DeliveryFeeShare
+                }).ToList(),
+                OrderJournals = journals.Select(j => new OrderJournalDto
+                {
+                    OrderJournalId = j.OrderJournalId,
+                    OrderId = j.OrderId,
+                    PartyType = j.PartyType,
+                    PartyId = j.PartyId,
+                    Direction = j.Direction,
+                    Amount = j.Amount,
+                    EntryKind = j.EntryKind,
+                    IdempotencyKey = j.IdempotencyKey,
+                    FaultParty = j.FaultParty,
+                    Note = j.Note,
+                    CreatedBy = j.CreatedBy,
+                    CreatedDate = j.CreatedDate
+                }).ToList()
             };
 
             return Result.Success(orderDetailDto);
         }
     }
 }
-

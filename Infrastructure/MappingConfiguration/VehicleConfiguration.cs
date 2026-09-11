@@ -42,6 +42,10 @@ namespace Infrastructure.MappingConfiguration
                 .HasColumnName("SubCategoryId")
                 .IsRequired();
 
+            builder.Property(v => v.MerchantId)
+                .HasColumnName("MerchantId")
+                .IsRequired();
+
             builder.Property(v => v.CreatedBy)
                 .HasColumnName("CreatedBy")
                 .HasMaxLength(256);
@@ -64,8 +68,17 @@ namespace Infrastructure.MappingConfiguration
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
 
+            builder.HasOne(v => v.Merchant)
+                .WithMany(m => m.Vehicles)
+                .HasForeignKey(v => v.MerchantId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
             builder.HasIndex(v => v.SubCategoryId)
                 .HasDatabaseName("IX_VO_Vehicle_SubCategoryId");
+
+            builder.HasIndex(v => v.MerchantId)
+                .HasDatabaseName("IX_VO_Vehicle_MerchantId");
 
             builder.HasIndex(v => v.Status)
                 .HasDatabaseName("IX_VO_Vehicle_Status");

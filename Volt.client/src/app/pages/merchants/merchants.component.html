@@ -1,0 +1,92 @@
+<div class="merchants">
+  <header class="merchants__header">
+    <div>
+      <h1 class="merchants__title">{{ 'merchants.title' | t }}</h1>
+      <p class="merchants__subtitle">{{ 'merchants.subtitle' | t }}</p>
+    </div>
+    <button type="button" class="merchants__add-btn" (click)="onAddNew()">
+      <span>{{ 'merchants.add' | t }}</span>
+    </button>
+  </header>
+
+  <div *ngIf="successMessage" class="merchants__alert merchants__alert--ok" role="status">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="merchants__alert" role="alert">{{ errorMessage }}</div>
+
+  <section class="merchants__filters" aria-label="filters">
+    <input
+      type="search"
+      class="merchants__search"
+      [(ngModel)]="searchTerm"
+      (keyup.enter)="applyFilters()"
+      [placeholder]="'merchants.searchPlaceholder' | t"
+    />
+
+    <select class="merchants__select" [(ngModel)]="isDeletedFilter">
+      <option [ngValue]="null">{{ 'merchants.filterNotDeleted' | t }}</option>
+      <option [ngValue]="true">{{ 'merchants.filterDeleted' | t }}</option>
+    </select>
+
+    <button type="button" class="merchants__btn merchants__btn--primary" (click)="applyFilters()">
+      {{ 'common.search' | t }}
+    </button>
+    <button type="button" class="merchants__btn" (click)="clearFilters()">
+      {{ 'common.clearFilters' | t }}
+    </button>
+  </section>
+
+  <div *ngIf="isLoading" class="merchants__loading">{{ 'common.loading' | t }}</div>
+
+  <section *ngIf="!isLoading" class="merchants__panel">
+    <div class="merchants__table-scroll">
+      <table class="merchants__table">
+        <thead>
+          <tr>
+            <th>{{ 'common.name' | t }}</th>
+            <th>{{ 'login.username' | t }}</th>
+            <th>{{ 'common.city' | t }}</th>
+            <th>{{ 'common.phone' | t }}</th>
+            <th>{{ 'common.email' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'merchants.cashOnReceive' | t }}</th>
+            <th>{{ 'merchants.deleted' | t }}</th>
+            <th>{{ 'common.createdDate' | t }}</th>
+            <th>{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="merchants.length === 0">
+            <td colspan="10" class="merchants__empty">{{ 'merchants.empty' | t }}</td>
+          </tr>
+          <tr *ngFor="let m of merchants">
+            <td>{{ m.fullName }}</td>
+            <td>{{ m.userName || '—' }}</td>
+            <td>{{ m.cityName || '—' }}</td>
+            <td>{{ m.mobileNumber }}</td>
+            <td>{{ m.email || '—' }}</td>
+            <td>
+              <span
+                class="merchants__badge"
+                [class.merchants__badge--on]="m.isActive"
+                [class.merchants__badge--off]="!m.isActive"
+              >
+                {{ statusLabel(m.isActive) }}
+              </span>
+            </td>
+            <td>{{ m.cashOnReceive ? ('common.yes' | t) : ('common.no' | t) }}</td>
+            <td>{{ m.isDeleted ? ('common.yes' | t) : ('common.no' | t) }}</td>
+            <td>{{ m.createdDate | date:'yyyy-MM-dd' }}</td>
+            <td>
+              <div class="merchants__row-actions" *ngIf="!m.isDeleted">
+                <button type="button" class="merchants__link" (click)="onEdit(m)">{{ 'common.edit' | t }}</button>
+                <button type="button" class="merchants__link merchants__link--danger" (click)="onDelete(m)" [disabled]="isDeleting">
+                  {{ 'common.delete' | t }}
+                </button>
+              </div>
+              <span *ngIf="m.isDeleted">—</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

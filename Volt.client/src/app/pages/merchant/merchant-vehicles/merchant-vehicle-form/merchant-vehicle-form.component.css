@@ -1,0 +1,4 @@
+/* Reuses entity-form styles; keep file for component styleUrls contract. */
+:host {
+  display: block;
+}

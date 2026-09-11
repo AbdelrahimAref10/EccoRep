@@ -1,0 +1,90 @@
+<div class="deliveries">
+  <header class="deliveries__header">
+    <div>
+      <h1 class="deliveries__title">{{ 'deliveries.title' | t }}</h1>
+      <p class="deliveries__subtitle">{{ 'deliveries.subtitle' | t }}</p>
+    </div>
+    <button type="button" class="deliveries__add-btn" (click)="onAddNew()">
+      <span>{{ 'deliveries.add' | t }}</span>
+    </button>
+  </header>
+
+  <div *ngIf="successMessage" class="deliveries__alert deliveries__alert--ok" role="status">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="deliveries__alert" role="alert">{{ errorMessage }}</div>
+
+  <section class="deliveries__filters" aria-label="filters">
+    <input
+      type="search"
+      class="deliveries__search"
+      [(ngModel)]="searchTerm"
+      (keyup.enter)="applyFilters()"
+      [placeholder]="'deliveries.searchPlaceholder' | t"
+    />
+
+    <select class="deliveries__select" [(ngModel)]="isDeletedFilter">
+      <option [ngValue]="null">{{ 'deliveries.filterNotDeleted' | t }}</option>
+      <option [ngValue]="true">{{ 'deliveries.filterDeleted' | t }}</option>
+    </select>
+
+    <button type="button" class="deliveries__btn deliveries__btn--primary" (click)="applyFilters()">
+      {{ 'common.search' | t }}
+    </button>
+    <button type="button" class="deliveries__btn" (click)="clearFilters()">
+      {{ 'common.clearFilters' | t }}
+    </button>
+  </section>
+
+  <div *ngIf="isLoading" class="deliveries__loading">{{ 'common.loading' | t }}</div>
+
+  <section *ngIf="!isLoading" class="deliveries__panel">
+    <div class="deliveries__table-scroll">
+      <table class="deliveries__table">
+        <thead>
+          <tr>
+            <th>{{ 'common.name' | t }}</th>
+            <th>{{ 'login.username' | t }}</th>
+            <th>{{ 'common.city' | t }}</th>
+            <th>{{ 'common.phone' | t }}</th>
+            <th>{{ 'common.email' | t }}</th>
+            <th>{{ 'common.status' | t }}</th>
+            <th>{{ 'deliveries.deleted' | t }}</th>
+            <th>{{ 'common.createdDate' | t }}</th>
+            <th>{{ 'common.actions' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="deliveries.length === 0">
+            <td colspan="9" class="deliveries__empty">{{ 'deliveries.empty' | t }}</td>
+          </tr>
+          <tr *ngFor="let d of deliveries">
+            <td>{{ d.fullName }}</td>
+            <td>{{ d.userName || '—' }}</td>
+            <td>{{ d.cityName || '—' }}</td>
+            <td>{{ d.mobileNumber }}</td>
+            <td>{{ d.email || '—' }}</td>
+            <td>
+              <span
+                class="deliveries__badge"
+                [class.deliveries__badge--on]="d.isActive"
+                [class.deliveries__badge--off]="!d.isActive"
+              >
+                {{ statusLabel(d.isActive) }}
+              </span>
+            </td>
+            <td>{{ d.isDeleted ? ('common.yes' | t) : ('common.no' | t) }}</td>
+            <td>{{ d.createdDate | date:'yyyy-MM-dd' }}</td>
+            <td>
+              <div class="deliveries__row-actions" *ngIf="!d.isDeleted">
+                <button type="button" class="deliveries__link" (click)="onEdit(d)">{{ 'common.edit' | t }}</button>
+                <button type="button" class="deliveries__link deliveries__link--danger" (click)="onDelete(d)" [disabled]="isDeleting">
+                  {{ 'common.delete' | t }}
+                </button>
+              </div>
+              <span *ngIf="d.isDeleted">—</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

@@ -24,7 +24,8 @@ namespace Application.Features.Order.Services
             int cityId,
             DateTime reservationDateFrom,
             DateTime reservationDateTo,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            int? excludeOrderId = null)
         {
             var dateRange = ValidateDateRange(reservationDateFrom, reservationDateTo, requireNotInPast: true);
             if (dateRange.IsFailure)
@@ -57,7 +58,9 @@ namespace Application.Features.Order.Services
                 .AsNoTracking()
                 .Where(v => v.SubCategoryId == subCategoryId
                     && v.SubCategory.Category.CityId == cityId
-                    && v.Status != VehicleStatus.UnderMaintenance)
+                    && v.Status != VehicleStatus.UnderMaintenance
+                    && v.MerchantId > 0
+                    && !v.Merchant.IsDeleted)
                 .OrderBy(v => v.Name)
                 .Select(v => new
                 {
@@ -65,13 +68,15 @@ namespace Application.Features.Order.Services
                     v.Name,
                     v.VehicleCode,
                     v.ImageUrl,
-                    v.Status
+                    v.Status,
+                    v.MerchantId,
+                    MerchantName = v.Merchant.FullName
                 })
                 .ToListAsync(cancellationToken);
 
             var vehicleIds = vehicles.Select(v => v.VehicleId).ToList();
             var reservationsByVehicle = await GetActiveReservationsByVehicleAsync(
-                vehicleIds, from, to, cancellationToken);
+                vehicleIds, from, to, excludeOrderId, cancellationToken);
 
             IReadOnlyList<VehicleReservationAvailabilityItem> items = vehicles
                 .Select(v =>
@@ -87,6 +92,8 @@ namespace Application.Features.Order.Services
                         VehicleCode = v.VehicleCode,
                         ImagePath = v.ImageUrl,
                         VehicleStatus = v.Status,
+                        MerchantId = v.MerchantId,
+                        MerchantName = v.MerchantName,
                         AvailabilityStatus = conflicting.Count > 0
                             ? VehicleAvailabilityStatus.Reserved
                             : VehicleAvailabilityStatus.Available,
@@ -102,6 +109,7 @@ namespace Application.Features.Order.Services
             IReadOnlyCollection<int> vehicleIds,
             DateTime from,
             DateTime to,
+            int? excludeOrderId,
             CancellationToken cancellationToken)
         {
             if (vehicleIds.Count == 0)
@@ -109,14 +117,21 @@ namespace Application.Features.Order.Services
                 return new Dictionary<int, List<(DateTime, DateTime)>>();
             }
 
-            var rows = await _context.ReservedVehiclesPerDays
+            var query = _context.ReservedVehiclesPerDays
                 .AsNoTracking()
                 .Where(rv => vehicleIds.Contains(rv.VehicleId)
                     && rv.State == ReservedVehicleState.StillBooked
                     && rv.Order.OrderState != OrderState.Completed
                     && rv.Order.OrderState != OrderState.Cancelled
                     && rv.DateFrom <= to
-                    && rv.DateTo >= from)
+                    && rv.DateTo >= from);
+
+            if (excludeOrderId.HasValue)
+            {
+                query = query.Where(rv => rv.OrderId != excludeOrderId.Value);
+            }
+
+            var rows = await query
                 .Select(rv => new { rv.VehicleId, rv.DateFrom, rv.DateTo })
                 .ToListAsync(cancellationToken);
 

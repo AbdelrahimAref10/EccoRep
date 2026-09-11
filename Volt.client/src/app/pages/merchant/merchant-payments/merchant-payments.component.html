@@ -1,0 +1,93 @@
+<div class="journals">
+  <header class="journals__header">
+    <div>
+      <h1 class="journals__title">{{ 'merchant.paymentsTitle' | t }}</h1>
+      <p class="journals__subtitle">{{ 'merchant.paymentsSubtitle' | t }}</p>
+    </div>
+  </header>
+
+  <div *ngIf="errorMessage" class="journals__alert journals__alert--err" role="alert">{{ errorMessage }}</div>
+  <div *ngIf="isLoading" class="journals__loading">{{ 'common.loading' | t }}</div>
+
+  <section class="journals__totals" *ngIf="ledger">
+    <div class="journals__total">
+      <span>{{ 'settlements.owedByCompany' | t }}</span>
+      <strong>{{ formatMoney(ledger.amountOwedByCompany) }}</strong>
+    </div>
+    <div class="journals__total">
+      <span>{{ 'settlements.owedToCompany' | t }}</span>
+      <strong>{{ formatMoney(ledger.amountOwedToCompany) }}</strong>
+    </div>
+    <div class="journals__total">
+      <span>{{ 'settlements.balance' | t }}</span>
+      <strong>{{ formatMoney(ledger.balance) }}</strong>
+    </div>
+  </section>
+
+  <section class="journals__filters" aria-label="filters">
+    <div class="journals__field">
+      <label>{{ 'settlements.orderId' | t }}</label>
+      <input type="number" class="entity-form__input" [(ngModel)]="filterOrderId" min="1" />
+    </div>
+    <div class="journals__actions">
+      <button type="button" class="journals__btn journals__btn--primary" (click)="applyOrderFilter()" [disabled]="isLoading">
+        {{ 'common.search' | t }}
+      </button>
+      <button type="button" class="journals__btn" (click)="clearOrderFilter()" [disabled]="isLoading">
+        {{ 'common.clearFilters' | t }}
+      </button>
+    </div>
+  </section>
+
+  <section class="journals__totals" *ngIf="journals">
+    <div class="journals__total">
+      <span>{{ 'journals.totalCredit' | t }}</span>
+      <strong>{{ formatMoney(journals.totalCredit) }}</strong>
+    </div>
+    <div class="journals__total">
+      <span>{{ 'journals.totalDebit' | t }}</span>
+      <strong>{{ formatMoney(journals.totalDebit) }}</strong>
+    </div>
+    <div class="journals__total">
+      <span>{{ 'settlements.balance' | t }}</span>
+      <strong>{{ formatMoney(journals.balance) }}</strong>
+    </div>
+  </section>
+
+  <section class="journals__panel" *ngIf="!isLoading">
+    <div class="journals__table-scroll">
+      <table class="journals__table">
+        <thead>
+          <tr>
+            <th>{{ 'journals.colDate' | t }}</th>
+            <th>{{ 'settlements.orderId' | t }}</th>
+            <th>{{ 'orders.journalKindCol' | t }}</th>
+            <th>{{ 'orders.journalDirection' | t }}</th>
+            <th>{{ 'common.amount' | t }}</th>
+            <th>{{ 'common.notes' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngIf="entries.length === 0">
+            <td colspan="6" class="journals__empty">{{ 'journals.empty' | t }}</td>
+          </tr>
+          <tr *ngFor="let row of entries">
+            <td>{{ row.createdDate | date:'yyyy-MM-dd HH:mm' }}</td>
+            <td>
+              <a *ngIf="row.orderId" [routerLink]="['/merchant/orders', row.orderId]">{{ row.orderId }}</a>
+              <span *ngIf="!row.orderId">—</span>
+            </td>
+            <td>{{ getJournalKindLabel(row.entryKind) }}</td>
+            <td>
+              {{ row.direction === JournalDirection.Debit
+                ? ('orders.journalDebit' | t)
+                : ('orders.journalCredit' | t) }}
+            </td>
+            <td>{{ formatMoney(row.amount) }}</td>
+            <td>{{ row.note || '—' }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

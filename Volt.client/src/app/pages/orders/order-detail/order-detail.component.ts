@@ -3,13 +3,29 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
-  AdminAvailableVehicleItemDto,
   AdminOrderClient,
+  AdminAvailableVehicleItemDto,
+  AdminReplaceOrderVehicleCommand,
+  AssignDeliveryToOrderCommand,
+  AssignDeliveryVehicleItem,
+  DeliveryClient,
+  DeliveryLookupDto,
+  FaultParty,
+  JournalDirection,
+  LedgerPartyType,
+  MarkCustomerRejectedReceiptCommand,
+  MarkMerchantHandoverToDeliveryCommand,
+  MerchantClient,
+  MerchantLookupDto,
+  MerchantOrderResponseStatus,
   OrderDetailDto,
+  OrderJournalEntryKind,
   OrderState,
   PaymentMethod,
   PaymentState,
+  ReassignMerchantOrderCommand,
   RefundState,
+  SendOrderToMerchantsCommand,
   UpdateOrderStateCommand
 } from '../../../core/services/clientAPI';
 import { VehicleStatus } from '../../../core/enums/vehicle-status.enum';
@@ -20,13 +36,6 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 interface PipelineStep {
   state: OrderState;
   key: string;
-}
-
-interface BookedCalendarDay {
-  date: Date;
-  day: number;
-  inMonth: boolean;
-  isBooked: boolean;
 }
 
 @Component({
@@ -41,6 +50,8 @@ interface BookedCalendarDay {
 })
 export class OrderDetailComponent implements OnInit {
   private readonly localeService = inject(LocaleService);
+  private readonly merchantClient = inject(MerchantClient);
+  private readonly deliveryClient = inject(DeliveryClient);
 
   order: OrderDetailDto | null = null;
   orderId: number = 0;
@@ -49,33 +60,63 @@ export class OrderDetailComponent implements OnInit {
   successMessage = '';
   actionLoading: string = '';
 
-  // Vehicle Assignment (same AvailableVehicles API as admin create order)
-  showVehicleModal = false;
-  fleetVehicles: AdminAvailableVehicleItemDto[] = [];
-  selectedVehicleIds: number[] = [];
-  isLoadingVehicles = false;
+  // Send to merchants
+  showMerchantsModal = false;
+  activeMerchants: MerchantLookupDto[] = [];
+  selectedMerchantIds: number[] = [];
+  isLoadingMerchants = false;
 
-  bookedDaysVehicle: AdminAvailableVehicleItemDto | null = null;
-  bookedCalendarMonth: Date = new Date();
+  // Reassign merchant
+  showReassignModal = false;
+  reassignOldMerchantId: number | null = null;
+  reassignNewMerchantId: number | null = null;
+  reassignMerchants: MerchantLookupDto[] = [];
+  isLoadingReassign = false;
 
-  // State Management (reserved for future granular state modal)
-  showStateModal = false;
-  newState: OrderState | null = null;
+  // Replace vehicle
+  showReplaceVehicleModal = false;
+  replaceOldVehicleId: number | null = null;
+  replaceNewVehicleId: number | null = null;
+  replaceCandidates: AdminAvailableVehicleItemDto[] = [];
+  isLoadingReplaceVehicles = false;
 
-  // Cancel confirmation dialog
+  // Assign delivery
+  showDeliveryModal = false;
+  activeDeliveries: DeliveryLookupDto[] = [];
+  deliveryAssignments: Record<number, number | null> = {};
+  isLoadingDeliveries = false;
+
+  // Merchant handover
+  showHandoverModal = false;
+  selectedHandoverVehicleIds: number[] = [];
+
+  // Reject receipt
+  showRejectReceiptModal = false;
+  rejectFaultParty: FaultParty = FaultParty.Customer;
+  rejectNote = '';
+
+  // Cancel / refund dialogs
   showCancelDialog = false;
   cancelDialogLoading = false;
-
-  // PayPal refund confirmation dialog
   showRefundDialog = false;
   refundDialogLoading = false;
 
   readonly pipelineSteps: PipelineStep[] = [
     { state: OrderState.Pending, key: 'common.pending' },
+    { state: OrderState.MerchantPending, key: 'common.merchantPending' },
+    { state: OrderState.MerchantConfirmed, key: 'common.merchantConfirmed' },
     { state: OrderState.Confirmed, key: 'common.confirmed' },
+    { state: OrderState.DeliveryAssigned, key: 'common.deliveryAssigned' },
     { state: OrderState.OnWay, key: 'common.onWay' },
     { state: OrderState.CustomerReceived, key: 'common.received' },
     { state: OrderState.Completed, key: 'common.completed' }
+  ];
+
+  readonly faultPartyOptions: FaultParty[] = [
+    FaultParty.Customer,
+    FaultParty.Merchant,
+    FaultParty.Delivery,
+    FaultParty.Company
   ];
 
   constructor(
@@ -109,85 +150,220 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
-  get assignableVehicles(): AdminAvailableVehicleItemDto[] {
-    return this.fleetVehicles.filter(v => v.isAvailable);
-  }
-
-  get unavailableAssignVehicles(): AdminAvailableVehicleItemDto[] {
-    return this.fleetVehicles.filter(v => !v.isAvailable);
-  }
-
-  get weekdayLabels(): string[] {
-    const locale = this.localeService.locale() === 'ar' ? 'ar-EG' : 'en-US';
-    const base = new Date(2024, 0, 7);
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(base);
-      d.setDate(base.getDate() + i);
-      return d.toLocaleDateString(locale, { weekday: 'short' });
-    });
-  }
-
-  // Vehicle Assignment — same AvailableVehicles API as admin create order
-  onAssignVehicles(): void {
+  // ── Send to merchants ──────────────────────────────────────────────
+  onOpenSendToMerchants(): void {
     if (!this.order) return;
-
-    this.isLoadingVehicles = true;
-    this.selectedVehicleIds = [];
-    this.fleetVehicles = [];
-    this.showVehicleModal = true;
+    this.showMerchantsModal = true;
+    this.selectedMerchantIds = [];
+    this.activeMerchants = [];
+    this.isLoadingMerchants = true;
     this.errorMessage = '';
 
-    const from = this.toCalendarDate(this.order.reservationDateFrom);
-    const to = this.toCalendarDate(this.order.reservationDateTo);
-
-    this.orderClient.getAvailableVehicles(
-      this.order.subCategoryId,
-      this.order.cityId,
-      from,
-      to
-    ).subscribe({
-      next: (result) => {
-        this.fleetVehicles = result.vehicles || [];
-        this.isLoadingVehicles = false;
+    this.merchantClient.getActive().subscribe({
+      next: (list) => {
+        this.activeMerchants = list || [];
+        this.isLoadingMerchants = false;
       },
       error: (error: any) => {
         this.showErrorMessage(
-          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.vehiclesLoadFailed')
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.merchantsLoadFailed')
         );
-        this.isLoadingVehicles = false;
-        console.error('Error loading available vehicles:', error);
+        this.isLoadingMerchants = false;
       }
     });
   }
 
+  toggleMerchantSelection(merchantId: number): void {
+    const idx = this.selectedMerchantIds.indexOf(merchantId);
+    if (idx > -1) {
+      this.selectedMerchantIds = this.selectedMerchantIds.filter(id => id !== merchantId);
+    } else {
+      this.selectedMerchantIds = [...this.selectedMerchantIds, merchantId];
+    }
+  }
+
+  isMerchantSelected(merchantId: number): boolean {
+    return this.selectedMerchantIds.includes(merchantId);
+  }
+
+  onConfirmSendToMerchants(): void {
+    if (!this.order || !this.selectedMerchantIds.length) {
+      this.showErrorMessage(this.localeService.translate('orders.selectMerchantsError'));
+      return;
+    }
+
+    this.actionLoading = 'sendMerchants';
+    const command = new SendOrderToMerchantsCommand();
+    command.orderId = this.orderId;
+    command.merchantIds = [...this.selectedMerchantIds];
+
+    this.orderClient.sendToMerchants(this.orderId, command).subscribe({
+      next: () => {
+        this.showMerchantsModal = false;
+        this.showSuccessMessage(this.localeService.translate('orders.sendToMerchantsSuccess'));
+        this.loadOrder();
+        this.actionLoading = '';
+      },
+      error: (error: any) => {
+        this.showErrorMessage(
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.sendToMerchantsFailed')
+        );
+        this.actionLoading = '';
+      }
+    });
+  }
+
+  onCloseMerchantsModal(): void {
+    this.showMerchantsModal = false;
+    this.selectedMerchantIds = [];
+  }
+
+  // ── Reassign merchant ──────────────────────────────────────────────
+  onOpenReassign(oldMerchantId: number): void {
+    this.reassignOldMerchantId = oldMerchantId;
+    this.reassignNewMerchantId = null;
+    this.showReassignModal = true;
+    this.isLoadingReassign = true;
+    this.reassignMerchants = [];
+
+    this.merchantClient.getActive().subscribe({
+      next: (list) => {
+        this.reassignMerchants = (list || []).filter(m => m.merchantId !== oldMerchantId);
+        this.isLoadingReassign = false;
+      },
+      error: (error: any) => {
+        this.showErrorMessage(
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.merchantsLoadFailed')
+        );
+        this.isLoadingReassign = false;
+      }
+    });
+  }
+
+  onConfirmReassign(): void {
+    if (!this.reassignOldMerchantId || !this.reassignNewMerchantId) {
+      this.showErrorMessage(this.localeService.translate('orders.selectNewMerchantError'));
+      return;
+    }
+
+    this.actionLoading = 'reassign';
+    const command = new ReassignMerchantOrderCommand();
+    command.orderId = this.orderId;
+    command.oldMerchantId = this.reassignOldMerchantId;
+    command.newMerchantId = this.reassignNewMerchantId;
+
+    this.orderClient.reassignMerchant(this.orderId, command).subscribe({
+      next: () => {
+        this.showReassignModal = false;
+        this.showSuccessMessage(this.localeService.translate('orders.reassignMerchantSuccess'));
+        this.loadOrder();
+        this.actionLoading = '';
+      },
+      error: (error: any) => {
+        this.showErrorMessage(
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.reassignMerchantFailed')
+        );
+        this.actionLoading = '';
+      }
+    });
+  }
+
+  onCloseReassignModal(): void {
+    this.showReassignModal = false;
+    this.reassignOldMerchantId = null;
+    this.reassignNewMerchantId = null;
+  }
+
+  canReplaceVehicle(): boolean {
+    if (!this.order) return false;
+    const state = this.order.orderState;
+    return state === OrderState.Pending
+      || state === OrderState.MerchantPending
+      || state === OrderState.MerchantConfirmed;
+  }
+
+  onOpenReplaceVehicle(oldVehicleId: number): void {
+    if (!this.order) return;
+    this.replaceOldVehicleId = oldVehicleId;
+    this.replaceNewVehicleId = null;
+    this.replaceCandidates = [];
+    this.showReplaceVehicleModal = true;
+    this.isLoadingReplaceVehicles = true;
+
+    const currentIds = new Set((this.order.orderVehicles || []).map(v => v.vehicleId));
+    this.orderClient.getAvailableVehicles(
+      this.order.subCategoryId,
+      this.order.cityId,
+      this.order.reservationDateFrom,
+      this.order.reservationDateTo,
+      this.orderId
+    ).subscribe({
+      next: (result) => {
+        this.replaceCandidates = (result?.vehicles || []).filter(
+          v => v.isAvailable && !currentIds.has(v.vehicleId)
+        );
+        this.isLoadingReplaceVehicles = false;
+      },
+      error: (error: any) => {
+        this.isLoadingReplaceVehicles = false;
+        this.showErrorMessage(
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.replaceVehicleLoadFailed')
+        );
+      }
+    });
+  }
+
+  onConfirmReplaceVehicle(): void {
+    if (!this.replaceOldVehicleId || !this.replaceNewVehicleId) {
+      this.showErrorMessage(this.localeService.translate('orders.selectNewVehicleError'));
+      return;
+    }
+
+    this.actionLoading = 'replaceVehicle';
+    const command = new AdminReplaceOrderVehicleCommand();
+    command.orderId = this.orderId;
+    command.oldVehicleId = this.replaceOldVehicleId;
+    command.newVehicleId = this.replaceNewVehicleId;
+
+    this.orderClient.replaceVehicle(this.orderId, command).subscribe({
+      next: () => {
+        this.showReplaceVehicleModal = false;
+        this.showSuccessMessage(this.localeService.translate('orders.replaceVehicleSuccess'));
+        this.actionLoading = '';
+        this.loadOrder();
+      },
+      error: (error: any) => {
+        this.actionLoading = '';
+        this.showErrorMessage(
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.replaceVehicleFailed')
+        );
+      }
+    });
+  }
+
+  onCloseReplaceVehicleModal(): void {
+    this.showReplaceVehicleModal = false;
+    this.replaceOldVehicleId = null;
+    this.replaceNewVehicleId = null;
+    this.replaceCandidates = [];
+  }
+
+  // ── Confirm (MerchantConfirmed → Confirmed, no vehicles) ───────────
   onConfirmOrder(): void {
     if (!this.order) return;
-
     this.errorMessage = '';
     this.successMessage = '';
 
-    // Backend is source of truth; still guide the admin in English before the call
-    if (!this.selectedVehicleIds.length || this.selectedVehicleIds.length !== this.order.vehiclesCount) {
-      this.showErrorMessage(
-        this.localeService.translate('orders.selectVehiclesError', { count: this.order.vehiclesCount })
-      );
-      return;
-    }
-
-    if (!confirm(this.localeService.translate('orders.confirmConfirmMessage', { count: this.selectedVehicleIds.length }))) {
-      return;
-    }
+    if (!confirm(this.localeService.translate('orders.confirmConfirmedMessage'))) return;
 
     this.actionLoading = 'confirm';
     const command = new UpdateOrderStateCommand();
     command.orderId = this.orderId;
     command.newState = OrderState.Confirmed;
-    command.vehicleIds = [...this.selectedVehicleIds];
+    command.vehicleIds = null;
 
     this.orderClient.updateOrderState(this.orderId, command).subscribe({
       next: () => {
-        this.showVehicleModal = false;
-        this.closeBookedDaysCalendar();
         this.showSuccessMessage(this.localeService.translate('orders.confirmedSuccess'));
         this.loadOrder();
         this.actionLoading = '';
@@ -204,182 +380,173 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
-  onCloseVehicleModal(): void {
-    this.showVehicleModal = false;
-    this.selectedVehicleIds = [];
-    this.fleetVehicles = [];
-    this.closeBookedDaysCalendar();
+  // ── Assign delivery ────────────────────────────────────────────────
+  onOpenAssignDelivery(): void {
+    if (!this.order) return;
+    this.showDeliveryModal = true;
+    this.isLoadingDeliveries = true;
+    this.activeDeliveries = [];
+    this.deliveryAssignments = {};
+    for (const v of this.order.orderVehicles || []) {
+      this.deliveryAssignments[v.vehicleId] = null;
+    }
+
+    this.deliveryClient.getActive(this.order.cityId).subscribe({
+      next: (list) => {
+        this.activeDeliveries = list || [];
+        this.isLoadingDeliveries = false;
+      },
+      error: (error: any) => {
+        this.showErrorMessage(
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.deliveriesLoadFailed')
+        );
+        this.isLoadingDeliveries = false;
+      }
+    });
   }
 
-  toggleVehicleSelection(vehicle: AdminAvailableVehicleItemDto): void {
-    if (!vehicle.isAvailable || !this.order) return;
+  setDeliveryAssignment(vehicleId: number, deliveryId: number | null): void {
+    this.deliveryAssignments[vehicleId] = deliveryId;
+  }
 
-    const index = this.selectedVehicleIds.indexOf(vehicle.vehicleId);
-    if (index > -1) {
-      this.selectedVehicleIds = this.selectedVehicleIds.filter(id => id !== vehicle.vehicleId);
+  get allDeliveriesAssigned(): boolean {
+    if (!this.order?.orderVehicles?.length) return false;
+    return this.order.orderVehicles.every(v => !!this.deliveryAssignments[v.vehicleId]);
+  }
+
+  onConfirmAssignDelivery(): void {
+    if (!this.order || !this.allDeliveriesAssigned) {
+      this.showErrorMessage(this.localeService.translate('orders.assignDeliveryAllRequired'));
       return;
     }
 
-    if (this.selectedVehicleIds.length >= this.order.vehiclesCount) {
-      this.showErrorMessage(
-        this.localeService.translate('orders.selectVehiclesError', { count: this.order.vehiclesCount })
-      );
+    this.actionLoading = 'assignDelivery';
+    const command = new AssignDeliveryToOrderCommand();
+    command.orderId = this.orderId;
+    command.assignments = this.order.orderVehicles.map(v => {
+      const item = new AssignDeliveryVehicleItem();
+      item.vehicleId = v.vehicleId;
+      item.deliveryId = this.deliveryAssignments[v.vehicleId]!;
+      return item;
+    });
+
+    this.orderClient.assignDelivery(this.orderId, command).subscribe({
+      next: () => {
+        this.showDeliveryModal = false;
+        this.showSuccessMessage(this.localeService.translate('orders.assignDeliverySuccess'));
+        this.loadOrder();
+        this.actionLoading = '';
+      },
+      error: (error: any) => {
+        this.showErrorMessage(
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.assignDeliveryFailed')
+        );
+        this.actionLoading = '';
+      }
+    });
+  }
+
+  onCloseDeliveryModal(): void {
+    this.showDeliveryModal = false;
+  }
+
+  // ── Merchant handover ──────────────────────────────────────────────
+  get unreceivedDeliveryVehicles() {
+    return (this.order?.deliveryMenOrders || []).filter(d => !d.deliveryReceivedFromMerchant);
+  }
+
+  onOpenHandover(): void {
+    this.selectedHandoverVehicleIds = [];
+    this.showHandoverModal = true;
+  }
+
+  toggleHandoverVehicle(vehicleId: number): void {
+    const idx = this.selectedHandoverVehicleIds.indexOf(vehicleId);
+    if (idx > -1) {
+      this.selectedHandoverVehicleIds = this.selectedHandoverVehicleIds.filter(id => id !== vehicleId);
+    } else {
+      this.selectedHandoverVehicleIds = [...this.selectedHandoverVehicleIds, vehicleId];
+    }
+  }
+
+  isHandoverSelected(vehicleId: number): boolean {
+    return this.selectedHandoverVehicleIds.includes(vehicleId);
+  }
+
+  onConfirmHandover(): void {
+    if (!this.selectedHandoverVehicleIds.length) {
+      this.showErrorMessage(this.localeService.translate('orders.selectHandoverVehiclesError'));
       return;
     }
 
-    this.selectedVehicleIds = [...this.selectedVehicleIds, vehicle.vehicleId];
+    this.actionLoading = 'handover';
+    const command = new MarkMerchantHandoverToDeliveryCommand();
+    command.orderId = this.orderId;
+    command.vehicleIds = [...this.selectedHandoverVehicleIds];
+
+    this.orderClient.markMerchantHandover(this.orderId, command).subscribe({
+      next: () => {
+        this.showHandoverModal = false;
+        this.showSuccessMessage(this.localeService.translate('orders.markHandoverSuccess'));
+        this.loadOrder();
+        this.actionLoading = '';
+      },
+      error: (error: any) => {
+        this.showErrorMessage(
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.markHandoverFailed')
+        );
+        this.actionLoading = '';
+      }
+    });
   }
 
-  /** Calendar date without timezone shift for AvailableVehicles query. */
-  private toCalendarDate(value: Date | string): Date {
-    const d = value instanceof Date ? value : new Date(value);
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0);
+  onCloseHandoverModal(): void {
+    this.showHandoverModal = false;
+    this.selectedHandoverVehicleIds = [];
   }
 
-
-  isVehicleSelected(vehicleId: number): boolean {
-    return this.selectedVehicleIds.includes(vehicleId);
+  // ── Reject receipt ─────────────────────────────────────────────────
+  onOpenRejectReceipt(): void {
+    this.rejectFaultParty = FaultParty.Customer;
+    this.rejectNote = '';
+    this.showRejectReceiptModal = true;
   }
 
-  unavailableReasonLabel(reason: string | null | undefined): string {
-    if (reason === 'UnderMaintenance') {
-      return this.localeService.translate('orders.reasonUnderMaintenance');
-    }
-    if (reason === 'Reserved') {
-      return this.localeService.translate('orders.reasonReserved');
-    }
-    return this.localeService.translate('orders.reasonUnavailable');
+  onConfirmRejectReceipt(): void {
+    this.actionLoading = 'rejectReceipt';
+    const command = new MarkCustomerRejectedReceiptCommand();
+    command.orderId = this.orderId;
+    command.faultParty = this.rejectFaultParty;
+    command.note = this.rejectNote?.trim() || null;
+
+    this.orderClient.rejectReceipt(this.orderId, command).subscribe({
+      next: () => {
+        this.showRejectReceiptModal = false;
+        this.showSuccessMessage(this.localeService.translate('orders.rejectReceiptSuccess'));
+        this.loadOrder();
+        this.actionLoading = '';
+      },
+      error: (error: any) => {
+        this.showErrorMessage(
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.rejectReceiptFailed')
+        );
+        this.actionLoading = '';
+      }
+    });
   }
 
-  hasBookedDays(vehicle: AdminAvailableVehicleItemDto): boolean {
-    return vehicle.unavailableReason === 'Reserved'
-      && Array.isArray(vehicle.conflictingDates)
-      && vehicle.conflictingDates.length > 0;
+  onCloseRejectReceiptModal(): void {
+    this.showRejectReceiptModal = false;
   }
 
-  openBookedDaysCalendar(vehicle: AdminAvailableVehicleItemDto, event?: Event): void {
-    event?.preventDefault();
-    event?.stopPropagation();
-    if (!this.hasBookedDays(vehicle)) return;
-    this.bookedDaysVehicle = vehicle;
-    const dates = this.getSortedBookedDates(vehicle);
-    this.bookedCalendarMonth = this.startOfMonth(dates[0]);
-  }
-
-  closeBookedDaysCalendar(): void {
-    this.bookedDaysVehicle = null;
-  }
-
-  get bookedDaysCount(): number {
-    return this.bookedDaysVehicle ? this.getSortedBookedDates(this.bookedDaysVehicle).length : 0;
-  }
-
-  get bookedMonthTitle(): string {
-    const locale = this.localeService.locale() === 'ar' ? 'ar-EG' : 'en-US';
-    return this.bookedCalendarMonth.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
-  }
-
-  get bookedMonthsLabel(): string {
-    if (!this.bookedDaysVehicle) return '';
-    const locale = this.localeService.locale() === 'ar' ? 'ar-EG' : 'en-US';
-    return this.getBookedMonthStarts(this.bookedDaysVehicle)
-      .map(month => month.toLocaleDateString(locale, { month: 'long', year: 'numeric' }))
-      .join(' · ');
-  }
-
-  get bookedCalendarDays(): BookedCalendarDay[] {
-    if (!this.bookedDaysVehicle) return [];
-    const bookedKeys = new Set(this.getSortedBookedDates(this.bookedDaysVehicle).map(d => this.dateKey(d)));
-    const year = this.bookedCalendarMonth.getFullYear();
-    const month = this.bookedCalendarMonth.getMonth();
-    const first = new Date(year, month, 1);
-    const startPad = first.getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const cells: BookedCalendarDay[] = [];
-
-    for (let i = 0; i < startPad; i++) {
-      const d = new Date(year, month, i - startPad + 1);
-      cells.push({ date: d, day: d.getDate(), inMonth: false, isBooked: false });
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const d = new Date(year, month, day);
-      cells.push({ date: d, day, inMonth: true, isBooked: bookedKeys.has(this.dateKey(d)) });
-    }
-
-    while (cells.length % 7 !== 0) {
-      const last = cells[cells.length - 1].date;
-      const d = new Date(last.getFullYear(), last.getMonth(), last.getDate() + 1);
-      cells.push({ date: d, day: d.getDate(), inMonth: false, isBooked: false });
-    }
-
-    return cells;
-  }
-
-  canShiftBookedMonth(delta: number): boolean {
-    return this.findAdjacentBookedMonth(delta) !== null;
-  }
-
-  shiftBookedMonth(delta: number): void {
-    const next = this.findAdjacentBookedMonth(delta);
-    if (!next) return;
-    this.bookedCalendarMonth = next;
-  }
-
-  private findAdjacentBookedMonth(delta: number): Date | null {
-    if (!this.bookedDaysVehicle) return null;
-    const months = this.getBookedMonthStarts(this.bookedDaysVehicle);
-    const current = this.bookedCalendarMonth.getTime();
-    const index = months.findIndex(m => m.getTime() === current);
-    if (index < 0) return null;
-    return months[index + delta] ?? null;
-  }
-
-  private getSortedBookedDates(vehicle: AdminAvailableVehicleItemDto): Date[] {
-    return (vehicle.conflictingDates || [])
-      .map(d => this.stripTime(new Date(d)))
-      .filter(d => !Number.isNaN(d.getTime()))
-      .sort((a, b) => a.getTime() - b.getTime());
-  }
-
-  private getBookedMonthStarts(vehicle: AdminAvailableVehicleItemDto): Date[] {
-    const seen = new Set<string>();
-    const months: Date[] = [];
-    for (const date of this.getSortedBookedDates(vehicle)) {
-      const start = this.startOfMonth(date);
-      const key = this.dateKey(start);
-      if (seen.has(key)) continue;
-      seen.add(key);
-      months.push(start);
-    }
-    return months;
-  }
-
-  private stripTime(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0, 0);
-  }
-
-  private startOfMonth(date: Date): Date {
-    return new Date(date.getFullYear(), date.getMonth(), 1, 12, 0, 0);
-  }
-
-  private dateKey(date: Date): string {
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-  }
-
-  // State Management
+  // ── State updates ──────────────────────────────────────────────────
   onUpdateState(state: OrderState): void {
     if (!this.order) return;
-
-    // Clear any previous error messages
     this.errorMessage = '';
     this.successMessage = '';
 
     let confirmMessage = '';
     switch (state) {
-      case OrderState.Confirmed:
-        confirmMessage = this.localeService.translate('orders.confirmConfirmedMessage');
-        break;
       case OrderState.OnWay:
         confirmMessage = this.localeService.translate('orders.confirmOnWayMessage');
         break;
@@ -415,7 +582,7 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
-  // Cancellation
+  // ── Cancellation ───────────────────────────────────────────────────
   onCancelOrder(): void {
     if (!this.order) return;
     this.errorMessage = '';
@@ -507,22 +674,33 @@ export class OrderDetailComponent implements OnInit {
     this.showRefundDialog = false;
   }
 
-  // Navigation
   onBack(): void {
     this.router.navigate(['/main/orders']);
   }
 
-  // Helper Methods
+  onGoSettlements(): void {
+    this.router.navigate(['/main/settlements']);
+  }
+
+  // ── Labels / helpers ───────────────────────────────────────────────
   getStateLabel(state: OrderState): string {
     switch (state) {
       case OrderState.Pending:
         return this.localeService.translate('common.pending');
+      case OrderState.MerchantPending:
+        return this.localeService.translate('common.merchantPending');
+      case OrderState.MerchantConfirmed:
+        return this.localeService.translate('common.merchantConfirmed');
       case OrderState.Confirmed:
         return this.localeService.translate('common.confirmed');
+      case OrderState.DeliveryAssigned:
+        return this.localeService.translate('common.deliveryAssigned');
       case OrderState.OnWay:
         return this.localeService.translate('common.onWay');
       case OrderState.CustomerReceived:
         return this.localeService.translate('common.received');
+      case OrderState.CustomerRejectedReceipt:
+        return this.localeService.translate('common.rejectedReceipt');
       case OrderState.Completed:
         return this.localeService.translate('common.completed');
       case OrderState.Cancelled:
@@ -536,18 +714,79 @@ export class OrderDetailComponent implements OnInit {
     switch (state) {
       case OrderState.Pending:
         return 'od__status--pending';
+      case OrderState.MerchantPending:
+        return 'od__status--merchant-pending';
+      case OrderState.MerchantConfirmed:
+        return 'od__status--merchant-confirmed';
       case OrderState.Confirmed:
         return 'od__status--confirmed';
+      case OrderState.DeliveryAssigned:
+        return 'od__status--delivery-assigned';
       case OrderState.OnWay:
         return 'od__status--onway';
       case OrderState.CustomerReceived:
         return 'od__status--received';
+      case OrderState.CustomerRejectedReceipt:
+        return 'od__status--rejected-receipt';
       case OrderState.Completed:
         return 'od__status--completed';
       case OrderState.Cancelled:
         return 'od__status--cancelled';
       default:
         return '';
+    }
+  }
+
+  getMerchantStatusLabel(status: MerchantOrderResponseStatus): string {
+    switch (status) {
+      case MerchantOrderResponseStatus.Pending:
+        return this.localeService.translate('common.pending');
+      case MerchantOrderResponseStatus.Accepted:
+        return this.localeService.translate('orders.merchantAccepted');
+      case MerchantOrderResponseStatus.Rejected:
+        return this.localeService.translate('orders.merchantRejected');
+      default:
+        return this.localeService.translate('common.noData');
+    }
+  }
+
+  getFaultPartyLabel(party: FaultParty | null | undefined): string {
+    switch (party) {
+      case FaultParty.Customer:
+        return this.localeService.translate('orders.faultCustomer');
+      case FaultParty.Merchant:
+        return this.localeService.translate('orders.faultMerchant');
+      case FaultParty.Delivery:
+        return this.localeService.translate('orders.faultDelivery');
+      case FaultParty.Company:
+        return this.localeService.translate('orders.faultCompany');
+      default:
+        return this.localeService.translate('common.noData');
+    }
+  }
+
+  getJournalDirectionLabel(direction: JournalDirection): string {
+    return direction === JournalDirection.Debit
+      ? this.localeService.translate('orders.journalDebit')
+      : this.localeService.translate('orders.journalCredit');
+  }
+
+  getJournalKindLabel(kind: OrderJournalEntryKind): string {
+    const key = `orders.journalKind.${OrderJournalEntryKind[kind]}`;
+    const translated = this.localeService.translate(key);
+    return translated === key ? String(kind) : translated;
+  }
+
+  getPartyTypeLabel(partyType: LedgerPartyType): string {
+    switch (partyType) {
+      case LedgerPartyType.Company:
+        return this.localeService.translate('orders.partyCompany');
+      case LedgerPartyType.Merchant:
+        return this.localeService.translate('orders.partyMerchant');
+      case LedgerPartyType.Delivery:
+        return this.localeService.translate('orders.partyDelivery');
+      default:
+        return this.localeService.translate('common.noData');
     }
   }
 
@@ -592,17 +831,38 @@ export class OrderDetailComponent implements OnInit {
     }
   }
 
-  canConfirm(): boolean {
+  canSendToMerchants(): boolean {
     if (this.isCancelled) return false;
     return this.order?.orderState === OrderState.Pending;
   }
 
-  canUpdateToOnWay(): boolean {
+  canConfirm(): boolean {
+    if (this.isCancelled) return false;
+    return this.order?.orderState === OrderState.MerchantConfirmed;
+  }
+
+  canAssignDelivery(): boolean {
     if (this.isCancelled) return false;
     return this.order?.orderState === OrderState.Confirmed;
   }
 
+  canUpdateToOnWay(): boolean {
+    if (this.isCancelled) return false;
+    return this.order?.orderState === OrderState.DeliveryAssigned;
+  }
+
+  canMarkHandover(): boolean {
+    if (this.isCancelled) return false;
+    return this.order?.orderState === OrderState.DeliveryAssigned
+      && this.unreceivedDeliveryVehicles.length > 0;
+  }
+
   canUpdateToCustomerReceived(): boolean {
+    if (this.isCancelled) return false;
+    return this.order?.orderState === OrderState.OnWay;
+  }
+
+  canRejectReceipt(): boolean {
     if (this.isCancelled) return false;
     return this.order?.orderState === OrderState.OnWay;
   }
@@ -614,7 +874,10 @@ export class OrderDetailComponent implements OnInit {
 
   canCancel(): boolean {
     if (this.isCancelled) return false;
-    return this.order?.orderState === OrderState.Pending || this.order?.orderState === OrderState.Confirmed;
+    const state = this.order?.orderState;
+    return state === OrderState.Pending
+      || state === OrderState.MerchantPending
+      || state === OrderState.MerchantConfirmed;
   }
 
   canEdit(): boolean {
@@ -634,10 +897,17 @@ export class OrderDetailComponent implements OnInit {
   get isCancelled(): boolean {
     if (!this.order) return false;
     if (this.order.orderState === OrderState.Cancelled) return true;
-    // Legacy cancelled rows (before OrderState.Cancelled)
     return !!this.order.orderCancellationFee
       || !!this.order.refundablePaypalAmount
       || this.order.moneyRefunded === true;
+  }
+
+  get isRejectedReceipt(): boolean {
+    return this.order?.orderState === OrderState.CustomerRejectedReceipt;
+  }
+
+  get showPipeline(): boolean {
+    return !this.isCancelled && !this.isRejectedReceipt;
   }
 
   get displayState(): OrderState {
@@ -666,15 +936,33 @@ export class OrderDetailComponent implements OnInit {
     }
   }
 
+  getVehicleStatusBadgeClass(status: VehicleStatus | number): string {
+    switch (status) {
+      case VehicleStatus.Available:
+        return 'od__vehicle-badge--ok';
+      case VehicleStatus.UnderMaintenance:
+        return 'od__vehicle-badge--warn';
+      case VehicleStatus.Rented:
+        return 'od__vehicle-badge--rented';
+      default:
+        return 'od__vehicle-badge--muted';
+    }
+  }
+
   get hasPrimaryAction(): boolean {
-    return this.canConfirm()
+    return this.canSendToMerchants()
+      || this.canConfirm()
+      || this.canAssignDelivery()
       || this.canUpdateToOnWay()
+      || this.canMarkHandover()
       || this.canUpdateToCustomerReceived()
-      || this.canComplete();
+      || this.canRejectReceipt()
+      || this.canComplete()
+      || this.order?.orderState === OrderState.MerchantPending;
   }
 
   getStepStatus(stepState: OrderState): 'done' | 'active' | 'upcoming' {
-    if (!this.order || this.isCancelled) return 'upcoming';
+    if (!this.order || this.isCancelled || this.isRejectedReceipt) return 'upcoming';
     if (this.order.orderState > stepState) return 'done';
     if (this.order.orderState === stepState) return 'active';
     return 'upcoming';
@@ -704,11 +992,19 @@ export class OrderDetailComponent implements OnInit {
     return OrderState;
   }
 
+  get MerchantOrderResponseStatus() {
+    return MerchantOrderResponseStatus;
+  }
+
   get PaymentMethod() {
     return PaymentMethod;
   }
 
   get PaymentState() {
     return PaymentState;
+  }
+
+  get FaultParty() {
+    return FaultParty;
   }
 }

@@ -36,7 +36,7 @@
       *ngFor="let item of menuItems"
       [routerLink]="item.route"
       routerLinkActive="dashboard-sidebar__item--active"
-      [routerLinkActiveOptions]="{ exact: item.route === '/main/dashboard' }"
+      [routerLinkActiveOptions]="{ exact: item.route === exactActiveRoute }"
       class="dashboard-sidebar__item"
       [attr.title]="item.labelKey | t"
       (click)="onNavClick()"
@@ -64,6 +64,6 @@
   </nav>
 
   <div class="dashboard-sidebar__footer" *ngIf="isOpen">
-    <span class="dashboard-sidebar__footer-text">{{ 'app.adminFooter' | t }}</span>
+    <span class="dashboard-sidebar__footer-text">{{ footerKey | t }}</span>
   </div>
 </aside>

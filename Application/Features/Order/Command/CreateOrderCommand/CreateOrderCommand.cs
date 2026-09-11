@@ -105,16 +105,6 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                 return Result.Failure<OrderDto>("City not found");
             }
 
-            if (request.ReservationDateFrom > request.ReservationDateTo)
-            {
-                return Result.Failure<OrderDto>("Reservation date from must be on or before reservation date to");
-            }
-
-            if (request.ReservationDateFrom < _dateTimeProvider.Now.Date)
-            {
-                return Result.Failure<OrderDto>("Reservation date from must be a future date");
-            }
-
             var vehicleIds = request.VehicleIds.Distinct().ToList();
 
             var vehicles = await _context.Vehicles
@@ -161,7 +151,6 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                 cancellationToken);
             var previousDebt = CancellationDebtHelper.SumWithdraw(pendingCancellationFees);
 
-            // Same domain pricing method used by admin calculate/create/update (includes previousDebt)
             var pricing = Domain.Models.Order.CalculatePricing(
                 subCategory.Price,
                 vehicleIds.Count,
@@ -170,7 +159,6 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                 reservationDays,
                 previousDebt);
 
-            // Mobile may still send rental-only total; accept that when debt exists, but charge pricing.Total.
             var mobileMatchesExpected = OrderCalculationService.ValidateTotalMatch(pricing.Total, request.MobileTotal, 0.50m);
             var mobileMatchesRentalOnly = previousDebt > 0
                 && OrderCalculationService.ValidateTotalMatch(pricing.RentalTotal, request.MobileTotal, 0.50m);
@@ -247,9 +235,7 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                 await _context.OrderTotals.AddAsync(orderTotals, cancellationToken);
                 await _context.OrderPayments.AddAsync(orderPayment, cancellationToken);
 
-                // Assign selected vehicles and confirm immediately (same as admin create)
-                order.Confirm(actor);
-
+                // Vehicles assigned at create — order stays Pending (no auto-confirm)
                 foreach (var vehicleId in vehicleIds)
                 {
                     _context.OrderVehicles.Add(Domain.Models.OrderVehicle.Create(order.OrderId, vehicleId, actor));
@@ -308,7 +294,7 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                     orderId: order.OrderId
                 );
 
-                var orderDto = new OrderDto
+                return Result.Success(new OrderDto
                 {
                     OrderId = order.OrderId,
                     OrderCode = order.OrderCode,
@@ -335,9 +321,7 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                     CreatedDate = order.CreatedDate,
                     PayPalApproveLink = payPalApproveLink,
                     PayPalOrderId = payPalOrderId
-                };
-
-                return Result.Success(orderDto);
+                });
             }
             catch (Exception ex)
             {
@@ -382,7 +366,7 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                 var notificationBody = new NotificationBodyForMultipleDevices
                 {
                     Title = "Order Created",
-                    Body = $"Your order #{order.OrderCode} has been created and confirmed.",
+                    Body = $"Your order #{order.OrderCode} has been created and is pending.",
                     FireBaseTokens = firebaseTokens,
                     PayLoad = new Dictionary<string, string>
                     {
@@ -397,7 +381,6 @@ namespace Application.Features.Order.Command.CreateOrderCommand
             }
             catch (Exception)
             {
-                // Notification failures should not affect order creation
             }
         }
     }

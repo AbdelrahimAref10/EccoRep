@@ -26,6 +26,10 @@ export class AdminNotificationService {
   private unreadCountSubject = new BehaviorSubject<number>(0);
   public unreadCount$: Observable<number> = this.unreadCountSubject.asObservable();
 
+  /** Fires when a realtime admin notification arrives (for page refresh). */
+  private incomingSubject = new BehaviorSubject<AdminNotification | null>(null);
+  public incoming$: Observable<AdminNotification | null> = this.incomingSubject.asObservable();
+
   private readonly apiBaseUrl = '/api/AdminNotification';
 
   constructor(
@@ -37,7 +41,9 @@ export class AdminNotificationService {
       if (notification) {
         console.log('📥 Adding notification from SignalR:', notification);
         this.playNotificationSound();
-        this.addNotification(this.mapToNotification(notification));
+        const mapped = this.mapToNotification(notification);
+        this.addNotification(mapped);
+        this.incomingSubject.next(mapped);
       }
     });
   }

@@ -1,0 +1,10 @@
+.m-vehicles__select {
+  min-width: 10rem;
+  width: 100%;
+  height: 2.5rem;
+  border: 1px solid var(--volt-border, #d1d5db);
+  border-radius: 0.5rem;
+  padding: 0 0.75rem;
+  background: var(--volt-surface, #fff);
+  color: inherit;
+}

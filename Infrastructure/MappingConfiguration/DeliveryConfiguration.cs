@@ -21,6 +21,10 @@ namespace Infrastructure.MappingConfiguration
                 .HasColumnName("UserId")
                 .IsRequired();
 
+            builder.Property(d => d.CityId)
+                .HasColumnName("CityId")
+                .IsRequired();
+
             builder.Property(d => d.FullName)
                 .HasColumnName("FullName")
                 .HasMaxLength(256)
@@ -55,6 +59,11 @@ namespace Infrastructure.MappingConfiguration
                 .HasDefaultValue(false)
                 .IsRequired();
 
+            builder.Property(d => d.IsDeleted)
+                .HasColumnName("IsDeleted")
+                .HasDefaultValue(false)
+                .IsRequired();
+
             builder.Property(d => d.CreatedBy)
                 .HasColumnName("CreatedBy")
                 .HasMaxLength(256);
@@ -76,9 +85,17 @@ namespace Infrastructure.MappingConfiguration
                 .HasForeignKey<Delivery>(d => d.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.HasOne(d => d.City)
+                .WithMany()
+                .HasForeignKey(d => d.CityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasIndex(d => d.UserId)
                 .IsUnique()
                 .HasDatabaseName("IX_Delivery_UserId");
+
+            builder.HasIndex(d => d.CityId)
+                .HasDatabaseName("IX_Delivery_CityId");
 
             builder.HasIndex(d => d.MobileNumber)
                 .HasDatabaseName("IX_Delivery_MobileNumber");

@@ -59,15 +59,15 @@ namespace Application.Features.Order.Command.CancelOrderCommand
                 return Result.Failure<bool>($"Order with ID {request.OrderId} not found");
             }
 
-            if (order.OrderState == OrderState.Completed)
-            {
-                return Result.Failure<bool>("Cannot cancel a completed order");
-            }
-
             if (order.OrderState == OrderState.Cancelled
                 || await CancellationDebtHelper.IsOrderCancelledAsync(_context, order, cancellationToken))
             {
                 return Result.Failure<bool>("Order is already cancelled");
+            }
+
+            if (!Domain.Models.Order.CanCancelInState(order.OrderState))
+            {
+                return Result.Failure<bool>($"Cannot cancel order in {order.OrderState} state. Cancel is only allowed before Confirmed.");
             }
 
             var userId = _userSession.UserId;

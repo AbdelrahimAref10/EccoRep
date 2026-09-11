@@ -37,6 +37,13 @@ namespace Application.Features.Order.DTOs
         public OrderTotalsDto? OrderTotals { get; set; }
         /// <summary>Present when order was cancelled and has a cancellation fee (wallet entry).</summary>
         public OrderCancellationFeeInfoDto? OrderCancellationFee { get; set; }
+        public FaultParty? ReceiptFaultParty { get; set; }
+        public string? ReceiptRejectNote { get; set; }
+        public List<MerchantOrderDto> MerchantOrders { get; set; } = new();
+        public List<MerchantOrderPaymentDetailDto> MerchantOrderPaymentDetails { get; set; } = new();
+        public List<DeliveryMenOrderDto> DeliveryMenOrders { get; set; } = new();
+        public List<DeliveryOrderPaymentDetailDto> DeliveryOrderPaymentDetails { get; set; } = new();
+        public List<OrderJournalDto> OrderJournals { get; set; } = new();
     }
 }
 

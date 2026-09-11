@@ -15,5 +15,7 @@ namespace Application.Features.Vehicle.DTOs
         public string CategoryName { get; set; } = string.Empty;
         public int CityId { get; set; }
         public string CityName { get; set; } = string.Empty;
+        public int MerchantId { get; set; }
+        public string MerchantName { get; set; } = string.Empty;
     }
 }

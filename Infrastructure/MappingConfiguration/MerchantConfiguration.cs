@@ -21,6 +21,10 @@ namespace Infrastructure.MappingConfiguration
                 .HasColumnName("UserId")
                 .IsRequired();
 
+            builder.Property(m => m.CityId)
+                .HasColumnName("CityId")
+                .IsRequired();
+
             builder.Property(m => m.FullName)
                 .HasColumnName("FullName")
                 .HasMaxLength(256)
@@ -55,6 +59,16 @@ namespace Infrastructure.MappingConfiguration
                 .HasDefaultValue(false)
                 .IsRequired();
 
+            builder.Property(m => m.CashOnReceive)
+                .HasColumnName("CashOnReceive")
+                .HasDefaultValue(false)
+                .IsRequired();
+
+            builder.Property(m => m.IsDeleted)
+                .HasColumnName("IsDeleted")
+                .HasDefaultValue(false)
+                .IsRequired();
+
             builder.Property(m => m.CreatedBy)
                 .HasColumnName("CreatedBy")
                 .HasMaxLength(256);
@@ -76,9 +90,17 @@ namespace Infrastructure.MappingConfiguration
                 .HasForeignKey<Merchant>(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.HasOne(m => m.City)
+                .WithMany()
+                .HasForeignKey(m => m.CityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             builder.HasIndex(m => m.UserId)
                 .IsUnique()
                 .HasDatabaseName("IX_Merchant_UserId");
+
+            builder.HasIndex(m => m.CityId)
+                .HasDatabaseName("IX_Merchant_CityId");
 
             builder.HasIndex(m => m.MobileNumber)
                 .HasDatabaseName("IX_Merchant_MobileNumber");

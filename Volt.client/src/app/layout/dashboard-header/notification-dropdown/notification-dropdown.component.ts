@@ -24,6 +24,7 @@ export interface Notification {
 export class NotificationDropdownComponent implements OnInit, OnChanges {
   @Input() notifications: Notification[] = [];
   @Input() isOpen: boolean = false;
+  @Input() viewAllOrdersRoute = '/main/orders';
   @Output() markAsRead = new EventEmitter<string>();
   @Output() markAllAsRead = new EventEmitter<void>();
   @Output() notificationClick = new EventEmitter<Notification>();

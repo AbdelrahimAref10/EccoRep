@@ -73,9 +73,9 @@ namespace Domain.Models
             return new Customer
             {
                 UserId = userId,
-                MobileNumber = mobileNumber,
-                FullName = fullName,
-                Gender = gender,
+                MobileNumber = mobileNumber.Trim(),
+                FullName = fullName.Trim(),
+                Gender = gender.Trim(),
                 PersonalImage = personalImage,
                 Email = email,
                 CommercialRegisterImage = commercialRegisterImage,
@@ -85,6 +85,66 @@ namespace Domain.Models
                 InvitationCode = invitationCode,
                 InvitationCodeExpiry = DateTime.UtcNow.AddHours(24),
                 IsInvitationCodeUsed = false,
+                CityId = cityId,
+                CreatedBy = createdBy,
+                CreatedDate = DateTime.UtcNow,
+                LastModifiedDate = DateTime.UtcNow
+            };
+        }
+
+        /// <summary>
+        /// Admin-created customer: active immediately, no invitation/OTP codes.
+        /// VerificationBy is stored as preference only (not an activation gate).
+        /// </summary>
+        public static Customer CreateByAdmin(
+            int userId,
+            string mobileNumber,
+            string fullName,
+            string gender,
+            int cityId,
+            int registerAs,
+            int verificationBy,
+            string? email = null,
+            string? personalImage = null,
+            string? commercialRegisterImage = null,
+            string? createdBy = null)
+        {
+            if (userId <= 0)
+                throw new ArgumentException("User ID must be greater than zero", nameof(userId));
+
+            if (string.IsNullOrWhiteSpace(mobileNumber))
+                throw new ArgumentException("Mobile number cannot be empty", nameof(mobileNumber));
+
+            if (string.IsNullOrWhiteSpace(fullName))
+                throw new ArgumentException("Full name cannot be empty", nameof(fullName));
+
+            if (string.IsNullOrWhiteSpace(gender))
+                throw new ArgumentException("Gender cannot be empty", nameof(gender));
+
+            if (cityId <= 0)
+                throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
+
+            if (!Enum.IsDefined(typeof(RegisterAs), registerAs))
+                throw new ArgumentException("Invalid RegisterAs value", nameof(registerAs));
+
+            if (!Enum.IsDefined(typeof(VerificationBy), verificationBy))
+                throw new ArgumentException("Invalid VerificationBy value", nameof(verificationBy));
+
+            return new Customer
+            {
+                UserId = userId,
+                MobileNumber = mobileNumber.Trim(),
+                FullName = fullName.Trim(),
+                Gender = gender.Trim(),
+                PersonalImage = personalImage,
+                Email = email,
+                CommercialRegisterImage = commercialRegisterImage,
+                RegisterAs = registerAs,
+                VerificationBy = verificationBy,
+                State = CustomerState.Active,
+                InvitationCode = null,
+                InvitationCodeExpiry = null,
+                IsInvitationCodeUsed = true,
                 CityId = cityId,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow,

@@ -16,6 +16,7 @@ namespace Application.Features.Vehicle.Command.CreateVehicleCommand
         public string Name { get; set; } = string.Empty;
         public string VehicleCode { get; set; } = string.Empty;
         public int SubCategoryId { get; set; }
+        public int MerchantId { get; set; }
         /// <summary>VehicleStatus as int: Available=0, UnderMaintenance=1, Rented=2.</summary>
         public int Status { get; set; }
         public string? ImageUrl { get; set; }
@@ -41,6 +42,19 @@ namespace Application.Features.Vehicle.Command.CreateVehicleCommand
                 return Result.Failure<int>("Invalid vehicle status");
             }
 
+            if (request.MerchantId <= 0)
+            {
+                return Result.Failure<int>("Merchant ID is required");
+            }
+
+            var merchantExists = await _context.Merchants
+                .AnyAsync(m => m.MerchantId == request.MerchantId && m.IsActive && !m.IsDeleted, cancellationToken);
+
+            if (!merchantExists)
+            {
+                return Result.Failure<int>($"Active merchant with ID {request.MerchantId} not found");
+            }
+
             var subCategory = await _context.SubCategories
                 .Include(sc => sc.Category)
                     .ThenInclude(c => c.City)
@@ -61,6 +75,7 @@ namespace Application.Features.Vehicle.Command.CreateVehicleCommand
                 request.Name,
                 request.VehicleCode,
                 request.SubCategoryId,
+                request.MerchantId,
                 status,
                 imageUrl,
                 _userSession.UserName ?? "System"

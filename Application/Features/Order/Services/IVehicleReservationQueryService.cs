@@ -13,6 +13,7 @@ namespace Application.Features.Order.Services
             int cityId,
             DateTime reservationDateFrom,
             DateTime reservationDateTo,
-            CancellationToken cancellationToken = default);
+            CancellationToken cancellationToken = default,
+            int? excludeOrderId = null);
     }
 }

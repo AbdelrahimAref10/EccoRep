@@ -1,0 +1,16 @@
+.orders__mini-badge {
+  display: inline-block;
+  margin-top: 0.25rem;
+  margin-inline-end: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.35rem;
+  background: rgba(59, 130, 246, 0.15);
+  color: #1e40af;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.orders__mini-badge--warn {
+  background: rgba(245, 158, 11, 0.18);
+  color: #9a3412;
+}

@@ -16,18 +16,18 @@
         <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
             <Version>8.*-*</Version>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.7" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.7">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.7"/>
-        <PackageReference Include="NSwag.AspNetCore" Version="14.0.3"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.7" />
+        <PackageReference Include="NSwag.AspNetCore" Version="14.0.3" />
         <PackageReference Include="NSwag.MSBuild" Version="14.0.3">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="System.Diagnostics.Tools" Version="4.3.0"/>
+        <PackageReference Include="System.Diagnostics.Tools" Version="4.3.0" />
     </ItemGroup>
 
 
@@ -37,9 +37,9 @@
 
 
     <ItemGroup>
-        <ProjectReference Include="..\Application\Application.csproj"/>
-        <ProjectReference Include="..\Infrastructure\Infrastructure.csproj"/>
-        <ProjectReference Include="..\Presentation\Presentation.csproj"/>
+        <ProjectReference Include="..\Application\Application.csproj" />
+        <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+        <ProjectReference Include="..\Presentation\Presentation.csproj" />
     </ItemGroup>
 
     <!-- Only include Volt.client during Publish, not during Build -->
@@ -50,19 +50,21 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="wwwroot\api\"/>
+        <Folder Include="Controllers\Merchant\" />
+        <Folder Include="Controllers\Delivery\" />
+        <Folder Include="wwwroot\api\" />
     </ItemGroup>
 
 
     <!-- Generate API client using NSwag after build completes -->
     <Target Name="NSwag" AfterTargets="Build">
-        <Message Text="Generating API client with NSwag..." Importance="high"/>
-        <Message Text="Configuration: $(Configuration)" Importance="high"/>
-        <Message Text="Assembly path: bin/$(Configuration)/net8.0/Volt.Server.dll" Importance="high"/>
+        <Message Text="Generating API client with NSwag..." Importance="high" />
+        <Message Text="Configuration: $(Configuration)" Importance="high" />
+        <Message Text="Assembly path: bin/$(Configuration)/net8.0/Volt.Server.dll" Importance="high" />
 
-        <Exec WorkingDirectory="$(ProjectDir)" EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development" Command="$(NSwagExe_Net80) run nswag.json /variables:Configuration=$(Configuration)" ContinueOnError="true" IgnoreExitCode="true"/>
+        <Exec WorkingDirectory="$(ProjectDir)" EnvironmentVariables="ASPNETCORE_ENVIRONMENT=Development" Command="$(NSwagExe_Net80) run nswag.json /variables:Configuration=$(Configuration)" ContinueOnError="true" IgnoreExitCode="true" />
 
-        <Message Text="API client generation completed." Importance="high"/>
+        <Message Text="API client generation completed." Importance="high" />
     </Target>
 
 
