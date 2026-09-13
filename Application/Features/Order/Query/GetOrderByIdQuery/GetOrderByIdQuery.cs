@@ -101,7 +101,6 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                 CustomerMobileNumber = order.Customer.MobileNumber,
                 SubCategoryId = order.SubCategoryId,
                 SubCategoryName = order.SubCategory.Name,
-                SubCategoryPrice = order.SubCategory.Price,
                 CityId = order.CityId,
                 CityName = order.City.Name,
                 ReservationDateFrom = order.ReservationDateFrom,
@@ -122,6 +121,10 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                 CreatedDate = order.CreatedDate,
                 ReceiptFaultParty = order.ReceiptFaultParty,
                 ReceiptRejectNote = order.ReceiptRejectNote,
+                OrderTotalDebitedToCompany = order.OrderTotalDebitedToCompany,
+                OrderDeliveryFailed = order.OrderDeliveryFailed,
+                OrderDeliveryFailureReason = order.OrderDeliveryFailureReason,
+                OrderDeliveryFailureFaultParty = order.OrderDeliveryFailureFaultParty,
                 OrderVehicles = order.OrderVehicles.Select(ov => new OrderVehicleDto
                 {
                     VehicleId = ov.VehicleId,
@@ -132,7 +135,25 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                         : null,
                     MerchantId = ov.Vehicle.MerchantId,
                     MerchantName = ov.Vehicle.Merchant?.FullName ?? string.Empty,
-                    Status = (int)ov.Vehicle.Status
+                    Status = (int)ov.Vehicle.Status,
+                    Color = ov.Vehicle.Color,
+                    Type = ov.Vehicle.Type,
+                    Model = ov.Vehicle.Model,
+                    Price = ov.Vehicle.Price,
+                    SpeedKmh = ov.Vehicle.SpeedKmh,
+                    EngineCapacityCc = ov.Vehicle.EngineCapacityCc,
+                    ReceivedFromOwner = ov.ReceivedFromOwner,
+                    ReceivedFromOwnerImageUrl = _imageService.GetImageUrl(ov.ReceivedFromOwnerImageUrl),
+                    DeliveredToCustomer = ov.DeliveredToCustomer,
+                    DeliveredToCustomerImageUrl = _imageService.GetImageUrl(ov.DeliveredToCustomerImageUrl),
+                    ReceivedFromCustomer = ov.ReceivedFromCustomer,
+                    ReceivedFromCustomerImageUrl = _imageService.GetImageUrl(ov.ReceivedFromCustomerImageUrl),
+                    DeliveredToOwner = ov.DeliveredToOwner,
+                    DeliveredToOwnerImageUrl = _imageService.GetImageUrl(ov.DeliveredToOwnerImageUrl),
+                    DeliveryFailed = ov.DeliveryFailed,
+                    DeliveryFailureReason = ov.DeliveryFailureReason,
+                    DeliveryFailureFaultParty = ov.DeliveryFailureFaultParty,
+                    MerchantResponseStatus = ov.MerchantResponseStatus
                 }).ToList(),
                 OrderPayments = order.OrderPayments.Select(op => new OrderPaymentDto
                 {
@@ -171,16 +192,29 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                     Amount = cancellationFeeEntry.Withdraw,
                     State = cancellationFeeEntry.State
                 } : null,
-                MerchantOrders = merchantOrders.Select(mo => new MerchantOrderDto
+                MerchantOrders = merchantOrders.Select(mo =>
                 {
-                    MerchantOrderId = mo.MerchantOrderId,
-                    OrderId = mo.OrderId,
-                    MerchantId = mo.MerchantId,
-                    MerchantName = mo.Merchant.FullName,
-                    ResponseStatus = mo.ResponseStatus,
-                    RejectReason = mo.RejectReason,
-                    RespondedAt = mo.RespondedAt,
-                    CreatedDate = mo.CreatedDate
+                    var merchantVehicles = order.OrderVehicles
+                        .Where(ov => ov.Vehicle.MerchantId == mo.MerchantId)
+                        .ToList();
+                    return new MerchantOrderDto
+                    {
+                        MerchantOrderId = mo.MerchantOrderId,
+                        OrderId = mo.OrderId,
+                        MerchantId = mo.MerchantId,
+                        MerchantName = mo.Merchant.FullName,
+                        ResponseStatus = mo.ResponseStatus,
+                        RejectReason = mo.RejectReason,
+                        RespondedAt = mo.RespondedAt,
+                        CreatedDate = mo.CreatedDate,
+                        ConfirmedVehiclesCount = merchantVehicles.Count(v => v.MerchantResponseStatus == MerchantVehicleResponseStatus.Confirmed),
+                        DeclinedVehiclesCount = merchantVehicles.Count(v => v.MerchantResponseStatus == MerchantVehicleResponseStatus.Declined),
+                        PendingVehiclesCount = merchantVehicles.Count(v => v.MerchantResponseStatus == MerchantVehicleResponseStatus.Pending),
+                        DeclinedVehicleCodes = merchantVehicles
+                            .Where(v => v.MerchantResponseStatus == MerchantVehicleResponseStatus.Declined)
+                            .Select(v => v.Vehicle.VehicleCode)
+                            .ToList()
+                    };
                 }).ToList(),
                 MerchantOrderPaymentDetails = merchantPaymentDetails.Select(p => new MerchantOrderPaymentDetailDto
                 {
@@ -191,7 +225,6 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                     VehicleId = p.VehicleId,
                     VehicleCode = p.Vehicle.VehicleCode,
                     VehicleRental = p.VehicleRental,
-                    ServiceFeeShare = p.ServiceFeeShare,
                     NetAmount = p.NetAmount
                 }).ToList(),
                 DeliveryMenOrders = deliveryMenOrders.Select(d => new DeliveryMenOrderDto
@@ -219,6 +252,7 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                 {
                     OrderJournalId = j.OrderJournalId,
                     OrderId = j.OrderId,
+                    VehicleId = j.VehicleId,
                     PartyType = j.PartyType,
                     PartyId = j.PartyId,
                     Direction = j.Direction,

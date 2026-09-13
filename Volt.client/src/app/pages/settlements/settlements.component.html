@@ -42,18 +42,27 @@
       <div *ngIf="activeTab === 'payDelivery'" class="settlements__form">
         <div class="settlements__field">
           <label>{{ 'settlements.kind' | t }}</label>
-          <select [(ngModel)]="payDeliveryKind">
-            <option [ngValue]="AdminPayDeliveryKind.CashFloat">{{ 'settlements.cashFloat' | t }}</option>
-            <option [ngValue]="AdminPayDeliveryKind.OrderPayout">{{ 'settlements.orderPayout' | t }}</option>
-          </select>
+          <app-multi-select
+            [multiple]="false"
+            [searchable]="false"
+            [clearable]="false"
+            [options]="payDeliveryKindOptions"
+            [(ngModel)]="payDeliveryKind"
+          ></app-multi-select>
         </div>
 
         <div class="settlements__field">
           <label>{{ 'settlements.delivery' | t }}</label>
-          <select [(ngModel)]="payDeliveryId" [disabled]="isLoadingLookups">
-            <option [ngValue]="null">{{ 'common.select' | t }}</option>
-            <option *ngFor="let d of deliveries" [ngValue]="d.deliveryId">{{ d.fullName }} — {{ d.mobileNumber }}</option>
-          </select>
+          <app-multi-select
+            [multiple]="false"
+            layout="table"
+            [disabled]="isLoadingLookups"
+            [options]="deliveryOptions"
+            [(ngModel)]="payDeliveryId"
+            [placeholder]="'common.select' | t"
+            [primaryColumnLabel]="'common.name' | t"
+            [secondaryColumnLabel]="'common.mobile' | t"
+          ></app-multi-select>
         </div>
 
         <div class="settlements__field" *ngIf="needsPayDeliveryOrderId">
@@ -85,18 +94,27 @@
       <div *ngIf="activeTab === 'collect'" class="settlements__form">
         <div class="settlements__field">
           <label>{{ 'settlements.kind' | t }}</label>
-          <select [(ngModel)]="collectKind">
-            <option [ngValue]="AdminCollectFromDeliveryKind.OrderCashRemittance">{{ 'settlements.remittance' | t }}</option>
-            <option [ngValue]="AdminCollectFromDeliveryKind.FloatReturn">{{ 'settlements.floatReturn' | t }}</option>
-          </select>
+          <app-multi-select
+            [multiple]="false"
+            [searchable]="false"
+            [clearable]="false"
+            [options]="collectKindOptions"
+            [(ngModel)]="collectKind"
+          ></app-multi-select>
         </div>
 
         <div class="settlements__field">
           <label>{{ 'settlements.delivery' | t }}</label>
-          <select [(ngModel)]="collectDeliveryId" [disabled]="isLoadingLookups">
-            <option [ngValue]="null">{{ 'common.select' | t }}</option>
-            <option *ngFor="let d of deliveries" [ngValue]="d.deliveryId">{{ d.fullName }} — {{ d.mobileNumber }}</option>
-          </select>
+          <app-multi-select
+            [multiple]="false"
+            layout="table"
+            [disabled]="isLoadingLookups"
+            [options]="deliveryOptions"
+            [(ngModel)]="collectDeliveryId"
+            [placeholder]="'common.select' | t"
+            [primaryColumnLabel]="'common.name' | t"
+            [secondaryColumnLabel]="'common.mobile' | t"
+          ></app-multi-select>
         </div>
 
         <div class="settlements__field" *ngIf="needsCollectOrderId">
@@ -128,10 +146,16 @@
       <div *ngIf="activeTab === 'payMerchant'" class="settlements__form">
         <div class="settlements__field">
           <label>{{ 'settlements.merchant' | t }}</label>
-          <select [(ngModel)]="payMerchantId" [disabled]="isLoadingLookups">
-            <option [ngValue]="null">{{ 'common.select' | t }}</option>
-            <option *ngFor="let m of merchants" [ngValue]="m.merchantId">{{ m.fullName }} — {{ m.mobileNumber }}</option>
-          </select>
+          <app-multi-select
+            [multiple]="false"
+            layout="table"
+            [disabled]="isLoadingLookups"
+            [options]="merchantOptions"
+            [(ngModel)]="payMerchantId"
+            [placeholder]="'common.select' | t"
+            [primaryColumnLabel]="'common.name' | t"
+            [secondaryColumnLabel]="'common.mobile' | t"
+          ></app-multi-select>
         </div>
 
         <div class="settlements__field">

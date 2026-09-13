@@ -19,6 +19,14 @@ namespace Application.Features.Vehicle.Command.UpdateVehicleCommand
         public int MerchantId { get; set; }
         /// <summary>VehicleStatus as int: Available=0, UnderMaintenance=1, Rented=2.</summary>
         public int Status { get; set; }
+        public string Color { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        /// <summary>Top speed in km/h. Optional.</summary>
+        public int? SpeedKmh { get; set; }
+        /// <summary>Motor engine capacity in CC. Optional.</summary>
+        public int? EngineCapacityCc { get; set; }
         public string? ImageUrl { get; set; }
     }
 
@@ -89,6 +97,12 @@ namespace Application.Features.Vehicle.Command.UpdateVehicleCommand
                 request.SubCategoryId,
                 request.MerchantId,
                 status,
+                request.Color,
+                request.Type,
+                request.Model,
+                request.Price,
+                request.SpeedKmh,
+                request.EngineCapacityCc,
                 imageUrl,
                 _userSession.UserName ?? "System"
             );

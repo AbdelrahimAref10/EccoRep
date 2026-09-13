@@ -5,11 +5,16 @@ import { Router, RouterModule } from '@angular/router';
 import { AdminDeliveryClient, DeliveryDto } from '../../core/services/clientAPI';
 import { LocaleService } from '../../core/services/locale.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import {
+  MultiSelectComponent,
+  MultiSelectOption
+} from '../../shared/components/multi-select/multi-select.component';
 
 @Component({
   selector: 'app-deliveries',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe, MultiSelectComponent, ConfirmDialogComponent],
   templateUrl: './deliveries.component.html',
   styleUrls: ['./deliveries.component.css']
 })
@@ -20,11 +25,24 @@ export class DeliveriesComponent implements OnInit {
 
   deliveries: DeliveryDto[] = [];
   searchTerm = '';
-  isDeletedFilter: boolean | null = null;
+  deletedFilterValue: 'active' | 'deleted' = 'active';
   isLoading = false;
   isDeleting = false;
+  pendingDeleteId: number | null = null;
+  showConfirmDialog = false;
   errorMessage = '';
   successMessage = '';
+
+  get deletedFilterOptions(): MultiSelectOption[] {
+    return [
+      { value: 'active', label: this.localeService.translate('deliveries.filterNotDeleted') },
+      { value: 'deleted', label: this.localeService.translate('deliveries.filterDeleted') }
+    ];
+  }
+
+  get isDeletedFilter(): boolean | null {
+    return this.deletedFilterValue === 'deleted' ? true : null;
+  }
 
   ngOnInit(): void {
     this.loadDeliveries();
@@ -55,7 +73,7 @@ export class DeliveriesComponent implements OnInit {
 
   clearFilters(): void {
     this.searchTerm = '';
-    this.isDeletedFilter = null;
+    this.deletedFilterValue = 'active';
     this.loadDeliveries();
   }
 
@@ -70,20 +88,33 @@ export class DeliveriesComponent implements OnInit {
 
   onDelete(delivery: DeliveryDto): void {
     if (delivery.isDeleted || this.isDeleting) return;
-    const ok = confirm(this.localeService.translate('deliveries.deleteConfirm'));
-    if (!ok) return;
+    this.pendingDeleteId = delivery.deliveryId;
+    this.showConfirmDialog = true;
+  }
+
+  onCancelDelete(): void {
+    this.showConfirmDialog = false;
+    this.pendingDeleteId = null;
+  }
+
+  onConfirmDelete(): void {
+    if (this.pendingDeleteId == null || this.isDeleting) return;
 
     this.isDeleting = true;
     this.errorMessage = '';
     this.successMessage = '';
-    this.deliveryClient.delete(delivery.deliveryId).subscribe({
+    this.deliveryClient.delete(this.pendingDeleteId).subscribe({
       next: () => {
         this.isDeleting = false;
+        this.showConfirmDialog = false;
+        this.pendingDeleteId = null;
         this.successMessage = this.localeService.translate('deliveries.deleteSuccess');
         this.loadDeliveries();
       },
       error: (error: any) => {
         this.isDeleting = false;
+        this.showConfirmDialog = false;
+        this.pendingDeleteId = null;
         this.errorMessage =
           error?.errorMessage ||
           error?.error?.errorMessage ||

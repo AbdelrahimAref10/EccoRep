@@ -6,6 +6,7 @@ namespace Application.Features.Order.DTOs
     {
         public int OrderJournalId { get; set; }
         public int? OrderId { get; set; }
+        public int? VehicleId { get; set; }
         public LedgerPartyType PartyType { get; set; }
         public int? PartyId { get; set; }
         public JournalDirection Direction { get; set; }
@@ -43,6 +44,7 @@ namespace Application.Features.Order.DTOs
     {
         public int OrderJournalId { get; set; }
         public int? OrderId { get; set; }
+        public string? OrderCode { get; set; }
         public LedgerPartyType PartyType { get; set; }
         public int? PartyId { get; set; }
         public string? PartyName { get; set; }

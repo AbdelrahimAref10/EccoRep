@@ -13,6 +13,11 @@ import { LocaleService } from '../../../core/services/locale.service';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { VehicleSpecsComponent } from '../../../shared/components/vehicle-specs/vehicle-specs.component';
+import {
+  MultiSelectComponent,
+  MultiSelectOption
+} from '../../../shared/components/multi-select/multi-select.component';
 
 @Component({
   selector: 'app-merchant-vehicles',
@@ -23,7 +28,9 @@ import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
     RouterModule,
     ConfirmDialogComponent,
     PaginationComponent,
-    TranslatePipe
+    TranslatePipe,
+    VehicleSpecsComponent,
+    MultiSelectComponent
   ],
   templateUrl: './merchant-vehicles.component.html',
   styleUrls: [
@@ -65,6 +72,18 @@ export class MerchantVehiclesComponent implements OnInit {
     { value: VehicleStatus.UnderMaintenance, key: 'vehicles.maintenance' },
     { value: VehicleStatus.Rented, key: 'vehicles.rented' }
   ];
+
+  get categoryOptions(): MultiSelectOption[] {
+    return this.categories
+      .filter(c => c.categoryId != null)
+      .map(c => ({ value: c.categoryId as number, label: c.name || '' }));
+  }
+
+  get subCategoryOptions(): MultiSelectOption[] {
+    return this.subCategories
+      .filter(s => s.subCategoryId != null)
+      .map(s => ({ value: s.subCategoryId as number, label: s.name || '' }));
+  }
 
   ngOnInit(): void {
     this.loadCategories();

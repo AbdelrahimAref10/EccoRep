@@ -21,10 +21,13 @@
       [placeholder]="'deliveries.searchPlaceholder' | t"
     />
 
-    <select class="deliveries__select" [(ngModel)]="isDeletedFilter">
-      <option [ngValue]="null">{{ 'deliveries.filterNotDeleted' | t }}</option>
-      <option [ngValue]="true">{{ 'deliveries.filterDeleted' | t }}</option>
-    </select>
+    <app-multi-select
+      [multiple]="false"
+      [searchable]="false"
+      [clearable]="false"
+      [options]="deletedFilterOptions"
+      [(ngModel)]="deletedFilterValue"
+    ></app-multi-select>
 
     <button type="button" class="deliveries__btn deliveries__btn--primary" (click)="applyFilters()">
       {{ 'common.search' | t }}
@@ -88,3 +91,15 @@
     </div>
   </section>
 </div>
+
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog"
+  [title]="'common.delete' | t"
+  [message]="'deliveries.deleteConfirm' | t"
+  [type]="'danger'"
+  [isLoading]="isDeleting"
+  [confirmText]="'common.delete' | t"
+  [cancelText]="'common.cancel' | t"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
+></app-confirm-dialog>

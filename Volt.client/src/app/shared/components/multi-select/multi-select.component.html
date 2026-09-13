@@ -4,6 +4,7 @@
   [class.ms--filled]="selectedCount > 0"
   [class.ms--disabled]="disabled"
   [class.ms--single]="!multiple"
+  [class.ms--table]="isTable"
 >
   <label *ngIf="label" class="ms__label">{{ label }}</label>
 
@@ -19,7 +20,10 @@
     aria-haspopup="listbox"
   >
     <span class="ms__trigger-text" [class.ms__trigger-text--placeholder]="selectedCount === 0">
-      <ng-container *ngIf="!multiple || selectedCount <= 1; else countTpl">{{ triggerLabel }}</ng-container>
+      <ng-container *ngIf="!multiple || selectedCount <= 1; else countTpl">
+        <span class="ms__trigger-label">{{ triggerLabel }}</span>
+        <span class="ms__trigger-meta" *ngIf="triggerDescription">{{ triggerDescription }}</span>
+      </ng-container>
       <ng-template #countTpl>
         <span class="ms__trigger-prefix">{{ placeholder }}</span>
         <span class="ms__badge">{{ selectedCount }}</span>
@@ -64,11 +68,17 @@
       <button type="button" class="ms__link" (click)="clear($event)" [disabled]="selectedCount === 0">{{ 'common.clear' | t }}</button>
     </div>
 
-    <div class="ms__options">
+    <div class="ms__options" [class.ms__options--table]="isTable">
+      <div class="ms__table-head" *ngIf="isTable && filteredOptions.length > 0">
+        <span class="ms__table-spacer" aria-hidden="true"></span>
+        <span>{{ primaryColumnLabel || ('common.name' | t) }}</span>
+        <span>{{ secondaryColumnLabel || ('common.mobile' | t) }}</span>
+      </div>
       <button
         *ngFor="let option of filteredOptions"
         type="button"
         class="ms__option"
+        [class.ms__option--row]="isTable"
         role="option"
         [class.ms__option--selected]="isSelected(option.value)"
         [attr.aria-selected]="isSelected(option.value)"
@@ -80,6 +90,7 @@
           </svg>
         </span>
         <span class="ms__option-label">{{ option.label }}</span>
+        <span class="ms__option-meta" *ngIf="isTable">{{ option.description || '—' }}</span>
       </button>
 
       <div *ngIf="filteredOptions.length === 0" class="ms__empty">

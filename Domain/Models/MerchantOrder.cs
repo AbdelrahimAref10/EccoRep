@@ -55,12 +55,24 @@ namespace Domain.Models
             LastModifiedDate = DateTime.UtcNow;
         }
 
+        public void AcceptPartial(string? modifiedBy = null)
+        {
+            if (ResponseStatus == MerchantOrderResponseStatus.Rejected)
+                throw new InvalidOperationException("Cannot accept a rejected merchant order invitation.");
+
+            ResponseStatus = MerchantOrderResponseStatus.PartiallyAccepted;
+            RejectReason = null;
+            RespondedAt = DateTime.UtcNow;
+            LastModifiedBy = modifiedBy;
+            LastModifiedDate = DateTime.UtcNow;
+        }
+
         public void Reject(string reason, string? modifiedBy = null)
         {
             if (string.IsNullOrWhiteSpace(reason))
                 throw new ArgumentException("Reject reason is required", nameof(reason));
 
-            if (ResponseStatus == MerchantOrderResponseStatus.Accepted)
+            if (ResponseStatus is MerchantOrderResponseStatus.Accepted or MerchantOrderResponseStatus.PartiallyAccepted)
                 throw new InvalidOperationException("Cannot reject an already accepted merchant order invitation.");
 
             ResponseStatus = MerchantOrderResponseStatus.Rejected;

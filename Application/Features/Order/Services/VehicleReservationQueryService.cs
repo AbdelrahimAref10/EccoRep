@@ -70,7 +70,13 @@ namespace Application.Features.Order.Services
                     v.ImageUrl,
                     v.Status,
                     v.MerchantId,
-                    MerchantName = v.Merchant.FullName
+                    MerchantName = v.Merchant.FullName,
+                    v.Color,
+                    v.Type,
+                    v.Model,
+                    v.Price,
+                    v.SpeedKmh,
+                    v.EngineCapacityCc
                 })
                 .ToListAsync(cancellationToken);
 
@@ -94,6 +100,12 @@ namespace Application.Features.Order.Services
                         VehicleStatus = v.Status,
                         MerchantId = v.MerchantId,
                         MerchantName = v.MerchantName,
+                        Color = v.Color,
+                        Type = v.Type,
+                        Model = v.Model,
+                        Price = v.Price,
+                        SpeedKmh = v.SpeedKmh,
+                        EngineCapacityCc = v.EngineCapacityCc,
                         AvailabilityStatus = conflicting.Count > 0
                             ? VehicleAvailabilityStatus.Reserved
                             : VehicleAvailabilityStatus.Available,

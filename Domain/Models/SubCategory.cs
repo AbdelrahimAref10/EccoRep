@@ -11,7 +11,6 @@ namespace Domain.Models
         public string? ImageUrl { get; private set; }
         public bool IsActive { get; private set; } = true;
         public bool IsOffer { get; private set; } = false;
-        public decimal Price { get; private set; }
 
         // Foreign key and navigation property
         public int CategoryId { get; private set; }
@@ -34,7 +33,6 @@ namespace Domain.Models
             string name,
             string description,
             int categoryId,
-            decimal price,
             string? imageUrl = null,
             bool isOffer = false,
             string? createdBy = null)
@@ -45,15 +43,11 @@ namespace Domain.Models
             if (categoryId <= 0)
                 throw new ArgumentException("Category ID must be greater than zero", nameof(categoryId));
 
-            if (price < 0)
-                throw new ArgumentException("Price cannot be negative", nameof(price));
-
             return new SubCategory
             {
                 Name = name.Trim(),
                 Description = description ?? string.Empty,
                 CategoryId = categoryId,
-                Price = price,
                 ImageUrl = imageUrl,
                 IsActive = true,
                 IsOffer = isOffer,
@@ -68,7 +62,6 @@ namespace Domain.Models
             string name,
             string description,
             int categoryId,
-            decimal price,
             string? imageUrl = null,
             bool isOffer = false,
             string? modifiedBy = null)
@@ -79,13 +72,9 @@ namespace Domain.Models
             if (categoryId <= 0)
                 throw new ArgumentException("Category ID must be greater than zero", nameof(categoryId));
 
-            if (price < 0)
-                throw new ArgumentException("Price cannot be negative", nameof(price));
-
             Name = name.Trim();
             Description = description ?? string.Empty;
             CategoryId = categoryId;
-            Price = price;
             ImageUrl = imageUrl;
             IsOffer = isOffer;
             LastModifiedBy = modifiedBy;
@@ -112,16 +101,5 @@ namespace Domain.Models
             LastModifiedBy = modifiedBy;
             LastModifiedDate = DateTime.UtcNow;
         }
-
-        public void UpdatePrice(decimal price, string? modifiedBy = null)
-        {
-            if (price < 0)
-                throw new ArgumentException("Price cannot be negative", nameof(price));
-
-            Price = price;
-            LastModifiedBy = modifiedBy;
-            LastModifiedDate = DateTime.UtcNow;
-        }
     }
 }
-

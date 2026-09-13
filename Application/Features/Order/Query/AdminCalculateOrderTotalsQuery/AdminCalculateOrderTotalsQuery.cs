@@ -110,7 +110,7 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
                 return Result.Failure<AdminOrderTotalsPreviewDto>(availability.Error);
             }
 
-            var days = Math.Max(1, (int)(to - from).TotalDays + 1);
+            var days = Domain.Models.Order.InclusiveReservationDays(from, to);
 
             decimal previousDebt = 0;
             if (request.CustomerId > 0)
@@ -123,8 +123,7 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
             }
 
             var pricing = Domain.Models.Order.CalculatePricing(
-                subCategory.Price,
-                distinctVehicleIds.Count,
+                vehicles.Select(v => v.Price).ToList(),
                 city,
                 request.IsUrgent,
                 days,
@@ -148,7 +147,13 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
                     VehicleCode = v.VehicleCode,
                     ImageUrl = !string.IsNullOrWhiteSpace(v.ImageUrl) ? _imageService.GetImageUrl(v.ImageUrl) : null,
                     MerchantId = v.MerchantId,
-                    MerchantName = v.Merchant?.FullName ?? string.Empty
+                    MerchantName = v.Merchant?.FullName ?? string.Empty,
+                    Color = v.Color,
+                    Type = v.Type,
+                    Model = v.Model,
+                    Price = v.Price,
+                    SpeedKmh = v.SpeedKmh,
+                    EngineCapacityCc = v.EngineCapacityCc
                 }).ToList(),
                 UnitPrice = pricing.UnitPrice,
                 SubTotal = pricing.SubTotal,

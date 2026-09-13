@@ -43,11 +43,11 @@
       <div class="entity-form__card-head">
         <p class="entity-form__card-kicker">Details</p>
         <h2 class="entity-form__card-title">Basic Information</h2>
-        <p class="entity-form__card-text">Name, category, pricing and description</p>
+        <p class="entity-form__card-text">Name, category and description</p>
       </div>
 
       <div class="entity-form__card-body">
-        <div class="entity-form__row entity-form__row--3">
+        <div class="entity-form__row">
           <div class="entity-form__field">
             <label class="entity-form__label">
               SubCategory Name<span class="entity-form__req">*</span>
@@ -75,23 +75,6 @@
             ></app-multi-select>
             <p *ngIf="subCategoryForm.get('categoryId')?.invalid && subCategoryForm.get('categoryId')?.touched" class="entity-form__error">
               Category is required
-            </p>
-          </div>
-
-          <div class="entity-form__field">
-            <label class="entity-form__label">
-              {{ 'subcategories.price' | t }} ({{ 'common.currency' | t }})<span class="entity-form__req">*</span>
-            </label>
-            <input
-              type="number"
-              formControlName="price"
-              class="entity-form__input"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-            />
-            <p *ngIf="subCategoryForm.get('price')?.invalid && subCategoryForm.get('price')?.touched" class="entity-form__error">
-              {{ 'subcategories.priceRequired' | t }}
             </p>
           </div>
         </div>

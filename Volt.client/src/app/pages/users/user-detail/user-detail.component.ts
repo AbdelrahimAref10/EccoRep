@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { AdminUserClient, UserDto, UpdateUserCommand, RoleClient, RoleDto } from '../../../core/services/clientAPI';
 import { LocaleService } from '../../../core/services/locale.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import {
   MultiSelectComponent,
   MultiSelectOption
@@ -13,7 +14,7 @@ import {
 @Component({
   selector: 'app-user-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, MultiSelectComponent, TranslatePipe],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, MultiSelectComponent, TranslatePipe, ConfirmDialogComponent],
   templateUrl: './user-detail.component.html',
   styleUrls: ['./user-detail.component.css', '../../../shared/styles/entity-form.css']
 })
@@ -37,6 +38,8 @@ export class UserDetailComponent implements OnInit {
   availableRoles: RoleDto[] = [];
   isLoadingRoles = false;
   showPassword = false;
+  showConfirmDialog = false;
+  pendingAction: 'delete' | 'activate' | 'deactivate' | null = null;
 
   get roleOptions(): MultiSelectOption[] {
     return this.availableRoles
@@ -213,23 +216,93 @@ export class UserDetailComponent implements OnInit {
   }
 
   onDelete(): void {
-    if (!confirm(this.localeService.translate('users.deleteConfirm'))) {
-      return;
-    }
+    this.openConfirm('delete');
+  }
 
-    this.actionLoading = 'delete';
-    this.adminUserClient.delete(this.userId).subscribe({
+  onActivate(): void {
+    this.openConfirm('activate');
+  }
+
+  onDeactivate(): void {
+    this.openConfirm('deactivate');
+  }
+
+  onCancelConfirm(): void {
+    if (this.actionLoading) return;
+    this.showConfirmDialog = false;
+    this.pendingAction = null;
+  }
+
+  onConfirmAction(): void {
+    if (!this.pendingAction || this.actionLoading) return;
+
+    const action = this.pendingAction;
+    this.actionLoading = action;
+
+    const request$ =
+      action === 'activate'
+        ? this.adminUserClient.activate(this.userId)
+        : action === 'deactivate'
+          ? this.adminUserClient.deactivate(this.userId)
+          : this.adminUserClient.delete(this.userId);
+
+    request$.subscribe({
       next: () => {
-        this.showSuccessMessage(this.localeService.translate('users.deletedSuccess'));
-        setTimeout(() => {
-          this.router.navigate(['/main/users']);
-        }, 1500);
+        this.showConfirmDialog = false;
+        this.pendingAction = null;
+        if (action === 'delete') {
+          this.showSuccessMessage(this.localeService.translate('users.deletedSuccess'));
+          setTimeout(() => this.router.navigate(['/main/users']), 1500);
+          return;
+        }
+        this.showSuccessMessage(
+          this.localeService.translate(action === 'activate' ? 'users.activatedSuccess' : 'users.deactivatedSuccess')
+        );
+        this.loadUser();
+        this.actionLoading = '';
       },
       error: (error: any) => {
-        this.showErrorMessage(error.error?.detail || error.error?.title || this.localeService.translate('users.deleteFailed'));
+        const failKey =
+          action === 'activate'
+            ? 'users.activateFailed'
+            : action === 'deactivate'
+              ? 'users.deactivateFailed'
+              : 'users.deleteFailed';
+        this.showErrorMessage(error.error?.detail || error.error?.title || this.localeService.translate(failKey));
         this.actionLoading = '';
+        this.showConfirmDialog = false;
+        this.pendingAction = null;
       }
     });
+  }
+
+  get confirmDialogTitle(): string {
+    if (this.pendingAction === 'activate') return this.localeService.translate('users.activateTitle');
+    if (this.pendingAction === 'deactivate') return this.localeService.translate('users.deactivateTitle');
+    return this.localeService.translate('users.deleteTitle');
+  }
+
+  get confirmDialogMessage(): string {
+    if (this.pendingAction === 'activate') return this.localeService.translate('users.activateConfirm');
+    if (this.pendingAction === 'deactivate') return this.localeService.translate('users.deactivateConfirm');
+    return this.localeService.translate('users.deleteConfirm');
+  }
+
+  get confirmDialogType(): 'danger' | 'warning' | 'info' {
+    if (this.pendingAction === 'activate') return 'info';
+    if (this.pendingAction === 'deactivate') return 'warning';
+    return 'danger';
+  }
+
+  get confirmDialogConfirmText(): string {
+    if (this.pendingAction === 'activate') return this.localeService.translate('users.activateTitle');
+    if (this.pendingAction === 'deactivate') return this.localeService.translate('users.deactivateTitle');
+    return this.localeService.translate('common.delete');
+  }
+
+  private openConfirm(action: 'delete' | 'activate' | 'deactivate'): void {
+    this.pendingAction = action;
+    this.showConfirmDialog = true;
   }
 
   showSuccessMessage(message: string): void {
@@ -261,43 +334,5 @@ export class UserDetailComponent implements OnInit {
     return this.isUserActive
       ? this.localeService.translate('common.active')
       : this.localeService.translate('common.inactive');
-  }
-
-  onActivate(): void {
-    if (!confirm(this.localeService.translate('users.activateConfirm'))) {
-      return;
-    }
-
-    this.actionLoading = 'activate';
-    this.adminUserClient.activate(this.userId).subscribe({
-      next: () => {
-        this.showSuccessMessage(this.localeService.translate('users.activatedSuccess'));
-        this.loadUser();
-        this.actionLoading = '';
-      },
-      error: (error: any) => {
-        this.showErrorMessage(error.error?.detail || error.error?.title || this.localeService.translate('users.activateFailed'));
-        this.actionLoading = '';
-      }
-    });
-  }
-
-  onDeactivate(): void {
-    if (!confirm(this.localeService.translate('users.deactivateConfirm'))) {
-      return;
-    }
-
-    this.actionLoading = 'deactivate';
-    this.adminUserClient.deactivate(this.userId).subscribe({
-      next: () => {
-        this.showSuccessMessage(this.localeService.translate('users.deactivatedSuccess'));
-        this.loadUser();
-        this.actionLoading = '';
-      },
-      error: (error: any) => {
-        this.showErrorMessage(error.error?.detail || error.error?.title || this.localeService.translate('users.deactivateFailed'));
-        this.actionLoading = '';
-      }
-    });
   }
 }

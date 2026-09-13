@@ -452,10 +452,6 @@ export class SubCategoriesComponent implements OnInit {
     localStorage.setItem('volt-subcategories-view', mode);
   }
 
-  formatPrice(price: number): string {
-    return `${Number(price || 0).toFixed(2)} ${this.localeService.translate('common.currency')}`;
-  }
-
   private toNullableBool(values: Array<string | number | boolean>): boolean | undefined {
     if (values.length !== 1) {
       return undefined;

@@ -10,7 +10,6 @@ namespace Domain.Models
         public int MerchantId { get; private set; }
         public int VehicleId { get; private set; }
         public decimal VehicleRental { get; private set; }
-        public decimal ServiceFeeShare { get; private set; }
         public decimal NetAmount { get; private set; }
 
         public Order Order { get; private set; } = null!;
@@ -29,7 +28,6 @@ namespace Domain.Models
             int merchantId,
             int vehicleId,
             decimal vehicleRental,
-            decimal serviceFeeShare,
             string? createdBy = null)
         {
             if (orderId <= 0)
@@ -40,8 +38,6 @@ namespace Domain.Models
                 throw new ArgumentException("Vehicle ID must be greater than zero", nameof(vehicleId));
             if (vehicleRental < 0)
                 throw new ArgumentException("Vehicle rental cannot be negative", nameof(vehicleRental));
-            if (serviceFeeShare < 0)
-                throw new ArgumentException("Service fee share cannot be negative", nameof(serviceFeeShare));
 
             return new MerchantOrderPaymentDetail
             {
@@ -49,8 +45,7 @@ namespace Domain.Models
                 MerchantId = merchantId,
                 VehicleId = vehicleId,
                 VehicleRental = vehicleRental,
-                ServiceFeeShare = serviceFeeShare,
-                NetAmount = vehicleRental - serviceFeeShare,
+                NetAmount = vehicleRental,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow

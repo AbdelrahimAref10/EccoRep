@@ -13,11 +13,15 @@ import {
 import { VehicleStatus } from '../../../../core/enums/vehicle-status.enum';
 import { LocaleService } from '../../../../core/services/locale.service';
 import { TranslatePipe } from '../../../../shared/pipes/translate.pipe';
+import {
+  MultiSelectComponent,
+  MultiSelectOption
+} from '../../../../shared/components/multi-select/multi-select.component';
 
 @Component({
   selector: 'app-merchant-vehicle-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, TranslatePipe],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, TranslatePipe, MultiSelectComponent],
   templateUrl: './merchant-vehicle-form.component.html',
   styleUrls: ['./merchant-vehicle-form.component.css', '../../../../shared/styles/entity-form.css']
 })
@@ -34,6 +38,12 @@ export class MerchantVehicleFormComponent implements OnInit {
     categoryId: [null as number | null, [Validators.required]],
     subCategoryId: [null as number | null, [Validators.required]],
     status: [VehicleStatus.Available, [Validators.required]],
+    color: ['', [Validators.required]],
+    type: ['', [Validators.required]],
+    model: ['', [Validators.required]],
+    price: [0, [Validators.required, Validators.min(0)]],
+    speedKmh: [null as number | null],
+    engineCapacityCc: [null as number | null],
     imageUrl: [null as string | null]
   });
 
@@ -53,6 +63,25 @@ export class MerchantVehicleFormComponent implements OnInit {
     { value: VehicleStatus.UnderMaintenance, key: 'vehicles.maintenance' },
     { value: VehicleStatus.Rented, key: 'vehicles.rented' }
   ];
+
+  get categoryOptions(): MultiSelectOption[] {
+    return this.categories
+      .filter(c => c.categoryId != null)
+      .map(c => ({ value: c.categoryId as number, label: c.name || '' }));
+  }
+
+  get subCategoryOptions(): MultiSelectOption[] {
+    return this.subCategories
+      .filter(s => s.subCategoryId != null)
+      .map(s => ({ value: s.subCategoryId as number, label: s.name || '' }));
+  }
+
+  get statusSelectOptions(): MultiSelectOption[] {
+    return this.statusOptions.map(opt => ({
+      value: opt.value,
+      label: this.localeService.translate(opt.key)
+    }));
+  }
 
   ngOnInit(): void {
     this.loadCategories();
@@ -113,6 +142,12 @@ export class MerchantVehicleFormComponent implements OnInit {
             categoryId: vehicle.categoryId,
             subCategoryId: vehicle.subCategoryId,
             status: vehicle.status as VehicleStatus,
+            color: vehicle.color,
+            type: vehicle.type,
+            model: vehicle.model,
+            price: vehicle.price,
+            speedKmh: vehicle.speedKmh,
+            engineCapacityCc: vehicle.engineCapacityCc,
             imageUrl: vehicle.imageUrl
           },
           { emitEvent: false }
@@ -170,6 +205,12 @@ export class MerchantVehicleFormComponent implements OnInit {
       command.vehicleCode = formValue.vehicleCode;
       command.subCategoryId = formValue.subCategoryId;
       command.status = Number(formValue.status);
+      command.color = formValue.color;
+      command.type = formValue.type;
+      command.model = formValue.model;
+      command.price = Number(formValue.price);
+      command.speedKmh = this.optionalInt(formValue.speedKmh);
+      command.engineCapacityCc = this.optionalInt(formValue.engineCapacityCc);
       command.imageUrl = this.selectedImageFile ? formValue.imageUrl : null;
 
       this.merchantClient.updateVehicle(command).subscribe({
@@ -188,6 +229,12 @@ export class MerchantVehicleFormComponent implements OnInit {
       command.vehicleCode = formValue.vehicleCode;
       command.subCategoryId = formValue.subCategoryId;
       command.status = Number(formValue.status);
+      command.color = formValue.color;
+      command.type = formValue.type;
+      command.model = formValue.model;
+      command.price = Number(formValue.price);
+      command.speedKmh = this.optionalInt(formValue.speedKmh);
+      command.engineCapacityCc = this.optionalInt(formValue.engineCapacityCc);
       command.imageUrl = formValue.imageUrl;
 
       this.merchantClient.createVehicle(command).subscribe({
@@ -205,5 +252,13 @@ export class MerchantVehicleFormComponent implements OnInit {
 
   onCancel(): void {
     this.router.navigate(['/merchant/vehicles']);
+  }
+
+  private optionalInt(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 }

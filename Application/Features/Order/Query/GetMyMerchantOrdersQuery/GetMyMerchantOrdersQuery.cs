@@ -120,6 +120,26 @@ namespace Application.Features.Order.Query.GetMyMerchantOrdersQuery
                 .Select(g => new { OrderId = g.Key, Count = g.Count() })
                 .ToDictionaryAsync(x => x.OrderId, x => x.Count, cancellationToken);
 
+            var pendingVehiclesByOrder = await _context.OrderVehicles
+                .AsNoTracking()
+                .Where(ov =>
+                    pageOrderIds.Contains(ov.OrderId)
+                    && ov.Vehicle.MerchantId == merchant.MerchantId
+                    && ov.MerchantResponseStatus == MerchantVehicleResponseStatus.Pending)
+                .GroupBy(ov => ov.OrderId)
+                .Select(g => new { OrderId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.OrderId, x => x.Count, cancellationToken);
+
+            var rentalEstimateByOrder = await _context.OrderVehicles
+                .AsNoTracking()
+                .Where(ov =>
+                    pageOrderIds.Contains(ov.OrderId)
+                    && ov.Vehicle.MerchantId == merchant.MerchantId
+                    && ov.MerchantResponseStatus != MerchantVehicleResponseStatus.Declined)
+                .GroupBy(ov => ov.OrderId)
+                .Select(g => new { OrderId = g.Key, Daily = g.Sum(x => x.Vehicle.Price) })
+                .ToDictionaryAsync(x => x.OrderId, x => x.Daily, cancellationToken);
+
             var payments = await _context.MerchantOrderPaymentDetails
                 .AsNoTracking()
                 .Where(p => p.MerchantId == merchant.MerchantId && pageOrderIds.Contains(p.OrderId))
@@ -150,10 +170,22 @@ namespace Application.Features.Order.Query.GetMyMerchantOrdersQuery
 
                 var myResponse = invitation?.ResponseStatus ?? MerchantOrderResponseStatus.Pending;
                 var pendingHandover = pendingHandovers.GetValueOrDefault(o.OrderId);
-                var canActOnInvite = o.OrderState == OrderState.MerchantPending
+                var myVehicleRows = myVehiclesByOrder.GetValueOrDefault(o.OrderId);
+                var hasPendingVehicle = pendingVehiclesByOrder.GetValueOrDefault(o.OrderId) > 0;
+                var canAccept = o.OrderState == OrderState.MerchantPending
+                    && myResponse != MerchantOrderResponseStatus.Rejected
+                    && hasPendingVehicle;
+                var canReject = o.OrderState == OrderState.MerchantPending
                     && myResponse == MerchantOrderResponseStatus.Pending;
                 var canHandover = pendingHandover > 0
                     && (o.OrderState == OrderState.DeliveryAssigned || o.OrderState == OrderState.OnWay);
+
+                var days = Domain.Models.Order.InclusiveReservationDays(
+                    o.ReservationDateFrom,
+                    o.ReservationDateTo);
+                var rentalTotal = orderPayments.Count > 0
+                    ? orderPayments.Sum(p => p.VehicleRental)
+                    : rentalEstimateByOrder.GetValueOrDefault(o.OrderId) * days;
 
                 return new MerchantPortalOrderListItemDto
                 {
@@ -169,12 +201,12 @@ namespace Application.Features.Order.Query.GetMyMerchantOrdersQuery
                     MyResponseStatus = myResponse,
                     MyRejectReason = invitation?.RejectReason,
                     MyRespondedAt = invitation?.RespondedAt,
-                    MyVehiclesCount = myVehiclesByOrder.GetValueOrDefault(o.OrderId),
-                    MyRentalTotal = orderPayments.Sum(p => p.VehicleRental),
-                    MyServiceFeeTotal = orderPayments.Sum(p => p.ServiceFeeShare),
-                    MyNetTotal = orderPayments.Sum(p => p.NetAmount),
-                    CanAccept = canActOnInvite,
-                    CanReject = canActOnInvite,
+                    MyVehiclesCount = myVehicleRows,
+                    MyRentalTotal = rentalTotal,
+                    MyServiceFeeTotal = 0,
+                    MyNetTotal = rentalTotal,
+                    CanAccept = canAccept,
+                    CanReject = canReject,
                     PendingHandoverVehicleCount = pendingHandover,
                     CanHandover = canHandover
                 };

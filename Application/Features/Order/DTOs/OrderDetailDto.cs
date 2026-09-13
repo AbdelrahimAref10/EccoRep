@@ -12,7 +12,6 @@ namespace Application.Features.Order.DTOs
         public string CustomerMobileNumber { get; set; } = string.Empty;
         public int SubCategoryId { get; set; }
         public string SubCategoryName { get; set; } = string.Empty;
-        public decimal SubCategoryPrice { get; set; }
         public int CityId { get; set; }
         public string CityName { get; set; } = string.Empty;
         public DateTime ReservationDateFrom { get; set; }
@@ -39,6 +38,10 @@ namespace Application.Features.Order.DTOs
         public OrderCancellationFeeInfoDto? OrderCancellationFee { get; set; }
         public FaultParty? ReceiptFaultParty { get; set; }
         public string? ReceiptRejectNote { get; set; }
+        public bool OrderTotalDebitedToCompany { get; set; }
+        public bool OrderDeliveryFailed { get; set; }
+        public string? OrderDeliveryFailureReason { get; set; }
+        public FaultParty? OrderDeliveryFailureFaultParty { get; set; }
         public List<MerchantOrderDto> MerchantOrders { get; set; } = new();
         public List<MerchantOrderPaymentDetailDto> MerchantOrderPaymentDetails { get; set; } = new();
         public List<DeliveryMenOrderDto> DeliveryMenOrders { get; set; } = new();

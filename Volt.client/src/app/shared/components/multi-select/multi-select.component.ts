@@ -15,6 +15,7 @@ import { TranslatePipe } from '../../pipes/translate.pipe';
 export interface MultiSelectOption {
   value: string | number | boolean;
   label: string;
+  description?: string;
 }
 
 @Component({
@@ -46,6 +47,9 @@ export class MultiSelectComponent implements ControlValueAccessor {
   @Input() emptyText = '';
   @Input() clearable = true;
   @Input() disabled = false;
+  @Input() layout: 'list' | 'table' = 'list';
+  @Input() primaryColumnLabel = '';
+  @Input() secondaryColumnLabel = '';
 
   @Input()
   set values(value: Array<string | number | boolean> | null | undefined) {
@@ -80,12 +84,28 @@ export class MultiSelectComponent implements ControlValueAccessor {
     return `${this.selectedCount}`;
   }
 
+  get triggerDescription(): string {
+    if (!this.selectedCount || (this.multiple && this.selectedCount > 1)) {
+      return '';
+    }
+    const selected = this.internalValues[0];
+    const match = this.options.find(o => this.sameValue(o.value, selected));
+    const description = (match?.description || '').trim();
+    return !description || description === '—' ? '' : description;
+  }
+
+  get isTable(): boolean {
+    return this.layout === 'table';
+  }
+
   get filteredOptions(): MultiSelectOption[] {
     const q = this.query.trim().toLowerCase();
     if (!q) {
       return this.options;
     }
-    return this.options.filter(o => o.label.toLowerCase().includes(q));
+    return this.options.filter(o =>
+      o.label.toLowerCase().includes(q) || (o.description || '').toLowerCase().includes(q)
+    );
   }
 
   writeValue(value: unknown): void {

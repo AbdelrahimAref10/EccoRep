@@ -42,11 +42,6 @@ namespace Infrastructure.MappingConfiguration
                 .HasDefaultValue(false)
                 .IsRequired();
 
-            builder.Property(sc => sc.Price)
-                .HasColumnName("Price")
-                .HasColumnType("decimal(18,2)")
-                .IsRequired();
-
             builder.Property(sc => sc.CategoryId)
                 .HasColumnName("CategoryId")
                 .IsRequired();

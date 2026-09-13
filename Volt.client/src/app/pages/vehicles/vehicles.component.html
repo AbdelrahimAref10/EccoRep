@@ -170,7 +170,7 @@
 
         <div class="vehicles__tile-body">
           <h3 class="vehicles__tile-title">{{ vehicle.name }}</h3>
-          <p class="vehicles__tile-desc">#{{ vehicle.vehicleCode }}</p>
+          <p class="vehicles__tile-code">#{{ vehicle.vehicleCode }}</p>
           <div class="vehicles__tile-meta">
             <span class="vehicles__meta-chip">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -182,9 +182,22 @@
             <span class="vehicles__tile-subs">{{ vehicle.subCategoryName }}</span>
             <span class="vehicles__tile-subs" *ngIf="vehicle.merchantName">{{ vehicle.merchantName }}</span>
           </div>
+          <app-vehicle-specs
+            [compact]="true"
+            [showPrice]="false"
+            [color]="vehicle.color"
+            [type]="vehicle.type"
+            [model]="vehicle.model"
+            [speedKmh]="vehicle.speedKmh"
+            [engineCapacityCc]="vehicle.engineCapacityCc"
+          ></app-vehicle-specs>
         </div>
 
         <div class="vehicles__tile-footer">
+          <div class="vehicles__tile-price">
+            <span class="vehicles__tile-price-value">{{ vehicle.price | number:'1.2-2' }}</span>
+            <span class="vehicles__tile-price-unit">{{ 'common.currency' | t }} / {{ 'vehicles.perDay' | t }}</span>
+          </div>
           <div class="vehicles__actions">
             <button
               type="button"
@@ -223,6 +236,7 @@
               <th scope="col">{{ 'vehicles.code' | t }}</th>
               <th scope="col">{{ 'vehicles.subCategory' | t }}</th>
               <th scope="col">{{ 'vehicles.merchant' | t }}</th>
+              <th scope="col">{{ 'vehicles.price' | t }}</th>
               <th scope="col">{{ 'common.city' | t }}</th>
               <th scope="col">{{ 'common.status' | t }}</th>
               <th scope="col">{{ 'common.actions' | t }}</th>
@@ -244,6 +258,9 @@
               <td><span class="vehicles__code">#{{ vehicle.vehicleCode }}</span></td>
               <td>{{ vehicle.subCategoryName }}</td>
               <td>{{ vehicle.merchantName || '—' }}</td>
+              <td>
+                <span class="vehicles__price">{{ vehicle.price | number:'1.2-2' }} {{ 'common.currency' | t }}</span>
+              </td>
               <td>{{ vehicle.cityName }}</td>
               <td>
                 <span class="vehicles__status" [ngClass]="statusClass(vehicle.status)">

@@ -24,15 +24,18 @@ namespace Application.Features.Order.Command.MarkCustomerRejectedReceiptCommand
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
         private readonly IOrderJournalService _journal;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public MarkCustomerRejectedReceiptCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IOrderJournalService journal)
+            IOrderJournalService journal,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _journal = journal;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(
@@ -90,6 +93,14 @@ namespace Application.Features.Order.Command.MarkCustomerRejectedReceiptCommand
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _realtime.NotifyAsync(
+                request.OrderId,
+                "Customer rejected receipt",
+                $"Customer rejected receipt on order {request.OrderId}.",
+                NotificationType.OrderUpdated,
+                cancellationToken: cancellationToken);
+
             return Result.Success(true);
         }
 

@@ -60,6 +60,12 @@
   align-items: center;
 }
 
+.deliveries__filters app-multi-select {
+  width: 16rem;
+  max-width: 100%;
+  flex: 0 1 16rem;
+}
+
 .deliveries__search,
 .deliveries__select {
   min-height: 2.75rem;

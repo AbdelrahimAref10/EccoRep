@@ -159,7 +159,9 @@ export class AdminNotificationService {
       3: 'order',
       4: 'order',
       5: 'order',
-      6: 'order'
+      6: 'order',
+      7: 'order',
+      8: 'order'
     };
     return types[type] || 'info';
   }

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, debounceTime, filter } from 'rxjs';
 import {
   MerchantClient,
   MerchantOrderResponseStatus,
@@ -67,21 +67,23 @@ export class MerchantOrdersComponent implements OnInit, OnDestroy {
       this.loadOrders();
     });
 
-    this.notificationSub = this.merchantNotifications.incoming$.subscribe(notification => {
-      if (notification) {
-        this.currentPage = 1;
-        this.loadOrders();
-      }
-    });
+    this.notificationSub = this.merchantNotifications.incoming$
+      .pipe(
+        filter(notification => !!notification),
+        debounceTime(300)
+      )
+      .subscribe(() => this.loadOrders(true));
   }
 
   ngOnDestroy(): void {
     this.notificationSub?.unsubscribe();
   }
 
-  loadOrders(): void {
-    this.isLoading = true;
-    this.errorMessage = '';
+  loadOrders(silent = false): void {
+    if (!silent) {
+      this.isLoading = true;
+      this.errorMessage = '';
+    }
     this.merchantClient
       .getMyOrders(
         this.currentPage,
@@ -159,6 +161,9 @@ export class MerchantOrdersComponent implements OnInit, OnDestroy {
     }
     if (status === MerchantOrderResponseStatus.Rejected) {
       return this.localeService.translate('merchant.responseRejected');
+    }
+    if (status === MerchantOrderResponseStatus.PartiallyAccepted) {
+      return this.localeService.translate('merchant.responsePartial');
     }
     return this.localeService.translate('merchant.responsePending');
   }

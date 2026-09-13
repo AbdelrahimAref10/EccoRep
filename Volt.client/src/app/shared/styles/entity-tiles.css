@@ -4,9 +4,10 @@
 .subcategories__gallery,
 .vehicles__gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1rem;
   padding: 0.15rem;
+  align-items: stretch;
 }
 
 .categories__tile,
@@ -145,8 +146,7 @@
 }
 
 .categories__tile-desc,
-.subcategories__tile-desc,
-.vehicles__tile-desc {
+.subcategories__tile-desc {
   margin: 0;
   font-size: 0.82rem;
   line-height: 1.45;
@@ -158,6 +158,14 @@
   min-height: 2.4em;
 }
 
+.vehicles__tile-code {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--volt-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .categories__tile-desc--empty,
 .subcategories__tile-desc--empty {
   color: var(--volt-text-muted);
@@ -165,13 +173,62 @@
 }
 
 .categories__tile-meta,
-.subcategories__tile-meta,
-.vehicles__tile-meta {
+.subcategories__tile-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.45rem;
   margin-top: 0.2rem;
+}
+
+.vehicles__tile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.vehicles__tile-body app-vehicle-specs {
+  display: block;
+  margin-top: 0.15rem;
+}
+
+.vehicles__tile-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem 0.9rem;
+  border-top: 1px solid var(--volt-border);
+  background: var(--volt-surface-muted);
+}
+
+.vehicles__tile-price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.vehicles__tile-price-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--volt-accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.vehicles__tile-price-unit {
+  font-size: 0.7rem;
+  font-weight: 650;
+  color: var(--volt-text-muted);
+}
+
+.vehicles__tile-footer .vehicles__actions {
+  width: auto;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .categories__tile-subs,
@@ -191,8 +248,7 @@
 }
 
 .categories__tile-footer,
-.subcategories__tile-footer,
-.vehicles__tile-footer {
+.subcategories__tile-footer {
   padding: 0.85rem 1rem 1rem;
   border-top: 1px solid var(--volt-border);
   background: var(--volt-surface-muted);

@@ -31,15 +31,18 @@ namespace Application.Features.Order.Command.AdminCollectFromDeliveryCommand
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
         private readonly IOrderJournalService _journal;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public AdminCollectFromDeliveryCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IOrderJournalService journal)
+            IOrderJournalService journal,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _journal = journal;
+            _realtime = realtime;
         }
 
         public async Task<Result<SettlementResultDto>> Handle(
@@ -151,6 +154,16 @@ namespace Application.Features.Order.Command.AdminCollectFromDeliveryCommand
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            if (request.OrderId is > 0)
+            {
+                await _realtime.NotifyAsync(
+                    request.OrderId.Value,
+                    "Delivery collection",
+                    $"Delivery collection recorded on order {request.OrderId}.",
+                    NotificationType.OrderUpdated,
+                    cancellationToken: cancellationToken);
+            }
 
             var balanceAfter = await _journal.GetGlobalPartyBalanceAsync(
                 LedgerPartyType.Delivery, request.DeliveryId, cancellationToken);

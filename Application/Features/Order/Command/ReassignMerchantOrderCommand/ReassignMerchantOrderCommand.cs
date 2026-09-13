@@ -1,9 +1,9 @@
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
 using Domain.Models;
 using Infrastructure;
-using Infrastructure.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Threading;
@@ -22,16 +22,16 @@ namespace Application.Features.Order.Command.ReassignMerchantOrderCommand
     {
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
-        private readonly IMerchantNotificationHubService _merchantNotifications;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public ReassignMerchantOrderCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IMerchantNotificationHubService merchantNotifications)
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
-            _merchantNotifications = merchantNotifications;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(ReassignMerchantOrderCommand request, CancellationToken cancellationToken)
@@ -76,7 +76,7 @@ namespace Application.Features.Order.Command.ReassignMerchantOrderCommand
             var modifiedBy = _userSession.UserName ?? "System";
             var wasMerchantConfirmed = order.OrderState == OrderState.MerchantConfirmed;
 
-            if (oldInvitation.ResponseStatus == MerchantOrderResponseStatus.Accepted)
+            if (oldInvitation.ResponseStatus is MerchantOrderResponseStatus.Accepted or MerchantOrderResponseStatus.PartiallyAccepted)
             {
                 _context.MerchantOrders.Remove(oldInvitation);
             }
@@ -109,13 +109,13 @@ namespace Application.Features.Order.Command.ReassignMerchantOrderCommand
 
             await _context.SaveChangesAsync(cancellationToken);
 
-            await _merchantNotifications.SendToMerchantsAsync(
-                new[] { request.NewMerchantId },
-                "New order invitation",
-                $"Order #{order.OrderCode} is waiting for your confirmation.",
-                NotificationType.OrderMerchantPending,
+            await _realtime.NotifyAsync(
                 order.OrderId,
-                order.OrderCode);
+                "Merchant reassigned",
+                $"Order #{order.OrderCode} was reassigned to another merchant.",
+                NotificationType.OrderMerchantPending,
+                new[] { request.OldMerchantId, request.NewMerchantId },
+                cancellationToken: cancellationToken);
 
             return Result.Success(true);
         }

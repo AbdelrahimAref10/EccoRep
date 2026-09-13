@@ -1,9 +1,9 @@
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
 using Domain.Models;
 using Infrastructure;
-using Infrastructure.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
@@ -23,16 +23,16 @@ namespace Application.Features.Order.Command.SendOrderToMerchantsCommand
     {
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
-        private readonly IMerchantNotificationHubService _merchantNotifications;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public SendOrderToMerchantsCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IMerchantNotificationHubService merchantNotifications)
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
-            _merchantNotifications = merchantNotifications;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(SendOrderToMerchantsCommand request, CancellationToken cancellationToken)
@@ -80,15 +80,14 @@ namespace Application.Features.Order.Command.SendOrderToMerchantsCommand
             order.MarkMerchantPending(createdBy);
             await _context.SaveChangesAsync(cancellationToken);
 
-            // Notify newly invited merchants immediately (sound + list refresh on merchant portal).
             var notifyIds = newMerchantIds.Count > 0 ? newMerchantIds : merchantIds;
-            await _merchantNotifications.SendToMerchantsAsync(
-                notifyIds,
-                "New order invitation",
-                $"Order #{order.OrderCode} is waiting for your confirmation.",
-                NotificationType.OrderMerchantPending,
+            await _realtime.NotifyAsync(
                 order.OrderId,
-                order.OrderCode);
+                "New order invitation",
+                $"Order #{order.OrderCode} is waiting for merchant confirmation.",
+                NotificationType.OrderMerchantPending,
+                notifyIds,
+                cancellationToken: cancellationToken);
 
             return Result.Success(true);
         }

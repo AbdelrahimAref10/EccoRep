@@ -9,7 +9,6 @@ namespace Application.Features.Order.DTOs
         public int VehicleId { get; set; }
         public string VehicleCode { get; set; } = string.Empty;
         public decimal VehicleRental { get; set; }
-        public decimal ServiceFeeShare { get; set; }
         public decimal NetAmount { get; set; }
     }
 }

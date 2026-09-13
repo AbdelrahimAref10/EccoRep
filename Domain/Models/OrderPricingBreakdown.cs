@@ -6,6 +6,7 @@ namespace Domain.Models
     /// </summary>
     public sealed class OrderPricingBreakdown
     {
+        /// <summary>Sum of selected vehicles' daily prices (not a subcategory unit price).</summary>
         public decimal UnitPrice { get; }
         public int VehiclesCount { get; }
         public decimal SubTotal { get; }

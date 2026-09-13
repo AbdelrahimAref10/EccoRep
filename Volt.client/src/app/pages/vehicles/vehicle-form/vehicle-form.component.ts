@@ -62,14 +62,30 @@ export class VehicleFormComponent implements OnInit {
       subCategoryId: [null, [Validators.required]],
       merchantId: [null, [Validators.required]],
       status: [VehicleStatus.Available, [Validators.required]],
+      color: ['', [Validators.required]],
+      type: ['', [Validators.required]],
+      model: ['', [Validators.required]],
+      price: [0, [Validators.required, Validators.min(0)]],
+      speedKmh: [null],
+      engineCapacityCc: [null],
       imageUrl: [null]
     });
+  }
+
+  get merchantOptions(): MultiSelectOption[] {
+    return this.merchants
+      .filter(merchant => merchant.merchantId != null)
+      .map(merchant => ({
+        value: merchant.merchantId as number,
+        label: merchant.fullName || String(merchant.merchantId),
+        description: merchant.mobileNumber || '—'
+      }));
   }
 
   get subCategoryOptions(): MultiSelectOption[] {
     return this.subCategories.map(subCategory => ({
       value: subCategory.subCategoryId,
-      label: `${subCategory.name} (${subCategory.categoryName}) - ${subCategory.price} ${this.localeService.translate('common.currency')}`
+      label: `${subCategory.name} (${subCategory.categoryName})`
     }));
   }
 
@@ -149,6 +165,12 @@ export class VehicleFormComponent implements OnInit {
           subCategoryId: vehicle.subCategoryId,
           merchantId: vehicle.merchantId,
           status: vehicle.status as VehicleStatus,
+          color: vehicle.color,
+          type: vehicle.type,
+          model: vehicle.model,
+          price: vehicle.price,
+          speedKmh: vehicle.speedKmh,
+          engineCapacityCc: vehicle.engineCapacityCc,
           imageUrl: vehicle.imageUrl
         });
 
@@ -214,6 +236,12 @@ export class VehicleFormComponent implements OnInit {
       command.subCategoryId = formValue.subCategoryId;
       command.merchantId = merchantId;
       command.status = Number(formValue.status);
+      command.color = formValue.color;
+      command.type = formValue.type;
+      command.model = formValue.model;
+      command.price = Number(formValue.price);
+      command.speedKmh = this.optionalInt(formValue.speedKmh);
+      command.engineCapacityCc = this.optionalInt(formValue.engineCapacityCc);
       // Only send imageUrl if it's a new base64 image (starts with data:image/), otherwise send null
       command.imageUrl = this.selectedImageFile ? formValue.imageUrl : null;
 
@@ -234,6 +262,12 @@ export class VehicleFormComponent implements OnInit {
       command.subCategoryId = formValue.subCategoryId;
       command.merchantId = merchantId;
       command.status = Number(formValue.status);
+      command.color = formValue.color;
+      command.type = formValue.type;
+      command.model = formValue.model;
+      command.price = Number(formValue.price);
+      command.speedKmh = this.optionalInt(formValue.speedKmh);
+      command.engineCapacityCc = this.optionalInt(formValue.engineCapacityCc);
       command.imageUrl = formValue.imageUrl;
 
       this.vehicleClient.create(command).subscribe({
@@ -251,5 +285,13 @@ export class VehicleFormComponent implements OnInit {
 
   onCancel(): void {
     this.router.navigate(['/main/vehicles']);
+  }
+
+  private optionalInt(value: unknown): number | null {
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
   }
 }

@@ -19,13 +19,17 @@ import {
 } from '../../core/services/clientAPI';
 import { LocaleService } from '../../core/services/locale.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import {
+  MultiSelectComponent,
+  MultiSelectOption
+} from '../../shared/components/multi-select/multi-select.component';
 
 type SettlementTab = 'payDelivery' | 'collect' | 'payMerchant';
 
 @Component({
   selector: 'app-settlements',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, MultiSelectComponent],
   templateUrl: './settlements.component.html',
   styleUrls: ['./settlements.component.css', '../../shared/styles/entity-form.css']
 })
@@ -67,6 +71,46 @@ export class SettlementsComponent implements OnInit {
 
   readonly AdminPayDeliveryKind = AdminPayDeliveryKind;
   readonly AdminCollectFromDeliveryKind = AdminCollectFromDeliveryKind;
+
+  get deliveryOptions(): MultiSelectOption[] {
+    return this.deliveries
+      .filter(d => d.deliveryId != null)
+      .map(d => ({
+        value: d.deliveryId as number,
+        label: d.fullName || String(d.deliveryId),
+        description: d.mobileNumber || '—'
+      }));
+  }
+
+  get merchantOptions(): MultiSelectOption[] {
+    return this.merchants
+      .filter(m => m.merchantId != null)
+      .map(m => ({
+        value: m.merchantId as number,
+        label: m.fullName || String(m.merchantId),
+        description: m.mobileNumber || '—'
+      }));
+  }
+
+  get payDeliveryKindOptions(): MultiSelectOption[] {
+    return [
+      { value: AdminPayDeliveryKind.CashFloat, label: this.localeService.translate('settlements.cashFloat') },
+      { value: AdminPayDeliveryKind.OrderPayout, label: this.localeService.translate('settlements.orderPayout') }
+    ];
+  }
+
+  get collectKindOptions(): MultiSelectOption[] {
+    return [
+      {
+        value: AdminCollectFromDeliveryKind.OrderCashRemittance,
+        label: this.localeService.translate('settlements.remittance')
+      },
+      {
+        value: AdminCollectFromDeliveryKind.FloatReturn,
+        label: this.localeService.translate('settlements.floatReturn')
+      }
+    ];
+  }
 
   ngOnInit(): void {
     this.loadLookups();

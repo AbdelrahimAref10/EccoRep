@@ -1,5 +1,6 @@
 using Application.Features.Order.Common;
 using Application.Features.Order.DTOs;
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
@@ -38,20 +39,20 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
         private readonly IUserSession _userSession;
         private readonly INotificationService _notificationService;
         private readonly IDateTimeProvider _dateTimeProvider;
-        private readonly IAdminNotificationHubService _adminNotificationHubService;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public AdminCreateOrderCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
             INotificationService notificationService,
             IDateTimeProvider dateTimeProvider,
-            IAdminNotificationHubService adminNotificationHubService)
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _notificationService = notificationService;
             _dateTimeProvider = dateTimeProvider;
-            _adminNotificationHubService = adminNotificationHubService;
+            _realtime = realtime;
         }
 
         public async Task<Result<OrderDto>> Handle(AdminCreateOrderCommand request, CancellationToken cancellationToken)
@@ -131,7 +132,7 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                 return Result.Failure<OrderDto>(availability.Error);
             }
 
-            var reservationDays = Math.Max(1, (int)(to - from).TotalDays + 1);
+            var reservationDays = Domain.Models.Order.InclusiveReservationDays(from, to);
 
             var pendingCancellationFees = await CancellationDebtHelper.GetPendingCancellationFeesAsync(
                 _context,
@@ -140,14 +141,11 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
             var previousDebt = CancellationDebtHelper.SumWithdraw(pendingCancellationFees);
 
             var pricing = Domain.Models.Order.CalculatePricing(
-                subCategory.Price,
-                vehicleIds.Count,
+                vehicles.Select(v => v.Price).ToList(),
                 city,
                 request.IsUrgent,
                 reservationDays,
                 previousDebt);
-
-            var finalTotal = pricing.Total;
 
             var orderCode = GenerateOrderCode();
             var maxRetries = 10;
@@ -174,9 +172,7 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                     request.CityId,
                     request.ReservationDateFrom,
                     request.ReservationDateTo,
-                    pricing.VehiclesCount,
-                    pricing.SubTotal,
-                    finalTotal,
+                    pricing,
                     request.PassportImage,
                     request.HotelName,
                     request.HotelAddress,
@@ -185,8 +181,7 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                     orderCode,
                     request.HotelPhone,
                     request.Notes,
-                    actor,
-                    previousDebt
+                    actor
                 );
 
                 await _context.Orders.AddAsync(order, cancellationToken);
@@ -194,20 +189,12 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
 
                 CancellationDebtHelper.AttachPendingFeesToOrder(pendingCancellationFees, order.OrderId);
 
-                var orderTotals = Domain.Models.OrderTotals.Create(
-                    order.OrderId,
-                    pricing.SubTotal,
-                    pricing.ServiceFees,
-                    pricing.DeliveryFees,
-                    pricing.UrgentFees,
-                    pricing.TieredDiscountAmount,
-                    finalTotal
-                );
+                var orderTotals = Domain.Models.OrderTotals.FromPricing(order.OrderId, pricing);
 
                 var orderPayment = Domain.Models.OrderPayment.Create(
                     order.OrderId,
                     (int)PaymentMethod.Cash,
-                    finalTotal,
+                    pricing.Total,
                     actor
                 );
 
@@ -246,12 +233,13 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
 
                 await SendOrderCreatedNotification(customer, order, cancellationToken);
 
-                await _adminNotificationHubService.SendNotificationAsync(
-                    title: "New Order Created",
-                    message: $"New order #{order.OrderCode} has been created by admin for customer {customer.FullName}",
-                    notificationType: NotificationType.OrderCreated,
-                    orderId: order.OrderId
-                );
+                await _realtime.NotifyAsync(
+                    order.OrderId,
+                    "New Order Created",
+                    $"New order #{order.OrderCode} has been created by admin for customer {customer.FullName}",
+                    NotificationType.OrderCreated,
+                    notifyMerchants: false,
+                    cancellationToken: cancellationToken);
 
                 return Result.Success(new OrderDto
                 {

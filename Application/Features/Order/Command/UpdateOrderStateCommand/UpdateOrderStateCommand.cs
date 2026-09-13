@@ -29,21 +29,18 @@ namespace Application.Features.Order.Command.UpdateOrderStateCommand
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
         private readonly INotificationService _notificationService;
-        private readonly IAdminNotificationHubService _adminNotificationHubService;
-        private readonly IOrderJournalService _journal;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public UpdateOrderStateCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
             INotificationService notificationService,
-            IAdminNotificationHubService adminNotificationHubService,
-            IOrderJournalService journal)
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _notificationService = notificationService;
-            _adminNotificationHubService = adminNotificationHubService;
-            _journal = journal;
+            _realtime = realtime;
         }
 
         public async Task<Result<OrderDto>> Handle(UpdateOrderStateCommand request, CancellationToken cancellationToken)
@@ -90,6 +87,11 @@ namespace Application.Features.Order.Command.UpdateOrderStateCommand
                         return Result.Failure<OrderDto>($"Order vehicles mismatch. Expected {order.VehiclesCount}, found {order.OrderVehicles.Count}");
                     }
 
+                    if (order.OrderVehicles.Any(ov => ov.MerchantResponseStatus != MerchantVehicleResponseStatus.Confirmed))
+                    {
+                        return Result.Failure<OrderDto>("Cannot confirm order while some vehicles are still pending or declined by merchants. Replace or remove declined vehicles first.");
+                    }
+
                     var buildResult = await BuildMerchantPaymentDetailsAsync(order, actor, cancellationToken);
                     if (buildResult.IsFailure)
                         return Result.Failure<OrderDto>(buildResult.Error);
@@ -99,58 +101,10 @@ namespace Application.Features.Order.Command.UpdateOrderStateCommand
                 }
 
                 case OrderState.OnWay:
-                {
-                    if (order.OrderState != OrderState.DeliveryAssigned)
-                    {
-                        return Result.Failure<OrderDto>($"Cannot mark order as OnWay. Current state: {order.OrderState}. Assign delivery first.");
-                    }
-                    order.MarkOnWay(actor);
-                    break;
-                }
-
                 case OrderState.CustomerReceived:
-                {
-                    if (order.OrderState != OrderState.OnWay)
-                    {
-                        return Result.Failure<OrderDto>($"Cannot mark customer received. Current state: {order.OrderState}");
-                    }
-
-                    var journalResult = await PostCustomerReceivedJournalsAsync(order, actor, cancellationToken);
-                    if (journalResult.IsFailure)
-                        return Result.Failure<OrderDto>(journalResult.Error);
-
-                    order.MarkCustomerReceived(actor);
-
-                    if (order.PaymentMethodId == (int)PaymentMethod.Cash)
-                    {
-                        var orderPayment = order.OrderPayments.FirstOrDefault();
-                        if (orderPayment != null && orderPayment.State == PaymentState.Pending)
-                        {
-                            // Mark paid; cash enters treasury when delivery remits (not here)
-                            orderPayment.MarkAsPaid(actor);
-                        }
-
-                        await CancellationDebtHelper.MarkUnderPaymentFeesAsPaidAsync(
-                            _context,
-                            order.OrderId,
-                            cancellationToken);
-                    }
-                    break;
-                }
-
                 case OrderState.Completed:
-                {
-                    if (order.OrderState != OrderState.CustomerReceived)
-                    {
-                        return Result.Failure<OrderDto>($"Cannot complete order. Current state: {order.OrderState}");
-                    }
-                    foreach (var orderVehicle in order.OrderVehicles)
-                    {
-                        orderVehicle.Vehicle.UpdateStatus(VehicleStatus.Available, actor);
-                    }
-                    order.Complete(actor);
-                    break;
-                }
+                    return Result.Failure<OrderDto>(
+                        $"State {request.NewState} is driven by per-vehicle lifecycle. Use vehicle receive/deliver endpoints instead of UpdateState.");
 
                 default:
                     return Result.Failure<OrderDto>($"Invalid state transition to {request.NewState}");
@@ -201,20 +155,8 @@ namespace Application.Features.Order.Command.UpdateOrderStateCommand
             if (existing)
                 return Result.Success();
 
-            var orderTotals = await _context.OrderTotals
-                .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.OrderId == order.OrderId, cancellationToken);
-
-            if (orderTotals == null)
-                return Result.Failure("Order totals not found");
-
             if (order.VehiclesCount <= 0)
                 return Result.Failure("Invalid vehicles count");
-
-            var days = Math.Max(1, (int)(order.ReservationDateTo.Date - order.ReservationDateFrom.Date).TotalDays + 1);
-            var unitPrice = order.SubCategory.Price;
-            var vehicleRental = unitPrice * days;
-            var servicePerVehicle = orderTotals.ServiceFees / order.VehiclesCount;
 
             foreach (var ov in order.OrderVehicles)
             {
@@ -227,92 +169,9 @@ namespace Application.Features.Order.Command.UpdateOrderStateCommand
                         order.OrderId,
                         vehicle.MerchantId,
                         vehicle.VehicleId,
-                        vehicleRental,
-                        servicePerVehicle,
+                        order.CalculateVehicleRental(vehicle.Price),
                         actor),
                     cancellationToken);
-            }
-
-            return Result.Success();
-        }
-
-        private async Task<Result> PostCustomerReceivedJournalsAsync(
-            Domain.Models.Order order,
-            string actor,
-            CancellationToken cancellationToken)
-        {
-            var deliveryFeeRows = await _context.DeliveryOrderPaymentDetails
-                .AsNoTracking()
-                .Where(d => d.OrderId == order.OrderId)
-                .ToListAsync(cancellationToken);
-
-            if (deliveryFeeRows.Count == 0)
-                return Result.Failure("Delivery payment details not found. Assign delivery first.");
-
-            foreach (var deliveryGroup in deliveryFeeRows.GroupBy(d => d.DeliveryId))
-            {
-                var fee = deliveryGroup.Sum(d => d.DeliveryFeeShare);
-                if (fee <= 0)
-                    continue;
-
-                var feeResult = await _journal.PostCreditAsync(
-                    order.OrderId,
-                    LedgerPartyType.Delivery,
-                    deliveryGroup.Key,
-                    fee,
-                    OrderJournalEntryKind.DeliveryFeeAccrued,
-                    OrderJournalKeys.Build(order.OrderId, $"delivery-fee:{deliveryGroup.Key}"),
-                    note: "Delivery fee accrued on customer received",
-                    createdBy: actor,
-                    cancellationToken: cancellationToken);
-
-                if (feeResult.IsFailure)
-                    return feeResult;
-            }
-
-            var orderTotals = await _context.OrderTotals
-                .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.OrderId == order.OrderId, cancellationToken);
-
-            if (order.PaymentMethodId == (int)PaymentMethod.Cash)
-            {
-                // Full order total debit on the delivery that collected (if multiple, debit primary = first by id)
-                var collectingDeliveryId = deliveryFeeRows
-                    .GroupBy(d => d.DeliveryId)
-                    .OrderByDescending(g => g.Count())
-                    .ThenBy(g => g.Key)
-                    .First().Key;
-
-                var cashResult = await _journal.PostDebitAsync(
-                    order.OrderId,
-                    LedgerPartyType.Delivery,
-                    collectingDeliveryId,
-                    order.OrderTotal,
-                    OrderJournalEntryKind.CashCollectedFromCustomer,
-                    OrderJournalKeys.Build(order.OrderId, $"cash-collected:{collectingDeliveryId}"),
-                    note: "Cash collected from customer",
-                    createdBy: actor,
-                    cancellationToken: cancellationToken);
-
-                if (cashResult.IsFailure)
-                    return cashResult;
-
-                if (orderTotals != null && orderTotals.ServiceFees > 0)
-                {
-                    var serviceResult = await _journal.PostCreditAsync(
-                        order.OrderId,
-                        LedgerPartyType.Company,
-                        null,
-                        orderTotals.ServiceFees,
-                        OrderJournalEntryKind.CompanyServiceFeeAccrued,
-                        OrderJournalKeys.Build(order.OrderId, "company-service-fee-cash"),
-                        note: "Company service fee on cash receipt",
-                        createdBy: actor,
-                        cancellationToken: cancellationToken);
-
-                    if (serviceResult.IsFailure)
-                        return serviceResult;
-                }
             }
 
             return Result.Success();
@@ -420,11 +279,12 @@ namespace Application.Features.Order.Command.UpdateOrderStateCommand
                         return;
                 }
 
-                await _adminNotificationHubService.SendNotificationAsync(
-                    title: title,
-                    message: message,
-                    notificationType: notificationType,
-                    orderId: order.OrderId);
+                await _realtime.NotifyAsync(
+                    order.OrderId,
+                    title,
+                    message,
+                    notificationType,
+                    cancellationToken: default);
             }
             catch
             {

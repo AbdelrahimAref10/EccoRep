@@ -1208,10 +1208,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("OrderId");
 
-                    b.Property<decimal>("ServiceFeeShare")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("ServiceFeeShare");
-
                     b.Property<int>("VehicleId")
                         .HasColumnType("int")
                         .HasColumnName("VehicleId");
@@ -1245,6 +1241,10 @@ namespace Infrastructure.Migrations
                     b.Property<int>("CityId")
                         .HasColumnType("int")
                         .HasColumnName("CityId");
+
+                    b.Property<bool>("CompanyServiceFeeAccrued")
+                        .HasColumnType("bit")
+                        .HasColumnName("CompanyServiceFeeAccrued");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(256)
@@ -1306,6 +1306,19 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("OrderCode");
 
+                    b.Property<bool>("OrderDeliveryFailed")
+                        .HasColumnType("bit")
+                        .HasColumnName("OrderDeliveryFailed");
+
+                    b.Property<int?>("OrderDeliveryFailureFaultParty")
+                        .HasColumnType("int")
+                        .HasColumnName("OrderDeliveryFailureFaultParty");
+
+                    b.Property<string>("OrderDeliveryFailureReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("OrderDeliveryFailureReason");
+
                     b.Property<int>("OrderState")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
@@ -1319,6 +1332,10 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("OrderTotal")
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("OrderTotal");
+
+                    b.Property<bool>("OrderTotalDebitedToCompany")
+                        .HasColumnType("bit")
+                        .HasColumnName("OrderTotalDebitedToCompany");
 
                     b.Property<string>("PassportImage")
                         .IsRequired()
@@ -1448,11 +1465,20 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("PartyType");
 
+                    b.Property<int?>("VehicleId")
+                        .HasColumnType("int")
+                        .HasColumnName("VehicleId");
+
                     b.HasKey("OrderJournalId");
 
                     b.HasIndex("IdempotencyKey")
                         .IsUnique()
                         .HasDatabaseName("IX_VO_OrderJournal_IdempotencyKey");
+
+                    b.HasIndex("VehicleId");
+
+                    b.HasIndex("OrderId", "VehicleId")
+                        .HasDatabaseName("IX_VO_OrderJournal_Order_Vehicle");
 
                     b.HasIndex("OrderId", "PartyType", "PartyId")
                         .HasDatabaseName("IX_VO_OrderJournal_Order_Party");
@@ -1575,6 +1601,45 @@ namespace Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
 
+                    b.Property<bool>("DeliveredToCustomer")
+                        .HasColumnType("bit")
+                        .HasColumnName("DeliveredToCustomer");
+
+                    b.Property<DateTime?>("DeliveredToCustomerAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DeliveredToCustomerAt");
+
+                    b.Property<string>("DeliveredToCustomerImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("DeliveredToCustomerImageUrl");
+
+                    b.Property<bool>("DeliveredToOwner")
+                        .HasColumnType("bit")
+                        .HasColumnName("DeliveredToOwner");
+
+                    b.Property<DateTime?>("DeliveredToOwnerAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("DeliveredToOwnerAt");
+
+                    b.Property<string>("DeliveredToOwnerImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("DeliveredToOwnerImageUrl");
+
+                    b.Property<bool>("DeliveryFailed")
+                        .HasColumnType("bit")
+                        .HasColumnName("DeliveryFailed");
+
+                    b.Property<int?>("DeliveryFailureFaultParty")
+                        .HasColumnType("int")
+                        .HasColumnName("DeliveryFailureFaultParty");
+
+                    b.Property<string>("DeliveryFailureReason")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("DeliveryFailureReason");
+
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)")
@@ -1583,6 +1648,38 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("LastModifiedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("LastModifiedDate");
+
+                    b.Property<int>("MerchantResponseStatus")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0)
+                        .HasColumnName("MerchantResponseStatus");
+
+                    b.Property<bool>("ReceivedFromCustomer")
+                        .HasColumnType("bit")
+                        .HasColumnName("ReceivedFromCustomer");
+
+                    b.Property<DateTime?>("ReceivedFromCustomerAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("ReceivedFromCustomerAt");
+
+                    b.Property<string>("ReceivedFromCustomerImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("ReceivedFromCustomerImageUrl");
+
+                    b.Property<bool>("ReceivedFromOwner")
+                        .HasColumnType("bit")
+                        .HasColumnName("ReceivedFromOwner");
+
+                    b.Property<DateTime?>("ReceivedFromOwnerAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("ReceivedFromOwnerAt");
+
+                    b.Property<string>("ReceivedFromOwnerImageUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("ReceivedFromOwnerImageUrl");
 
                     b.HasKey("OrderId", "VehicleId");
 
@@ -1978,10 +2075,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(256)")
                         .HasColumnName("Name");
 
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("Price");
-
                     b.HasKey("SubCategoryId");
 
                     b.HasIndex("CategoryId")
@@ -2171,6 +2264,12 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VehicleId"));
 
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasColumnName("Color");
+
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)")
@@ -2179,6 +2278,10 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
+
+                    b.Property<int?>("EngineCapacityCc")
+                        .HasColumnType("int")
+                        .HasColumnName("EngineCapacityCc");
 
                     b.Property<string>("ImageUrl")
                         .HasColumnType("nvarchar(max)")
@@ -2197,11 +2300,25 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("MerchantId");
 
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("Model");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)")
                         .HasColumnName("Name");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("Price");
+
+                    b.Property<int?>("SpeedKmh")
+                        .HasColumnType("int")
+                        .HasColumnName("SpeedKmh");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -2212,6 +2329,12 @@ namespace Infrastructure.Migrations
                     b.Property<int>("SubCategoryId")
                         .HasColumnType("int")
                         .HasColumnName("SubCategoryId");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("Type");
 
                     b.Property<string>("VehicleCode")
                         .IsRequired()
@@ -2636,7 +2759,14 @@ namespace Infrastructure.Migrations
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade);
 
+                    b.HasOne("Domain.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Order");
+
+                    b.Navigation("Vehicle");
                 });
 
             modelBuilder.Entity("Domain.Models.OrderPayment", b =>

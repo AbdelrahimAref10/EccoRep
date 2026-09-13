@@ -3,6 +3,7 @@ using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
 using Infrastructure;
+using Infrastructure.Services;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -21,11 +22,16 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
     {
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
+        private readonly IImageService _imageService;
 
-        public GetMyMerchantOrderDetailQueryHandler(DatabaseContext context, IUserSession userSession)
+        public GetMyMerchantOrderDetailQueryHandler(
+            DatabaseContext context,
+            IUserSession userSession,
+            IImageService imageService)
         {
             _context = context;
             _userSession = userSession;
+            _imageService = imageService;
         }
 
         public async Task<Result<MerchantPortalOrderDetailDto>> Handle(
@@ -66,7 +72,24 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
                     VehicleId = ov.VehicleId,
                     VehicleName = ov.Vehicle.Name,
                     VehicleCode = ov.Vehicle.VehicleCode,
-                    Status = (int)ov.Vehicle.Status
+                    ImageUrl = !string.IsNullOrWhiteSpace(ov.Vehicle.ImageUrl)
+                        ? _imageService.GetImageUrl(ov.Vehicle.ImageUrl)
+                        : null,
+                    Status = (int)ov.Vehicle.Status,
+                    Color = ov.Vehicle.Color,
+                    Type = ov.Vehicle.Type,
+                    Model = ov.Vehicle.Model,
+                    Price = ov.Vehicle.Price,
+                    SpeedKmh = ov.Vehicle.SpeedKmh,
+                    EngineCapacityCc = ov.Vehicle.EngineCapacityCc,
+                    ReceivedFromOwner = ov.ReceivedFromOwner,
+                    DeliveredToCustomer = ov.DeliveredToCustomer,
+                    ReceivedFromCustomer = ov.ReceivedFromCustomer,
+                    DeliveredToOwner = ov.DeliveredToOwner,
+                    DeliveryFailed = ov.DeliveryFailed,
+                    DeliveryFailureReason = ov.DeliveryFailureReason,
+                    DeliveryFailureFaultParty = ov.DeliveryFailureFaultParty,
+                    MerchantResponseStatus = ov.MerchantResponseStatus
                 })
                 .ToList();
 
@@ -78,6 +101,17 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
                 .Include(p => p.Vehicle)
                 .Where(p => p.OrderId == request.OrderId && p.MerchantId == merchant.MerchantId)
                 .ToListAsync(cancellationToken);
+
+            var days = Domain.Models.Order.InclusiveReservationDays(
+                order.ReservationDateFrom,
+                order.ReservationDateTo);
+            var rentalTotal = paymentDetails.Count > 0
+                ? paymentDetails.Sum(p => p.VehicleRental)
+                : order.OrderVehicles
+                    .Where(ov =>
+                        ov.Vehicle.MerchantId == merchant.MerchantId
+                        && ov.MerchantResponseStatus != MerchantVehicleResponseStatus.Declined)
+                    .Sum(ov => ov.Vehicle.Price * days);
 
             var deliveryAssignments = await _context.DeliveryMenOrders
                 .AsNoTracking()
@@ -96,7 +130,13 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
                 .ThenBy(j => j.OrderJournalId)
                 .ToListAsync(cancellationToken);
 
-            var canActOnInvite = order.OrderState == OrderState.MerchantPending
+            var canAccept = order.OrderState == OrderState.MerchantPending
+                && invitation.ResponseStatus != MerchantOrderResponseStatus.Rejected
+                && order.OrderVehicles.Any(ov =>
+                    ov.Vehicle.MerchantId == merchant.MerchantId
+                    && ov.MerchantResponseStatus == MerchantVehicleResponseStatus.Pending);
+
+            var canReject = order.OrderState == OrderState.MerchantPending
                 && invitation.ResponseStatus == MerchantOrderResponseStatus.Pending;
 
             var pendingHandoverIds = deliveryAssignments
@@ -127,7 +167,6 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
                 OrderId = order.OrderId,
                 OrderCode = order.OrderCode,
                 SubCategoryName = order.SubCategory.Name,
-                SubCategoryPrice = order.SubCategory.Price,
                 CityName = order.City.Name,
                 ReservationDateFrom = order.ReservationDateFrom,
                 ReservationDateTo = order.ReservationDateTo,
@@ -143,8 +182,8 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
                 MyResponseStatus = invitation.ResponseStatus,
                 MyRejectReason = invitation.RejectReason,
                 MyRespondedAt = invitation.RespondedAt,
-                CanAccept = canActOnInvite,
-                CanReject = canActOnInvite,
+                CanAccept = canAccept,
+                CanReject = canReject,
                 CanHandover = canHandover,
                 MyVehicles = myVehicles,
                 MyPaymentDetails = paymentDetails.Select(p => new MerchantOrderPaymentDetailDto
@@ -156,7 +195,6 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
                     VehicleId = p.VehicleId,
                     VehicleCode = p.Vehicle.VehicleCode,
                     VehicleRental = p.VehicleRental,
-                    ServiceFeeShare = p.ServiceFeeShare,
                     NetAmount = p.NetAmount
                 }).ToList(),
                 MyHandovers = handovers,
@@ -164,6 +202,7 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
                 {
                     OrderJournalId = j.OrderJournalId,
                     OrderId = j.OrderId,
+                    VehicleId = j.VehicleId,
                     PartyType = j.PartyType,
                     PartyId = j.PartyId,
                     Direction = j.Direction,
@@ -175,9 +214,9 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
                     CreatedBy = j.CreatedBy,
                     CreatedDate = j.CreatedDate
                 }).ToList(),
-                MyRentalTotal = paymentDetails.Sum(p => p.VehicleRental),
-                MyServiceFeeTotal = paymentDetails.Sum(p => p.ServiceFeeShare),
-                MyNetTotal = paymentDetails.Sum(p => p.NetAmount)
+                MyRentalTotal = rentalTotal,
+                MyServiceFeeTotal = 0,
+                MyNetTotal = rentalTotal
             });
         }
     }

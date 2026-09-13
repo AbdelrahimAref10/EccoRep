@@ -7,7 +7,9 @@ using Application.Features.Order.Command.MarkCustomerRejectedReceiptCommand;
 using Application.Features.Order.Command.MarkMerchantHandoverToDeliveryCommand;
 using Application.Features.Order.Command.MarkOrderCancellationFeePaidCommand;
 using Application.Features.Order.Command.MarkOrderMoneyRefundedCommand;
-using Application.Features.Order.Command.AdminReplaceOrderVehicleCommand;
+using Application.Features.Order.Command.AdminReplacementOrderVehicleCommand;
+using Application.Features.Order.Command.AdminRemoveOrderVehicleCommand;
+using Application.Features.Order.Command.OrderVehicleLifecycleCommands;
 using Application.Features.Order.Command.ReassignMerchantOrderCommand;
 using Application.Features.Order.Command.RejectOrderCommand;
 using Application.Features.Order.Command.SendOrderToMerchantsCommand;
@@ -142,11 +144,24 @@ namespace Volt.Server.Controllers.Admin
             return Ok(result.Value);
         }
 
-        /// <summary>Replace one order vehicle with another available in the order reservation range.</summary>
-        [HttpPost("{orderId}/ReplaceVehicle")]
+        /// <summary>Replacement of one order vehicle with another available in the reservation range. Recalculates order totals.</summary>
+        [HttpPost("{orderId}/Replacement")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> ReplaceVehicle(int orderId, [FromBody] AdminReplaceOrderVehicleCommand command)
+        public async Task<IActionResult> Replacement(int orderId, [FromBody] AdminReplacementOrderVehicleCommand command)
+        {
+            command.OrderId = orderId;
+            var result = await _mediator.Send(command);
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        /// <summary>Remove one vehicle from the order and recalculate totals/payment.</summary>
+        [HttpPost("{orderId}/RemoveVehicle")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RemoveVehicle(int orderId, [FromBody] AdminRemoveOrderVehicleCommand command)
         {
             command.OrderId = orderId;
             var result = await _mediator.Send(command);
@@ -171,6 +186,102 @@ namespace Volt.Server.Controllers.Admin
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> MarkMerchantHandover(int orderId, [FromBody] MarkMerchantHandoverToDeliveryCommand command)
+        {
+            command.OrderId = orderId;
+            var result = await _mediator.Send(command);
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpPost("{orderId}/vehicles/{vehicleId}/ReceivedFromOwner")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> MarkVehicleReceivedFromOwner(
+            int orderId,
+            int vehicleId,
+            [FromBody] MarkVehicleReceivedFromOwnerCommand? command)
+        {
+            command ??= new MarkVehicleReceivedFromOwnerCommand();
+            command.OrderId = orderId;
+            command.VehicleId = vehicleId;
+            var result = await _mediator.Send(command);
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpPost("{orderId}/vehicles/{vehicleId}/DeliveredToCustomer")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> MarkVehicleDeliveredToCustomer(
+            int orderId,
+            int vehicleId,
+            [FromBody] MarkVehicleDeliveredToCustomerCommand? command)
+        {
+            command ??= new MarkVehicleDeliveredToCustomerCommand();
+            command.OrderId = orderId;
+            command.VehicleId = vehicleId;
+            var result = await _mediator.Send(command);
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpPost("{orderId}/vehicles/{vehicleId}/ReceivedFromCustomer")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> MarkVehicleReceivedFromCustomer(
+            int orderId,
+            int vehicleId,
+            [FromBody] MarkVehicleReceivedFromCustomerCommand? command)
+        {
+            command ??= new MarkVehicleReceivedFromCustomerCommand();
+            command.OrderId = orderId;
+            command.VehicleId = vehicleId;
+            var result = await _mediator.Send(command);
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpPost("{orderId}/vehicles/{vehicleId}/DeliveredToOwner")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> MarkVehicleDeliveredToOwner(
+            int orderId,
+            int vehicleId,
+            [FromBody] MarkVehicleDeliveredToOwnerCommand? command)
+        {
+            command ??= new MarkVehicleDeliveredToOwnerCommand();
+            command.OrderId = orderId;
+            command.VehicleId = vehicleId;
+            var result = await _mediator.Send(command);
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpPost("{orderId}/vehicles/{vehicleId}/NotReceivedByCustomer")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> MarkVehicleNotReceivedByCustomer(
+            int orderId,
+            int vehicleId,
+            [FromBody] MarkVehicleNotReceivedByCustomerCommand command)
+        {
+            command.OrderId = orderId;
+            command.VehicleId = vehicleId;
+            var result = await _mediator.Send(command);
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpPost("{orderId}/NotDelivered")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> MarkOrderNotDelivered(int orderId, [FromBody] MarkOrderNotDeliveredCommand command)
         {
             command.OrderId = orderId;
             var result = await _mediator.Send(command);

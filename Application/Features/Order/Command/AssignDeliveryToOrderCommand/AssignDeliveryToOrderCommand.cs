@@ -1,3 +1,4 @@
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
@@ -28,11 +29,16 @@ namespace Application.Features.Order.Command.AssignDeliveryToOrderCommand
     {
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
+        private readonly IOrderRealtimeNotifier _realtime;
 
-        public AssignDeliveryToOrderCommandHandler(DatabaseContext context, IUserSession userSession)
+        public AssignDeliveryToOrderCommandHandler(
+            DatabaseContext context,
+            IUserSession userSession,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(AssignDeliveryToOrderCommand request, CancellationToken cancellationToken)
@@ -171,6 +177,14 @@ namespace Application.Features.Order.Command.AssignDeliveryToOrderCommand
 
             order.MarkDeliveryAssigned(createdBy);
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _realtime.NotifyAsync(
+                order.OrderId,
+                "Delivery assigned",
+                $"Delivery was assigned on order #{order.OrderCode}.",
+                NotificationType.OrderUpdated,
+                cancellationToken: cancellationToken);
+
             return Result.Success(true);
         }
     }

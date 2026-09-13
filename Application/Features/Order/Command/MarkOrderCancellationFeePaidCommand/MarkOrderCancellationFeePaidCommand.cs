@@ -1,3 +1,4 @@
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Enums;
 using Infrastructure;
@@ -16,10 +17,14 @@ namespace Application.Features.Order.Command.MarkOrderCancellationFeePaidCommand
     public class MarkOrderCancellationFeePaidCommandHandler : IRequestHandler<MarkOrderCancellationFeePaidCommand, Result<int>>
     {
         private readonly DatabaseContext _context;
+        private readonly IOrderRealtimeNotifier _realtime;
 
-        public MarkOrderCancellationFeePaidCommandHandler(DatabaseContext context)
+        public MarkOrderCancellationFeePaidCommandHandler(
+            DatabaseContext context,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
+            _realtime = realtime;
         }
 
         public async Task<Result<int>> Handle(MarkOrderCancellationFeePaidCommand request, CancellationToken cancellationToken)
@@ -48,6 +53,13 @@ namespace Application.Features.Order.Command.MarkOrderCancellationFeePaidCommand
             {
                 return Result.Failure<int>("Cannot mark order as paid");
             }
+
+            await _realtime.NotifyAsync(
+                request.OrderId,
+                "Cancellation fee paid",
+                $"Cancellation fee was marked paid for order {request.OrderId}.",
+                NotificationType.OrderUpdated,
+                cancellationToken: cancellationToken);
 
             return Result.Success<int>(request.OrderId);
         }

@@ -17,7 +17,7 @@ namespace Application.Features.Order.Query.GetAllOrderJournalsQuery
     /// </summary>
     public record GetAllOrderJournalsQuery : IRequest<Result<OrderJournalListDto>>
     {
-        public int? OrderId { get; set; }
+        public string? OrderCode { get; set; }
         public int? DeliveryId { get; set; }
         public int? MerchantId { get; set; }
     }
@@ -35,8 +35,6 @@ namespace Application.Features.Order.Query.GetAllOrderJournalsQuery
             GetAllOrderJournalsQuery request,
             CancellationToken cancellationToken)
         {
-            if (request.OrderId is <= 0)
-                return Result.Failure<OrderJournalListDto>("OrderId must be greater than zero");
             if (request.DeliveryId is <= 0)
                 return Result.Failure<OrderJournalListDto>("DeliveryId must be greater than zero");
             if (request.MerchantId is <= 0)
@@ -47,8 +45,17 @@ namespace Application.Features.Order.Query.GetAllOrderJournalsQuery
 
             var query = _context.OrderJournals.AsNoTracking().AsQueryable();
 
-            if (request.OrderId.HasValue)
-                query = query.Where(j => j.OrderId == request.OrderId.Value);
+            if (!string.IsNullOrWhiteSpace(request.OrderCode))
+            {
+                var code = request.OrderCode.Trim();
+                var matchingOrderIds = await _context.Orders
+                    .AsNoTracking()
+                    .Where(o => o.OrderCode.Contains(code))
+                    .Select(o => o.OrderId)
+                    .ToListAsync(cancellationToken);
+
+                query = query.Where(j => j.OrderId.HasValue && matchingOrderIds.Contains(j.OrderId.Value));
+            }
 
             if (request.DeliveryId.HasValue)
             {
@@ -93,6 +100,18 @@ namespace Application.Features.Order.Query.GetAllOrderJournalsQuery
                     .Where(d => deliveryIds.Contains(d.DeliveryId))
                     .ToDictionaryAsync(d => d.DeliveryId, d => d.FullName, cancellationToken);
 
+            var orderIds = rows
+                .Where(j => j.OrderId.HasValue)
+                .Select(j => j.OrderId!.Value)
+                .Distinct()
+                .ToList();
+
+            var orderCodes = orderIds.Count == 0
+                ? new Dictionary<int, string>()
+                : await _context.Orders.AsNoTracking()
+                    .Where(o => orderIds.Contains(o.OrderId))
+                    .ToDictionaryAsync(o => o.OrderId, o => o.OrderCode, cancellationToken);
+
             decimal totalCredit = 0;
             decimal totalDebit = 0;
             var entries = new List<OrderJournalMovementDto>(rows.Count);
@@ -116,6 +135,9 @@ namespace Application.Features.Order.Query.GetAllOrderJournalsQuery
                 {
                     OrderJournalId = j.OrderJournalId,
                     OrderId = j.OrderId,
+                    OrderCode = j.OrderId.HasValue && orderCodes.TryGetValue(j.OrderId.Value, out var code)
+                        ? code
+                        : null,
                     PartyType = j.PartyType,
                     PartyId = j.PartyId,
                     PartyName = partyName,

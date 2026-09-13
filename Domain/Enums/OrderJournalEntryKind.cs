@@ -16,6 +16,10 @@ namespace Domain.Enums
         /// <summary>Delivery received cash float from company (عليه) — OrderId null.</summary>
         DeliveryCashFloatReceived = 12,
         /// <summary>Delivery returned unused float to company (ليه/تصفير) — OrderId null.</summary>
-        DeliveryCashFloatReturned = 13
+        DeliveryCashFloatReturned = 13,
+        /// <summary>Company debit for full order total (cash first customer delivery, or PayPal capture).</summary>
+        OrderTotalDebitedToCompany = 14,
+        /// <summary>Fault party debit after non-delivery (vehicle or whole order).</summary>
+        NonDeliveryFaultDebit = 15
     }
 }

@@ -10,12 +10,19 @@ namespace Application.Features.Vehicle.DTOs
         public int Status { get; set; }
         public int SubCategoryId { get; set; }
         public string SubCategoryName { get; set; } = string.Empty;
-        public decimal SubCategoryPrice { get; set; }
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
         public int CityId { get; set; }
         public string CityName { get; set; } = string.Empty;
         public int MerchantId { get; set; }
         public string MerchantName { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        /// <summary>Top speed in km/h. Optional.</summary>
+        public int? SpeedKmh { get; set; }
+        /// <summary>Motor engine capacity in CC. Optional.</summary>
+        public int? EngineCapacityCc { get; set; }
     }
 }

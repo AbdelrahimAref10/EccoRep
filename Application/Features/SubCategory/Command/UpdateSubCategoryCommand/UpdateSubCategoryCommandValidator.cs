@@ -67,11 +67,6 @@ namespace Application.Features.SubCategory.Command.UpdateSubCategoryCommand
                 return Result.Failure($"Category with ID {request.CategoryId} not found");
             }
 
-            if (request.Price < 0)
-            {
-                return Result.Failure("Price must be greater than or equal to zero");
-            }
-
             // Check if another subcategory with same name exists in this category
             var existingSubCategory = await _context.SubCategories
                 .FirstOrDefaultAsync(sc => sc.Name.ToLower() == request.Name.ToLower().Trim() && 

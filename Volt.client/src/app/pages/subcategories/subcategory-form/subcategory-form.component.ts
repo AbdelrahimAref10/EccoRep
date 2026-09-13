@@ -39,7 +39,6 @@ export class SubCategoryFormComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: ['', [Validators.required]],
       categoryId: [null, [Validators.required]],
-      price: [0, [Validators.required, Validators.min(0)]],
       isOffer: [false],
       imageUrl: [null]
     });
@@ -96,7 +95,6 @@ export class SubCategoryFormComponent implements OnInit {
           name: subCategory.name,
           description: subCategory.description,
           categoryId: subCategory.categoryId,
-          price: subCategory.price,
           isOffer: subCategory.isOffer || false,
           imageUrl: subCategory.imageUrl
         });
@@ -155,7 +153,6 @@ export class SubCategoryFormComponent implements OnInit {
       command.name = formValue.name;
       command.description = formValue.description;
       command.categoryId = formValue.categoryId;
-      command.price = formValue.price;
       command.isOffer = formValue.isOffer || false;
       // Only send imageUrl if it's a new base64 image (starts with data:image/), otherwise send null
       command.imageUrl = this.selectedImageFile ? formValue.imageUrl : null;
@@ -175,7 +172,6 @@ export class SubCategoryFormComponent implements OnInit {
       command.name = formValue.name;
       command.description = formValue.description;
       command.categoryId = formValue.categoryId;
-      command.price = formValue.price;
       command.isOffer = formValue.isOffer || false;
       command.imageUrl = formValue.imageUrl;
 

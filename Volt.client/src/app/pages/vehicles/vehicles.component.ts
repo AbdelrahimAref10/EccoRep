@@ -22,6 +22,7 @@ import {
   MultiSelectOption
 } from '../../shared/components/multi-select/multi-select.component';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { VehicleSpecsComponent } from '../../shared/components/vehicle-specs/vehicle-specs.component';
 
 @Component({
   selector: 'app-vehicles',
@@ -33,7 +34,8 @@ import { TranslatePipe } from '../../shared/pipes/translate.pipe';
     ConfirmDialogComponent,
     PaginationComponent,
     MultiSelectComponent,
-    TranslatePipe
+    TranslatePipe,
+    VehicleSpecsComponent
   ],
   templateUrl: './vehicles.component.html',
   styleUrls: ['./vehicles.component.css', '../../shared/styles/list-filters.css', '../../shared/styles/entity-tiles.css']

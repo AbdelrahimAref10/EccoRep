@@ -43,8 +43,7 @@ namespace Application.Features.SubCategory.Query.GetSubCategoriesLookupQuery
                     SubCategoryId = sc.SubCategoryId,
                     Name = sc.Name,
                     CategoryId = sc.CategoryId,
-                    CategoryName = sc.Category.Name,
-                    Price = sc.Price
+                    CategoryName = sc.Category.Name
                 })
                 .ToListAsync(cancellationToken);
 

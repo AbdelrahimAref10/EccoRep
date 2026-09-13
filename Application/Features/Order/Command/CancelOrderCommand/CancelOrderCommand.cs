@@ -1,5 +1,6 @@
 using Application.Features.Order.Common;
 using Application.Features.Order.DTOs;
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
@@ -27,20 +28,20 @@ namespace Application.Features.Order.Command.CancelOrderCommand
         private readonly IUserSession _userSession;
         private readonly INotificationService _notificationService;
         private readonly IDateTimeProvider _dateTimeProvider;
-        private readonly IAdminNotificationHubService _adminNotificationHubService;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public CancelOrderCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
             INotificationService notificationService,
             IDateTimeProvider dateTimeProvider,
-            IAdminNotificationHubService adminNotificationHubService)
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _notificationService = notificationService;
             _dateTimeProvider = dateTimeProvider;
-            _adminNotificationHubService = adminNotificationHubService;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(CancelOrderCommand request, CancellationToken cancellationToken)
@@ -65,9 +66,10 @@ namespace Application.Features.Order.Command.CancelOrderCommand
                 return Result.Failure<bool>("Order is already cancelled");
             }
 
-            if (!Domain.Models.Order.CanCancelInState(order.OrderState))
+            if (!order.CanCancel())
             {
-                return Result.Failure<bool>($"Cannot cancel order in {order.OrderState} state. Cancel is only allowed before Confirmed.");
+                return Result.Failure<bool>(
+                    $"Cannot cancel order in {order.OrderState} state. Cancel stops once any vehicle is received from the merchant.");
             }
 
             var userId = _userSession.UserId;
@@ -159,12 +161,12 @@ namespace Application.Features.Order.Command.CancelOrderCommand
 
             await SendOrderCancelledNotification(order, cancellationToken);
 
-            await _adminNotificationHubService.SendNotificationAsync(
-                title: "Order Cancelled",
-                message: $"Order #{order.OrderCode} has been cancelled",
-                notificationType: Domain.Enums.NotificationType.OrderCancelled,
-                orderId: order.OrderId
-            );
+            await _realtime.NotifyAsync(
+                order.OrderId,
+                "Order Cancelled",
+                $"Order #{order.OrderCode} has been cancelled",
+                NotificationType.OrderCancelled,
+                cancellationToken: cancellationToken);
 
             return Result.Success(true);
         }

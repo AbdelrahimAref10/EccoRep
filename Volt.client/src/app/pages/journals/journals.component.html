@@ -10,36 +10,44 @@
 
   <section class="journals__filters" aria-label="filters">
     <div class="journals__field">
-      <label>{{ 'settlements.orderId' | t }}</label>
-      <input type="number" class="entity-form__input" [(ngModel)]="filterOrderId" min="1" />
+      <label>{{ 'orders.orderCode' | t }}</label>
+      <input
+        type="text"
+        class="entity-form__input"
+        [(ngModel)]="filterOrderCode"
+        [placeholder]="'orders.searchPlaceholder' | t"
+        (keyup.enter)="loadJournals()"
+      />
     </div>
 
     <div class="journals__field">
       <label>{{ 'settlements.delivery' | t }}</label>
-      <select
-        class="entity-form__select"
-        [(ngModel)]="filterDeliveryId"
+      <app-multi-select
+        [multiple]="false"
+        layout="table"
         [disabled]="isLoadingLookups"
+        [options]="deliveryOptions"
+        [(ngModel)]="filterDeliveryId"
         (ngModelChange)="onDeliveryChange()"
-      >
-        <option [ngValue]="null">{{ 'common.all' | t }}</option>
-        <option *ngFor="let d of deliveries" [ngValue]="d.deliveryId">{{ d.fullName }} — {{ d.mobileNumber }}</option>
-      </select>
+        [placeholder]="'common.all' | t"
+        [primaryColumnLabel]="'common.name' | t"
+        [secondaryColumnLabel]="'common.mobile' | t"
+      ></app-multi-select>
     </div>
 
     <div class="journals__field">
       <label>{{ 'settlements.merchant' | t }}</label>
-      <select
-        class="entity-form__select"
-        [(ngModel)]="filterMerchantId"
+      <app-multi-select
+        [multiple]="false"
+        layout="table"
         [disabled]="isLoadingLookups"
+        [options]="merchantOptions"
+        [(ngModel)]="filterMerchantId"
         (ngModelChange)="onMerchantChange()"
-      >
-        <option [ngValue]="null">{{ 'common.all' | t }}</option>
-        <option *ngFor="let m of merchants" [ngValue]="m.merchantId">
-          {{ m.fullName }}<ng-container *ngIf="m.mobileNumber"> — {{ m.mobileNumber }}</ng-container>
-        </option>
-      </select>
+        [placeholder]="'common.all' | t"
+        [primaryColumnLabel]="'common.name' | t"
+        [secondaryColumnLabel]="'common.mobile' | t"
+      ></app-multi-select>
     </div>
 
     <div class="journals__actions">
@@ -60,7 +68,7 @@
         <thead>
           <tr>
             <th>{{ 'journals.colDate' | t }}</th>
-            <th>{{ 'settlements.orderId' | t }}</th>
+            <th>{{ 'orders.orderCode' | t }}</th>
             <th>{{ 'orders.journalParty' | t }}</th>
             <th>{{ 'orders.journalKindCol' | t }}</th>
             <th>{{ 'orders.journalDirection' | t }}</th>
@@ -75,7 +83,7 @@
           </tr>
           <tr *ngFor="let row of entries">
             <td>{{ row.createdDate | date:'yyyy-MM-dd HH:mm' }}</td>
-            <td>{{ row.orderId || '—' }}</td>
+            <td>{{ row.orderCode || '—' }}</td>
             <td>
               <div class="journals__party">
                 <span class="journals__party-type">{{ getPartyTypeLabel(row.partyType) }}</span>

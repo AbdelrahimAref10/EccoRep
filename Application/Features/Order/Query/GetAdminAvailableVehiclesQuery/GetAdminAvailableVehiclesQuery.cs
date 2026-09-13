@@ -67,7 +67,7 @@ namespace Application.Features.Order.Query.GetAdminAvailableVehiclesQuery
             var city = subCategory.Category.City!;
             var from = request.ReservationDateFrom.Date;
             var to = request.ReservationDateTo.Date;
-            var days = Math.Max(1, (int)(to - from).TotalDays + 1);
+            var days = Domain.Models.Order.InclusiveReservationDays(from, to);
 
             var items = availability.Value.Select(v =>
             {
@@ -85,7 +85,13 @@ namespace Application.Features.Order.Query.GetAdminAvailableVehiclesQuery
                     Status = (int)v.VehicleStatus,
                     IsAvailable = isAvailable,
                     UnavailableReason = isAvailable ? null : "Reserved",
-                    ConflictingDates = v.ConflictingDates.ToList()
+                    ConflictingDates = v.ConflictingDates.ToList(),
+                    Color = v.Color,
+                    Type = v.Type,
+                    Model = v.Model,
+                    Price = v.Price,
+                    SpeedKmh = v.SpeedKmh,
+                    EngineCapacityCc = v.EngineCapacityCc
                 };
             }).ToList();
 

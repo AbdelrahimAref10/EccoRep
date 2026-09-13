@@ -453,118 +453,513 @@
   line-height: 1.45;
 }
 
-/* Vehicles */
-.od__vehicles {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr));
-  gap: 0.85rem;
-}
-
-.od__vehicle {
+/* Vehicles — invoice groups by merchant */
+.od__fleet {
   display: flex;
   flex-direction: column;
-  min-width: 0;
-  padding: 0;
-  overflow: hidden;
-  border-radius: 0.95rem;
+  gap: 1rem;
+}
+
+.od__merchant-block {
   border: 1px solid var(--volt-border);
-  background: var(--volt-surface);
-}
-
-.od__vehicle-media {
-  position: relative;
-  aspect-ratio: 4 / 3;
+  border-radius: 0.95rem;
   background: var(--volt-bg);
+  overflow: hidden;
 }
 
-.od__vehicle-img {
+.od__merchant-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0.95rem;
+  border-bottom: 1px solid var(--volt-border);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--volt-accent) 10%, transparent), transparent 62%),
+    var(--volt-surface);
+}
+
+.od__merchant-kicker {
+  margin: 0;
+  font-size: 0.64rem;
+  font-weight: 780;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--volt-accent-strong);
+}
+
+.od__merchant-name {
+  margin: 0.12rem 0 0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.od__merchant-count {
+  flex-shrink: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--volt-text-secondary);
+}
+
+.od__invoice {
+  display: flex;
+  flex-direction: column;
+}
+
+.od__invoice-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.7rem 0.95rem 0.8rem;
+  border-bottom: 1px dashed var(--volt-border);
+}
+
+.od__invoice-item:last-child {
+  border-bottom: none;
+}
+
+.od__invoice-item--declined {
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.od__invoice-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.od__invoice-thumb {
+  flex-shrink: 0;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.65rem;
+  overflow: hidden;
+  border: 1px solid var(--volt-border);
+  background: #fff;
+}
+
+.od__invoice-thumb img,
+.od__invoice-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.od__invoice-fallback {
+  display: grid;
+  place-items: center;
+  color: var(--volt-text-muted);
+  background: var(--volt-surface-muted);
+}
+
+.od__invoice-fallback svg {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.od__invoice-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.od__invoice-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.od__invoice-name {
+  font-size: 0.88rem;
+  font-weight: 750;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.od__invoice-code {
+  font-size: 0.72rem;
+  color: var(--volt-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.od__invoice-info app-vehicle-specs {
+  display: block;
+}
+
+.od__invoice-rate {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.05rem;
+  flex-shrink: 0;
+  text-align: end;
+}
+
+.od__invoice-rate strong {
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--volt-accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.od__invoice-rate span {
+  font-size: 0.64rem;
+  font-weight: 650;
+  color: var(--volt-text-muted);
+}
+
+.od__vehicle-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.3rem;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 750;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.od__vehicle-badge--ok { background: #16a34a; }
+.od__vehicle-badge--warn { background: #d97706; }
+.od__vehicle-badge--rented { background: var(--volt-accent-strong); }
+.od__vehicle-badge--muted { background: #64748b; }
+
+.od__vehicle-action {
+  margin-top: 0;
+  justify-content: center;
+}
+
+.od__vehicle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.od__vehicle-actions .od__vehicle-action {
+  width: auto;
+}
+
+.od__cycle {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.7rem;
+}
+
+.od__cycle-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.7rem;
+  color: var(--volt-text-muted);
+}
+
+.od__cycle-step--done {
+  color: var(--volt-text-secondary);
+  font-weight: 650;
+}
+
+.od__cycle-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--volt-border);
+  flex-shrink: 0;
+}
+
+.od__cycle-step--done .od__cycle-dot {
+  background: #16a34a;
+}
+
+.od__cycle-proof {
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 0.3rem;
+  overflow: hidden;
+  border: 1px solid var(--volt-border);
+}
+
+.od__cycle-proof img,
+.od__cycle-preview img {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.od__vehicle-fallback {
+.od__cycle-preview {
+  margin-top: 0.75rem;
   display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  color: var(--volt-text-muted);
-  background:
-    linear-gradient(160deg, var(--volt-accent-soft), transparent 55%),
-    var(--volt-bg);
+  gap: 0.5rem;
+  justify-items: start;
 }
 
-.od__vehicle-fallback svg {
-  width: 2.25rem;
-  height: 2.25rem;
-  opacity: 0.7;
+.od__cycle-preview img {
+  width: 8rem;
+  height: 8rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--volt-border);
 }
 
-.od__vehicle-badge {
-  position: absolute;
-  top: 0.55rem;
-  inset-inline-end: 0.55rem;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  min-height: 1.4rem;
-  padding: 0 0.55rem;
-  border-radius: 999px;
-  font-size: 0.68rem;
-  font-weight: 750;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+.od-modal__dialog--proof {
+  width: min(28.5rem, 100%);
 }
 
-.od__vehicle-badge--ok { background: rgba(22, 163, 74, 0.92); }
-.od__vehicle-badge--warn { background: rgba(180, 83, 9, 0.92); }
-.od__vehicle-badge--rented { background: rgba(20, 176, 162, 0.94); }
-.od__vehicle-badge--muted { background: rgba(15, 23, 42, 0.72); }
+.od-proof__header {
+  align-items: flex-start;
+}
 
-.od__vehicle-body {
+.od-proof__heading {
   display: flex;
-  flex-direction: column;
-  gap: 0.28rem;
-  padding: 0.75rem 0.8rem 0.85rem;
+  align-items: flex-start;
+  gap: 0.75rem;
   min-width: 0;
 }
 
-.od__vehicle-name {
-  font-size: 0.9rem;
-  font-weight: 750;
-  line-height: 1.3;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.od-proof__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 0.85rem;
+  background: var(--volt-accent-soft);
+  color: var(--volt-accent-strong);
 }
 
-.od__vehicle-code {
-  font-size: 0.74rem;
+.od-proof__icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.od-proof__body {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.od-proof__vehicle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: 0.95rem;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-bg);
+}
+
+.od-proof__vehicle-thumb {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.7rem;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--volt-surface-muted);
+  color: var(--volt-text-muted);
+  flex: 0 0 auto;
+}
+
+.od-proof__vehicle-thumb img,
+.od-proof__vehicle-thumb svg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.od-proof__vehicle-thumb svg {
+  padding: 0.45rem;
+}
+
+.od-proof__vehicle-meta {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.od-proof__vehicle-meta strong {
+  font-size: 0.9rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.od-proof__vehicle-meta span {
+  font-size: 0.75rem;
   color: var(--volt-text-muted);
   font-variant-numeric: tabular-nums;
 }
 
-.od__vehicle-merchant {
+.od-proof__optional {
+  flex: 0 0 auto;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--volt-accent) 12%, var(--volt-surface));
+  color: var(--volt-accent-strong);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.od-proof__drop {
+  position: relative;
+  border-radius: 1.05rem;
+  overflow: hidden;
+}
+
+.od-proof__input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.od-proof__zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 11.5rem;
+  padding: 1.25rem 1rem;
+  border: 1.5px dashed color-mix(in srgb, var(--volt-accent) 38%, var(--volt-border));
+  border-radius: 1.05rem;
+  background:
+    linear-gradient(180deg, var(--volt-accent-soft), transparent 72%),
+    var(--volt-bg);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease;
+}
+
+.od-proof__drop--active .od-proof__zone,
+.od-proof__zone:hover {
+  border-color: var(--volt-accent);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(20, 176, 162, 0.12);
+}
+
+.od-proof__zone-icon {
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.95rem;
+  background: var(--volt-surface);
+  color: var(--volt-accent-strong);
+  box-shadow: 0 6px 16px rgba(15, 26, 23, 0.08);
+}
+
+.od-proof__zone-icon svg {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.od-proof__zone strong {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--volt-text-primary);
+}
+
+.od-proof__zone small {
+  font-size: 0.75rem;
+  color: var(--volt-text-muted);
+}
+
+.od-proof__preview {
+  position: relative;
+  border-radius: 1.05rem;
+  overflow: hidden;
+  border: 1px solid var(--volt-border);
+  background: #0f1a17;
+}
+
+.od-proof__preview img {
   display: block;
-  margin-top: 0.1rem;
-  font-size: 0.76rem;
-  color: var(--volt-text-secondary);
-  line-height: 1.35;
-  white-space: nowrap;
+  width: 100%;
+  height: 13.5rem;
+  object-fit: cover;
+}
+
+.od-proof__preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem;
+  background: color-mix(in srgb, var(--volt-surface) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.od-proof__file {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--volt-text-secondary);
 }
 
-.od__vehicle-merchant-label {
-  color: var(--volt-text-muted);
-  font-weight: 650;
+.od-proof__preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
 }
 
-.od__vehicle-action {
-  width: 100%;
-  margin-top: 0.45rem;
-  justify-content: center;
+.od-proof__text-btn {
+  margin: 0;
+  border: 0;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.55rem;
+  background: var(--volt-surface-muted);
+  color: var(--volt-text-primary);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.od-proof__text-btn--danger {
+  color: #b91c1c;
+  background: color-mix(in srgb, #ef4444 12%, var(--volt-surface));
+}
+
+.od__vehicle-fail {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #b91c1c;
+  line-height: 1.35;
+}
+
+@media (max-width: 720px) {
+  .od__invoice-main {
+    flex-wrap: wrap;
+  }
+
+  .od__invoice-rate {
+    width: 100%;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    text-align: start;
+  }
 }
 
 /* Receipt */

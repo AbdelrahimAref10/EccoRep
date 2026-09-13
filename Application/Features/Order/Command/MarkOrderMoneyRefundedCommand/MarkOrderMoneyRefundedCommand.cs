@@ -1,3 +1,4 @@
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
@@ -22,11 +23,16 @@ namespace Application.Features.Order.Command.MarkOrderMoneyRefundedCommand
     {
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
+        private readonly IOrderRealtimeNotifier _realtime;
 
-        public MarkOrderMoneyRefundedCommandHandler(DatabaseContext context, IUserSession userSession)
+        public MarkOrderMoneyRefundedCommandHandler(
+            DatabaseContext context,
+            IUserSession userSession,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(MarkOrderMoneyRefundedCommand request, CancellationToken cancellationToken)
@@ -63,6 +69,12 @@ namespace Application.Features.Order.Command.MarkOrderMoneyRefundedCommand
             {
                 order.MarkMoneyRefunded(_userSession.UserName ?? "Admin");
                 await _context.SaveChangesAsync(cancellationToken);
+                await _realtime.NotifyAsync(
+                    order.OrderId,
+                    "Refund confirmed",
+                    $"PayPal refund was confirmed for order #{order.OrderCode}.",
+                    NotificationType.OrderUpdated,
+                    cancellationToken: cancellationToken);
                 return Result.Success(true);
             }
 
@@ -75,6 +87,14 @@ namespace Application.Features.Order.Command.MarkOrderMoneyRefundedCommand
             order.MarkMoneyRefunded(_userSession.UserName ?? "Admin");
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _realtime.NotifyAsync(
+                order.OrderId,
+                "Refund confirmed",
+                $"PayPal refund was confirmed for order #{order.OrderCode}.",
+                NotificationType.OrderUpdated,
+                cancellationToken: cancellationToken);
+
             return Result.Success(true);
         }
     }

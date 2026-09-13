@@ -26,15 +26,18 @@ namespace Application.Features.Order.Command.AdminPayMerchantCommand
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
         private readonly IOrderJournalService _journal;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public AdminPayMerchantCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IOrderJournalService journal)
+            IOrderJournalService journal,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _journal = journal;
+            _realtime = realtime;
         }
 
         public async Task<Result<SettlementResultDto>> Handle(
@@ -101,6 +104,14 @@ namespace Application.Features.Order.Command.AdminPayMerchantCommand
                     amount, order.OrderCode, request.MerchantId, actor));
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _realtime.NotifyAsync(
+                request.OrderId,
+                "Merchant payout",
+                $"Merchant payout recorded on order #{order.OrderCode}.",
+                NotificationType.OrderUpdated,
+                new[] { request.MerchantId },
+                cancellationToken: cancellationToken);
 
             var balanceAfter = await _journal.GetGlobalPartyBalanceAsync(
                 LedgerPartyType.Merchant, request.MerchantId, cancellationToken);

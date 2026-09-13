@@ -46,6 +46,34 @@ namespace Infrastructure.MappingConfiguration
                 .HasColumnName("MerchantId")
                 .IsRequired();
 
+            builder.Property(v => v.Color)
+                .HasColumnName("Color")
+                .HasMaxLength(50)
+                .IsRequired();
+
+            builder.Property(v => v.Type)
+                .HasColumnName("Type")
+                .HasMaxLength(100)
+                .IsRequired();
+
+            builder.Property(v => v.Model)
+                .HasColumnName("Model")
+                .HasMaxLength(100)
+                .IsRequired();
+
+            builder.Property(v => v.Price)
+                .HasColumnName("Price")
+                .HasColumnType("decimal(18,2)")
+                .IsRequired();
+
+            builder.Property(v => v.SpeedKmh)
+                .HasColumnName("SpeedKmh")
+                .IsRequired(false);
+
+            builder.Property(v => v.EngineCapacityCc)
+                .HasColumnName("EngineCapacityCc")
+                .IsRequired(false);
+
             builder.Property(v => v.CreatedBy)
                 .HasColumnName("CreatedBy")
                 .HasMaxLength(256);

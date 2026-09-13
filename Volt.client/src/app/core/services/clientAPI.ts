@@ -1185,17 +1185,21 @@ export class MerchantClient {
         return _observableOf(null as any);
     }
 
-    acceptOrder(orderId: number): Observable<boolean> {
+    acceptOrder(orderId: number, command?: AcceptMerchantOrderCommand | undefined): Observable<boolean> {
         let url_ = this.baseUrl + "/api/Merchant/orders/{orderId}/Accept";
         if (orderId === undefined || orderId === null)
             throw new Error("The parameter 'orderId' must be defined.");
         url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
         url_ = url_.replace(/[?&]$/, "");
 
+        const content_ = JSON.stringify(command);
+
         let options_ : any = {
+            body: content_,
             observe: "response",
             responseType: "blob",
             headers: new HttpHeaders({
+                "Content-Type": "application/json",
                 "Accept": "application/json"
             })
         };
@@ -5921,8 +5925,8 @@ export class AdminOrderClient {
         return _observableOf(null as any);
     }
 
-    replaceVehicle(orderId: number, command: AdminReplaceOrderVehicleCommand): Observable<boolean> {
-        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/ReplaceVehicle";
+    replacement(orderId: number, command: AdminReplacementOrderVehicleCommand): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/Replacement";
         if (orderId === undefined || orderId === null)
             throw new Error("The parameter 'orderId' must be defined.");
         url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
@@ -5941,11 +5945,11 @@ export class AdminOrderClient {
         };
 
         return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processReplaceVehicle(response_);
+            return this.processReplacement(response_);
         })).pipe(_observableCatch((response_: any) => {
             if (response_ instanceof HttpResponseBase) {
                 try {
-                    return this.processReplaceVehicle(response_ as any);
+                    return this.processReplacement(response_ as any);
                 } catch (e) {
                     return _observableThrow(e) as any as Observable<boolean>;
                 }
@@ -5954,7 +5958,70 @@ export class AdminOrderClient {
         }));
     }
 
-    protected processReplaceVehicle(response: HttpResponseBase): Observable<boolean> {
+    protected processReplacement(response: HttpResponseBase): Observable<boolean> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    removeVehicle(orderId: number, command: AdminRemoveOrderVehicleCommand): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/RemoveVehicle";
+        if (orderId === undefined || orderId === null)
+            throw new Error("The parameter 'orderId' must be defined.");
+        url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processRemoveVehicle(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processRemoveVehicle(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<boolean>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<boolean>;
+        }));
+    }
+
+    protected processRemoveVehicle(response: HttpResponseBase): Observable<boolean> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -6081,6 +6148,399 @@ export class AdminOrderClient {
     }
 
     protected processMarkMerchantHandover(response: HttpResponseBase): Observable<boolean> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    markVehicleReceivedFromOwner(orderId: number, vehicleId: number, command?: MarkVehicleReceivedFromOwnerCommand | undefined): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/ReceivedFromOwner";
+        if (orderId === undefined || orderId === null)
+            throw new Error("The parameter 'orderId' must be defined.");
+        url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
+        if (vehicleId === undefined || vehicleId === null)
+            throw new Error("The parameter 'vehicleId' must be defined.");
+        url_ = url_.replace("{vehicleId}", encodeURIComponent("" + vehicleId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMarkVehicleReceivedFromOwner(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMarkVehicleReceivedFromOwner(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<boolean>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<boolean>;
+        }));
+    }
+
+    protected processMarkVehicleReceivedFromOwner(response: HttpResponseBase): Observable<boolean> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    markVehicleDeliveredToCustomer(orderId: number, vehicleId: number, command?: MarkVehicleDeliveredToCustomerCommand | undefined): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/DeliveredToCustomer";
+        if (orderId === undefined || orderId === null)
+            throw new Error("The parameter 'orderId' must be defined.");
+        url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
+        if (vehicleId === undefined || vehicleId === null)
+            throw new Error("The parameter 'vehicleId' must be defined.");
+        url_ = url_.replace("{vehicleId}", encodeURIComponent("" + vehicleId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMarkVehicleDeliveredToCustomer(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMarkVehicleDeliveredToCustomer(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<boolean>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<boolean>;
+        }));
+    }
+
+    protected processMarkVehicleDeliveredToCustomer(response: HttpResponseBase): Observable<boolean> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    markVehicleReceivedFromCustomer(orderId: number, vehicleId: number, command?: MarkVehicleReceivedFromCustomerCommand | undefined): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/ReceivedFromCustomer";
+        if (orderId === undefined || orderId === null)
+            throw new Error("The parameter 'orderId' must be defined.");
+        url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
+        if (vehicleId === undefined || vehicleId === null)
+            throw new Error("The parameter 'vehicleId' must be defined.");
+        url_ = url_.replace("{vehicleId}", encodeURIComponent("" + vehicleId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMarkVehicleReceivedFromCustomer(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMarkVehicleReceivedFromCustomer(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<boolean>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<boolean>;
+        }));
+    }
+
+    protected processMarkVehicleReceivedFromCustomer(response: HttpResponseBase): Observable<boolean> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    markVehicleDeliveredToOwner(orderId: number, vehicleId: number, command?: MarkVehicleDeliveredToOwnerCommand | undefined): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/DeliveredToOwner";
+        if (orderId === undefined || orderId === null)
+            throw new Error("The parameter 'orderId' must be defined.");
+        url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
+        if (vehicleId === undefined || vehicleId === null)
+            throw new Error("The parameter 'vehicleId' must be defined.");
+        url_ = url_.replace("{vehicleId}", encodeURIComponent("" + vehicleId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMarkVehicleDeliveredToOwner(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMarkVehicleDeliveredToOwner(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<boolean>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<boolean>;
+        }));
+    }
+
+    protected processMarkVehicleDeliveredToOwner(response: HttpResponseBase): Observable<boolean> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    markVehicleNotReceivedByCustomer(orderId: number, vehicleId: number, command: MarkVehicleNotReceivedByCustomerCommand): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/NotReceivedByCustomer";
+        if (orderId === undefined || orderId === null)
+            throw new Error("The parameter 'orderId' must be defined.");
+        url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
+        if (vehicleId === undefined || vehicleId === null)
+            throw new Error("The parameter 'vehicleId' must be defined.");
+        url_ = url_.replace("{vehicleId}", encodeURIComponent("" + vehicleId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMarkVehicleNotReceivedByCustomer(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMarkVehicleNotReceivedByCustomer(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<boolean>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<boolean>;
+        }));
+    }
+
+    protected processMarkVehicleNotReceivedByCustomer(response: HttpResponseBase): Observable<boolean> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    markOrderNotDelivered(orderId: number, command: MarkOrderNotDeliveredCommand): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/NotDelivered";
+        if (orderId === undefined || orderId === null)
+            throw new Error("The parameter 'orderId' must be defined.");
+        url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processMarkOrderNotDelivered(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processMarkOrderNotDelivered(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<boolean>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<boolean>;
+        }));
+    }
+
+    protected processMarkOrderNotDelivered(response: HttpResponseBase): Observable<boolean> {
         const status = response.status;
         const responseBlob =
             response instanceof HttpResponse ? response.body :
@@ -7308,10 +7768,10 @@ export class AdminSettlementClient {
         this.baseUrl = baseUrl ?? "";
     }
 
-    getJournals(orderId?: number | null | undefined, deliveryId?: number | null | undefined, merchantId?: number | null | undefined): Observable<OrderJournalListDto> {
+    getJournals(orderCode?: string | null | undefined, deliveryId?: number | null | undefined, merchantId?: number | null | undefined): Observable<OrderJournalListDto> {
         let url_ = this.baseUrl + "/api/AdminSettlement/journals?";
-        if (orderId !== undefined && orderId !== null)
-            url_ += "OrderId=" + encodeURIComponent("" + orderId) + "&";
+        if (orderCode !== undefined && orderCode !== null)
+            url_ += "OrderCode=" + encodeURIComponent("" + orderCode) + "&";
         if (deliveryId !== undefined && deliveryId !== null)
             url_ += "DeliveryId=" + encodeURIComponent("" + deliveryId) + "&";
         if (merchantId !== undefined && merchantId !== null)
@@ -11087,6 +11547,7 @@ export enum NotificationType {
     OrderCompleted = 5,
     OrderCancelled = 6,
     OrderMerchantPending = 7,
+    OrderUpdated = 8,
 }
 
 export class MerchantDashboardSummaryDto {
@@ -11172,7 +11633,6 @@ export class SubCategoryDto {
     imageUrl!: string | null;
     isActive!: boolean;
     isOffer!: boolean;
-    price!: number;
     categoryId!: number;
     categoryName!: string;
     cityId!: number;
@@ -11187,7 +11647,6 @@ export class SubCategoryDto {
             this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
             this.isActive = _data["isActive"] !== undefined ? _data["isActive"] : <any>null;
             this.isOffer = _data["isOffer"] !== undefined ? _data["isOffer"] : <any>null;
-            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
             this.categoryId = _data["categoryId"] !== undefined ? _data["categoryId"] : <any>null;
             this.categoryName = _data["categoryName"] !== undefined ? _data["categoryName"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
@@ -11211,7 +11670,6 @@ export class SubCategoryDto {
         data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         data["isActive"] = this.isActive !== undefined ? this.isActive : <any>null;
         data["isOffer"] = this.isOffer !== undefined ? this.isOffer : <any>null;
-        data["price"] = this.price !== undefined ? this.price : <any>null;
         data["categoryId"] = this.categoryId !== undefined ? this.categoryId : <any>null;
         data["categoryName"] = this.categoryName !== undefined ? this.categoryName : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
@@ -11281,13 +11739,18 @@ export class VehicleDto {
     status!: number;
     subCategoryId!: number;
     subCategoryName!: string;
-    subCategoryPrice!: number;
     categoryId!: number;
     categoryName!: string;
     cityId!: number;
     cityName!: string;
     merchantId!: number;
     merchantName!: string;
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
 
     init(_data?: any) {
         if (_data) {
@@ -11298,13 +11761,18 @@ export class VehicleDto {
             this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
             this.subCategoryId = _data["subCategoryId"] !== undefined ? _data["subCategoryId"] : <any>null;
             this.subCategoryName = _data["subCategoryName"] !== undefined ? _data["subCategoryName"] : <any>null;
-            this.subCategoryPrice = _data["subCategoryPrice"] !== undefined ? _data["subCategoryPrice"] : <any>null;
             this.categoryId = _data["categoryId"] !== undefined ? _data["categoryId"] : <any>null;
             this.categoryName = _data["categoryName"] !== undefined ? _data["categoryName"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
             this.cityName = _data["cityName"] !== undefined ? _data["cityName"] : <any>null;
             this.merchantId = _data["merchantId"] !== undefined ? _data["merchantId"] : <any>null;
             this.merchantName = _data["merchantName"] !== undefined ? _data["merchantName"] : <any>null;
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
         }
     }
 
@@ -11324,13 +11792,18 @@ export class VehicleDto {
         data["status"] = this.status !== undefined ? this.status : <any>null;
         data["subCategoryId"] = this.subCategoryId !== undefined ? this.subCategoryId : <any>null;
         data["subCategoryName"] = this.subCategoryName !== undefined ? this.subCategoryName : <any>null;
-        data["subCategoryPrice"] = this.subCategoryPrice !== undefined ? this.subCategoryPrice : <any>null;
         data["categoryId"] = this.categoryId !== undefined ? this.categoryId : <any>null;
         data["categoryName"] = this.categoryName !== undefined ? this.categoryName : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
         data["cityName"] = this.cityName !== undefined ? this.cityName : <any>null;
         data["merchantId"] = this.merchantId !== undefined ? this.merchantId : <any>null;
         data["merchantName"] = this.merchantName !== undefined ? this.merchantName : <any>null;
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         return data;
     }
 }
@@ -11340,6 +11813,12 @@ export class MerchantCreateVehicleCommand {
     vehicleCode!: string;
     subCategoryId!: number;
     status!: number;
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
     imageUrl!: string | null;
 
     init(_data?: any) {
@@ -11348,6 +11827,12 @@ export class MerchantCreateVehicleCommand {
             this.vehicleCode = _data["vehicleCode"] !== undefined ? _data["vehicleCode"] : <any>null;
             this.subCategoryId = _data["subCategoryId"] !== undefined ? _data["subCategoryId"] : <any>null;
             this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
             this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
         }
     }
@@ -11365,6 +11850,12 @@ export class MerchantCreateVehicleCommand {
         data["vehicleCode"] = this.vehicleCode !== undefined ? this.vehicleCode : <any>null;
         data["subCategoryId"] = this.subCategoryId !== undefined ? this.subCategoryId : <any>null;
         data["status"] = this.status !== undefined ? this.status : <any>null;
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         return data;
     }
@@ -11376,6 +11867,12 @@ export class MerchantUpdateVehicleCommand {
     vehicleCode!: string;
     subCategoryId!: number;
     status!: number;
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
     imageUrl!: string | null;
 
     init(_data?: any) {
@@ -11385,6 +11882,12 @@ export class MerchantUpdateVehicleCommand {
             this.vehicleCode = _data["vehicleCode"] !== undefined ? _data["vehicleCode"] : <any>null;
             this.subCategoryId = _data["subCategoryId"] !== undefined ? _data["subCategoryId"] : <any>null;
             this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
             this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
         }
     }
@@ -11403,6 +11906,12 @@ export class MerchantUpdateVehicleCommand {
         data["vehicleCode"] = this.vehicleCode !== undefined ? this.vehicleCode : <any>null;
         data["subCategoryId"] = this.subCategoryId !== undefined ? this.subCategoryId : <any>null;
         data["status"] = this.status !== undefined ? this.status : <any>null;
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         return data;
     }
@@ -11557,13 +12066,13 @@ export enum MerchantOrderResponseStatus {
     Pending = 0,
     Accepted = 1,
     Rejected = 2,
+    PartiallyAccepted = 3,
 }
 
 export class MerchantPortalOrderDetailDto {
     orderId!: number;
     orderCode!: string;
     subCategoryName!: string;
-    subCategoryPrice!: number;
     cityName!: string;
     reservationDateFrom!: Date;
     reservationDateTo!: Date;
@@ -11595,7 +12104,6 @@ export class MerchantPortalOrderDetailDto {
             this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
             this.orderCode = _data["orderCode"] !== undefined ? _data["orderCode"] : <any>null;
             this.subCategoryName = _data["subCategoryName"] !== undefined ? _data["subCategoryName"] : <any>null;
-            this.subCategoryPrice = _data["subCategoryPrice"] !== undefined ? _data["subCategoryPrice"] : <any>null;
             this.cityName = _data["cityName"] !== undefined ? _data["cityName"] : <any>null;
             this.reservationDateFrom = _data["reservationDateFrom"] ? new Date(_data["reservationDateFrom"].toString()) : <any>null;
             this.reservationDateTo = _data["reservationDateTo"] ? new Date(_data["reservationDateTo"].toString()) : <any>null;
@@ -11664,7 +12172,6 @@ export class MerchantPortalOrderDetailDto {
         data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
         data["orderCode"] = this.orderCode !== undefined ? this.orderCode : <any>null;
         data["subCategoryName"] = this.subCategoryName !== undefined ? this.subCategoryName : <any>null;
-        data["subCategoryPrice"] = this.subCategoryPrice !== undefined ? this.subCategoryPrice : <any>null;
         data["cityName"] = this.cityName !== undefined ? this.cityName : <any>null;
         data["reservationDateFrom"] = this.reservationDateFrom ? this.reservationDateFrom.toISOString() : <any>null;
         data["reservationDateTo"] = this.reservationDateTo ? this.reservationDateTo.toISOString() : <any>null;
@@ -11714,14 +12221,44 @@ export class MerchantPortalVehicleDto {
     vehicleId!: number;
     vehicleName!: string;
     vehicleCode!: string;
+    imageUrl!: string | null;
     status!: number;
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
+    receivedFromOwner!: boolean;
+    deliveredToCustomer!: boolean;
+    receivedFromCustomer!: boolean;
+    deliveredToOwner!: boolean;
+    deliveryFailed!: boolean;
+    deliveryFailureReason!: string | null;
+    deliveryFailureFaultParty!: FaultParty | null;
+    merchantResponseStatus!: MerchantVehicleResponseStatus;
 
     init(_data?: any) {
         if (_data) {
             this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
             this.vehicleName = _data["vehicleName"] !== undefined ? _data["vehicleName"] : <any>null;
             this.vehicleCode = _data["vehicleCode"] !== undefined ? _data["vehicleCode"] : <any>null;
+            this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
             this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
+            this.receivedFromOwner = _data["receivedFromOwner"] !== undefined ? _data["receivedFromOwner"] : <any>null;
+            this.deliveredToCustomer = _data["deliveredToCustomer"] !== undefined ? _data["deliveredToCustomer"] : <any>null;
+            this.receivedFromCustomer = _data["receivedFromCustomer"] !== undefined ? _data["receivedFromCustomer"] : <any>null;
+            this.deliveredToOwner = _data["deliveredToOwner"] !== undefined ? _data["deliveredToOwner"] : <any>null;
+            this.deliveryFailed = _data["deliveryFailed"] !== undefined ? _data["deliveryFailed"] : <any>null;
+            this.deliveryFailureReason = _data["deliveryFailureReason"] !== undefined ? _data["deliveryFailureReason"] : <any>null;
+            this.deliveryFailureFaultParty = _data["deliveryFailureFaultParty"] !== undefined ? _data["deliveryFailureFaultParty"] : <any>null;
+            this.merchantResponseStatus = _data["merchantResponseStatus"] !== undefined ? _data["merchantResponseStatus"] : <any>null;
         }
     }
 
@@ -11737,9 +12274,38 @@ export class MerchantPortalVehicleDto {
         data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
         data["vehicleName"] = this.vehicleName !== undefined ? this.vehicleName : <any>null;
         data["vehicleCode"] = this.vehicleCode !== undefined ? this.vehicleCode : <any>null;
+        data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         data["status"] = this.status !== undefined ? this.status : <any>null;
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
+        data["receivedFromOwner"] = this.receivedFromOwner !== undefined ? this.receivedFromOwner : <any>null;
+        data["deliveredToCustomer"] = this.deliveredToCustomer !== undefined ? this.deliveredToCustomer : <any>null;
+        data["receivedFromCustomer"] = this.receivedFromCustomer !== undefined ? this.receivedFromCustomer : <any>null;
+        data["deliveredToOwner"] = this.deliveredToOwner !== undefined ? this.deliveredToOwner : <any>null;
+        data["deliveryFailed"] = this.deliveryFailed !== undefined ? this.deliveryFailed : <any>null;
+        data["deliveryFailureReason"] = this.deliveryFailureReason !== undefined ? this.deliveryFailureReason : <any>null;
+        data["deliveryFailureFaultParty"] = this.deliveryFailureFaultParty !== undefined ? this.deliveryFailureFaultParty : <any>null;
+        data["merchantResponseStatus"] = this.merchantResponseStatus !== undefined ? this.merchantResponseStatus : <any>null;
         return data;
     }
+}
+
+export enum FaultParty {
+    None = 0,
+    Customer = 1,
+    Merchant = 2,
+    Delivery = 3,
+    Company = 4,
+}
+
+export enum MerchantVehicleResponseStatus {
+    Pending = 0,
+    Confirmed = 1,
+    Declined = 2,
 }
 
 export class MerchantOrderPaymentDetailDto {
@@ -11750,7 +12316,6 @@ export class MerchantOrderPaymentDetailDto {
     vehicleId!: number;
     vehicleCode!: string;
     vehicleRental!: number;
-    serviceFeeShare!: number;
     netAmount!: number;
 
     init(_data?: any) {
@@ -11762,7 +12327,6 @@ export class MerchantOrderPaymentDetailDto {
             this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
             this.vehicleCode = _data["vehicleCode"] !== undefined ? _data["vehicleCode"] : <any>null;
             this.vehicleRental = _data["vehicleRental"] !== undefined ? _data["vehicleRental"] : <any>null;
-            this.serviceFeeShare = _data["serviceFeeShare"] !== undefined ? _data["serviceFeeShare"] : <any>null;
             this.netAmount = _data["netAmount"] !== undefined ? _data["netAmount"] : <any>null;
         }
     }
@@ -11783,7 +12347,6 @@ export class MerchantOrderPaymentDetailDto {
         data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
         data["vehicleCode"] = this.vehicleCode !== undefined ? this.vehicleCode : <any>null;
         data["vehicleRental"] = this.vehicleRental !== undefined ? this.vehicleRental : <any>null;
-        data["serviceFeeShare"] = this.serviceFeeShare !== undefined ? this.serviceFeeShare : <any>null;
         data["netAmount"] = this.netAmount !== undefined ? this.netAmount : <any>null;
         return data;
     }
@@ -11833,6 +12396,7 @@ export class MerchantPortalHandoverDto {
 export class OrderJournalDto {
     orderJournalId!: number;
     orderId!: number | null;
+    vehicleId!: number | null;
     partyType!: LedgerPartyType;
     partyId!: number | null;
     direction!: JournalDirection;
@@ -11848,6 +12412,7 @@ export class OrderJournalDto {
         if (_data) {
             this.orderJournalId = _data["orderJournalId"] !== undefined ? _data["orderJournalId"] : <any>null;
             this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
             this.partyType = _data["partyType"] !== undefined ? _data["partyType"] : <any>null;
             this.partyId = _data["partyId"] !== undefined ? _data["partyId"] : <any>null;
             this.direction = _data["direction"] !== undefined ? _data["direction"] : <any>null;
@@ -11872,6 +12437,7 @@ export class OrderJournalDto {
         data = typeof data === 'object' ? data : {};
         data["orderJournalId"] = this.orderJournalId !== undefined ? this.orderJournalId : <any>null;
         data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
         data["partyType"] = this.partyType !== undefined ? this.partyType : <any>null;
         data["partyId"] = this.partyId !== undefined ? this.partyId : <any>null;
         data["direction"] = this.direction !== undefined ? this.direction : <any>null;
@@ -11911,14 +12477,8 @@ export enum OrderJournalEntryKind {
     CustomerRejectedReceiptNote = 11,
     DeliveryCashFloatReceived = 12,
     DeliveryCashFloatReturned = 13,
-}
-
-export enum FaultParty {
-    None = 0,
-    Customer = 1,
-    Merchant = 2,
-    Delivery = 3,
-    Company = 4,
+    OrderTotalDebitedToCompany = 14,
+    NonDeliveryFaultDebit = 15,
 }
 
 export class PartyLedgerDto {
@@ -12019,6 +12579,7 @@ export class OrderJournalListDto {
 export class OrderJournalMovementDto {
     orderJournalId!: number;
     orderId!: number | null;
+    orderCode!: string | null;
     partyType!: LedgerPartyType;
     partyId!: number | null;
     partyName!: string | null;
@@ -12035,6 +12596,7 @@ export class OrderJournalMovementDto {
         if (_data) {
             this.orderJournalId = _data["orderJournalId"] !== undefined ? _data["orderJournalId"] : <any>null;
             this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            this.orderCode = _data["orderCode"] !== undefined ? _data["orderCode"] : <any>null;
             this.partyType = _data["partyType"] !== undefined ? _data["partyType"] : <any>null;
             this.partyId = _data["partyId"] !== undefined ? _data["partyId"] : <any>null;
             this.partyName = _data["partyName"] !== undefined ? _data["partyName"] : <any>null;
@@ -12060,6 +12622,7 @@ export class OrderJournalMovementDto {
         data = typeof data === 'object' ? data : {};
         data["orderJournalId"] = this.orderJournalId !== undefined ? this.orderJournalId : <any>null;
         data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        data["orderCode"] = this.orderCode !== undefined ? this.orderCode : <any>null;
         data["partyType"] = this.partyType !== undefined ? this.partyType : <any>null;
         data["partyId"] = this.partyId !== undefined ? this.partyId : <any>null;
         data["partyName"] = this.partyName !== undefined ? this.partyName : <any>null;
@@ -12071,6 +12634,43 @@ export class OrderJournalMovementDto {
         data["note"] = this.note !== undefined ? this.note : <any>null;
         data["createdBy"] = this.createdBy !== undefined ? this.createdBy : <any>null;
         data["createdDate"] = this.createdDate ? this.createdDate.toISOString() : <any>null;
+        return data;
+    }
+}
+
+export class AcceptMerchantOrderCommand {
+    orderId!: number;
+    confirmedVehicleIds!: number[] | null;
+
+    init(_data?: any) {
+        if (_data) {
+            this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            if (Array.isArray(_data["confirmedVehicleIds"])) {
+                this.confirmedVehicleIds = [] as any;
+                for (let item of _data["confirmedVehicleIds"])
+                    this.confirmedVehicleIds!.push(item);
+            }
+            else {
+                this.confirmedVehicleIds = <any>null;
+            }
+        }
+    }
+
+    static fromJS(data: any): AcceptMerchantOrderCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new AcceptMerchantOrderCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        if (Array.isArray(this.confirmedVehicleIds)) {
+            data["confirmedVehicleIds"] = [];
+            for (let item of this.confirmedVehicleIds)
+                data["confirmedVehicleIds"].push(item);
+        }
         return data;
     }
 }
@@ -12104,6 +12704,7 @@ export class RejectMerchantOrderCommand {
 export class MarkMerchantHandoverToDeliveryCommand {
     orderId!: number;
     vehicleIds!: number[];
+    imageUrl!: string | null;
 
     init(_data?: any) {
         if (_data) {
@@ -12116,6 +12717,7 @@ export class MarkMerchantHandoverToDeliveryCommand {
             else {
                 this.vehicleIds = <any>null;
             }
+            this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
         }
     }
 
@@ -12134,6 +12736,7 @@ export class MarkMerchantHandoverToDeliveryCommand {
             for (let item of this.vehicleIds)
                 data["vehicleIds"].push(item);
         }
+        data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         return data;
     }
 }
@@ -12607,6 +13210,12 @@ export class CustomerAvailableVehicleItemDto {
     imageUrl!: string | null;
     status!: number;
     conflictingDates!: Date[];
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
 
     init(_data?: any) {
         if (_data) {
@@ -12623,6 +13232,12 @@ export class CustomerAvailableVehicleItemDto {
             else {
                 this.conflictingDates = <any>null;
             }
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
         }
     }
 
@@ -12645,6 +13260,12 @@ export class CustomerAvailableVehicleItemDto {
             for (let item of this.conflictingDates)
                 data["conflictingDates"].push(item.toISOString());
         }
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         return data;
     }
 }
@@ -14620,7 +15241,6 @@ export class OrderDetailDto {
     customerMobileNumber!: string;
     subCategoryId!: number;
     subCategoryName!: string;
-    subCategoryPrice!: number;
     cityId!: number;
     cityName!: string;
     reservationDateFrom!: Date;
@@ -14646,6 +15266,10 @@ export class OrderDetailDto {
     orderCancellationFee!: OrderCancellationFeeInfoDto | null;
     receiptFaultParty!: FaultParty | null;
     receiptRejectNote!: string | null;
+    orderTotalDebitedToCompany!: boolean;
+    orderDeliveryFailed!: boolean;
+    orderDeliveryFailureReason!: string | null;
+    orderDeliveryFailureFaultParty!: FaultParty | null;
     merchantOrders!: MerchantOrderDto[];
     merchantOrderPaymentDetails!: MerchantOrderPaymentDetailDto[];
     deliveryMenOrders!: DeliveryMenOrderDto[];
@@ -14661,7 +15285,6 @@ export class OrderDetailDto {
             this.customerMobileNumber = _data["customerMobileNumber"] !== undefined ? _data["customerMobileNumber"] : <any>null;
             this.subCategoryId = _data["subCategoryId"] !== undefined ? _data["subCategoryId"] : <any>null;
             this.subCategoryName = _data["subCategoryName"] !== undefined ? _data["subCategoryName"] : <any>null;
-            this.subCategoryPrice = _data["subCategoryPrice"] !== undefined ? _data["subCategoryPrice"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
             this.cityName = _data["cityName"] !== undefined ? _data["cityName"] : <any>null;
             this.reservationDateFrom = _data["reservationDateFrom"] ? new Date(_data["reservationDateFrom"].toString()) : <any>null;
@@ -14701,6 +15324,10 @@ export class OrderDetailDto {
             this.orderCancellationFee = _data["orderCancellationFee"] ? OrderCancellationFeeInfoDto.fromJS(_data["orderCancellationFee"]) : <any>null;
             this.receiptFaultParty = _data["receiptFaultParty"] !== undefined ? _data["receiptFaultParty"] : <any>null;
             this.receiptRejectNote = _data["receiptRejectNote"] !== undefined ? _data["receiptRejectNote"] : <any>null;
+            this.orderTotalDebitedToCompany = _data["orderTotalDebitedToCompany"] !== undefined ? _data["orderTotalDebitedToCompany"] : <any>null;
+            this.orderDeliveryFailed = _data["orderDeliveryFailed"] !== undefined ? _data["orderDeliveryFailed"] : <any>null;
+            this.orderDeliveryFailureReason = _data["orderDeliveryFailureReason"] !== undefined ? _data["orderDeliveryFailureReason"] : <any>null;
+            this.orderDeliveryFailureFaultParty = _data["orderDeliveryFailureFaultParty"] !== undefined ? _data["orderDeliveryFailureFaultParty"] : <any>null;
             if (Array.isArray(_data["merchantOrders"])) {
                 this.merchantOrders = [] as any;
                 for (let item of _data["merchantOrders"])
@@ -14760,7 +15387,6 @@ export class OrderDetailDto {
         data["customerMobileNumber"] = this.customerMobileNumber !== undefined ? this.customerMobileNumber : <any>null;
         data["subCategoryId"] = this.subCategoryId !== undefined ? this.subCategoryId : <any>null;
         data["subCategoryName"] = this.subCategoryName !== undefined ? this.subCategoryName : <any>null;
-        data["subCategoryPrice"] = this.subCategoryPrice !== undefined ? this.subCategoryPrice : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
         data["cityName"] = this.cityName !== undefined ? this.cityName : <any>null;
         data["reservationDateFrom"] = this.reservationDateFrom ? this.reservationDateFrom.toISOString() : <any>null;
@@ -14794,6 +15420,10 @@ export class OrderDetailDto {
         data["orderCancellationFee"] = this.orderCancellationFee ? this.orderCancellationFee.toJSON() : <any>null;
         data["receiptFaultParty"] = this.receiptFaultParty !== undefined ? this.receiptFaultParty : <any>null;
         data["receiptRejectNote"] = this.receiptRejectNote !== undefined ? this.receiptRejectNote : <any>null;
+        data["orderTotalDebitedToCompany"] = this.orderTotalDebitedToCompany !== undefined ? this.orderTotalDebitedToCompany : <any>null;
+        data["orderDeliveryFailed"] = this.orderDeliveryFailed !== undefined ? this.orderDeliveryFailed : <any>null;
+        data["orderDeliveryFailureReason"] = this.orderDeliveryFailureReason !== undefined ? this.orderDeliveryFailureReason : <any>null;
+        data["orderDeliveryFailureFaultParty"] = this.orderDeliveryFailureFaultParty !== undefined ? this.orderDeliveryFailureFaultParty : <any>null;
         if (Array.isArray(this.merchantOrders)) {
             data["merchantOrders"] = [];
             for (let item of this.merchantOrders)
@@ -14831,6 +15461,24 @@ export class OrderVehicleDto {
     merchantId!: number;
     merchantName!: string;
     status!: number;
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
+    receivedFromOwner!: boolean;
+    receivedFromOwnerImageUrl!: string | null;
+    deliveredToCustomer!: boolean;
+    deliveredToCustomerImageUrl!: string | null;
+    receivedFromCustomer!: boolean;
+    receivedFromCustomerImageUrl!: string | null;
+    deliveredToOwner!: boolean;
+    deliveredToOwnerImageUrl!: string | null;
+    deliveryFailed!: boolean;
+    deliveryFailureReason!: string | null;
+    deliveryFailureFaultParty!: FaultParty | null;
+    merchantResponseStatus!: MerchantVehicleResponseStatus;
 
     init(_data?: any) {
         if (_data) {
@@ -14841,6 +15489,24 @@ export class OrderVehicleDto {
             this.merchantId = _data["merchantId"] !== undefined ? _data["merchantId"] : <any>null;
             this.merchantName = _data["merchantName"] !== undefined ? _data["merchantName"] : <any>null;
             this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
+            this.receivedFromOwner = _data["receivedFromOwner"] !== undefined ? _data["receivedFromOwner"] : <any>null;
+            this.receivedFromOwnerImageUrl = _data["receivedFromOwnerImageUrl"] !== undefined ? _data["receivedFromOwnerImageUrl"] : <any>null;
+            this.deliveredToCustomer = _data["deliveredToCustomer"] !== undefined ? _data["deliveredToCustomer"] : <any>null;
+            this.deliveredToCustomerImageUrl = _data["deliveredToCustomerImageUrl"] !== undefined ? _data["deliveredToCustomerImageUrl"] : <any>null;
+            this.receivedFromCustomer = _data["receivedFromCustomer"] !== undefined ? _data["receivedFromCustomer"] : <any>null;
+            this.receivedFromCustomerImageUrl = _data["receivedFromCustomerImageUrl"] !== undefined ? _data["receivedFromCustomerImageUrl"] : <any>null;
+            this.deliveredToOwner = _data["deliveredToOwner"] !== undefined ? _data["deliveredToOwner"] : <any>null;
+            this.deliveredToOwnerImageUrl = _data["deliveredToOwnerImageUrl"] !== undefined ? _data["deliveredToOwnerImageUrl"] : <any>null;
+            this.deliveryFailed = _data["deliveryFailed"] !== undefined ? _data["deliveryFailed"] : <any>null;
+            this.deliveryFailureReason = _data["deliveryFailureReason"] !== undefined ? _data["deliveryFailureReason"] : <any>null;
+            this.deliveryFailureFaultParty = _data["deliveryFailureFaultParty"] !== undefined ? _data["deliveryFailureFaultParty"] : <any>null;
+            this.merchantResponseStatus = _data["merchantResponseStatus"] !== undefined ? _data["merchantResponseStatus"] : <any>null;
         }
     }
 
@@ -14860,6 +15526,24 @@ export class OrderVehicleDto {
         data["merchantId"] = this.merchantId !== undefined ? this.merchantId : <any>null;
         data["merchantName"] = this.merchantName !== undefined ? this.merchantName : <any>null;
         data["status"] = this.status !== undefined ? this.status : <any>null;
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
+        data["receivedFromOwner"] = this.receivedFromOwner !== undefined ? this.receivedFromOwner : <any>null;
+        data["receivedFromOwnerImageUrl"] = this.receivedFromOwnerImageUrl !== undefined ? this.receivedFromOwnerImageUrl : <any>null;
+        data["deliveredToCustomer"] = this.deliveredToCustomer !== undefined ? this.deliveredToCustomer : <any>null;
+        data["deliveredToCustomerImageUrl"] = this.deliveredToCustomerImageUrl !== undefined ? this.deliveredToCustomerImageUrl : <any>null;
+        data["receivedFromCustomer"] = this.receivedFromCustomer !== undefined ? this.receivedFromCustomer : <any>null;
+        data["receivedFromCustomerImageUrl"] = this.receivedFromCustomerImageUrl !== undefined ? this.receivedFromCustomerImageUrl : <any>null;
+        data["deliveredToOwner"] = this.deliveredToOwner !== undefined ? this.deliveredToOwner : <any>null;
+        data["deliveredToOwnerImageUrl"] = this.deliveredToOwnerImageUrl !== undefined ? this.deliveredToOwnerImageUrl : <any>null;
+        data["deliveryFailed"] = this.deliveryFailed !== undefined ? this.deliveryFailed : <any>null;
+        data["deliveryFailureReason"] = this.deliveryFailureReason !== undefined ? this.deliveryFailureReason : <any>null;
+        data["deliveryFailureFaultParty"] = this.deliveryFailureFaultParty !== undefined ? this.deliveryFailureFaultParty : <any>null;
+        data["merchantResponseStatus"] = this.merchantResponseStatus !== undefined ? this.merchantResponseStatus : <any>null;
         return data;
     }
 }
@@ -15047,6 +15731,10 @@ export class MerchantOrderDto {
     rejectReason!: string | null;
     respondedAt!: Date | null;
     createdDate!: Date;
+    confirmedVehiclesCount!: number;
+    declinedVehiclesCount!: number;
+    pendingVehiclesCount!: number;
+    declinedVehicleCodes!: string[];
 
     init(_data?: any) {
         if (_data) {
@@ -15058,6 +15746,17 @@ export class MerchantOrderDto {
             this.rejectReason = _data["rejectReason"] !== undefined ? _data["rejectReason"] : <any>null;
             this.respondedAt = _data["respondedAt"] ? new Date(_data["respondedAt"].toString()) : <any>null;
             this.createdDate = _data["createdDate"] ? new Date(_data["createdDate"].toString()) : <any>null;
+            this.confirmedVehiclesCount = _data["confirmedVehiclesCount"] !== undefined ? _data["confirmedVehiclesCount"] : <any>null;
+            this.declinedVehiclesCount = _data["declinedVehiclesCount"] !== undefined ? _data["declinedVehiclesCount"] : <any>null;
+            this.pendingVehiclesCount = _data["pendingVehiclesCount"] !== undefined ? _data["pendingVehiclesCount"] : <any>null;
+            if (Array.isArray(_data["declinedVehicleCodes"])) {
+                this.declinedVehicleCodes = [] as any;
+                for (let item of _data["declinedVehicleCodes"])
+                    this.declinedVehicleCodes!.push(item);
+            }
+            else {
+                this.declinedVehicleCodes = <any>null;
+            }
         }
     }
 
@@ -15078,6 +15777,14 @@ export class MerchantOrderDto {
         data["rejectReason"] = this.rejectReason !== undefined ? this.rejectReason : <any>null;
         data["respondedAt"] = this.respondedAt ? this.respondedAt.toISOString() : <any>null;
         data["createdDate"] = this.createdDate ? this.createdDate.toISOString() : <any>null;
+        data["confirmedVehiclesCount"] = this.confirmedVehiclesCount !== undefined ? this.confirmedVehiclesCount : <any>null;
+        data["declinedVehiclesCount"] = this.declinedVehiclesCount !== undefined ? this.declinedVehiclesCount : <any>null;
+        data["pendingVehiclesCount"] = this.pendingVehiclesCount !== undefined ? this.pendingVehiclesCount : <any>null;
+        if (Array.isArray(this.declinedVehicleCodes)) {
+            data["declinedVehicleCodes"] = [];
+            for (let item of this.declinedVehicleCodes)
+                data["declinedVehicleCodes"].push(item);
+        }
         return data;
     }
 }
@@ -15239,6 +15946,12 @@ export class AdminAvailableVehicleItemDto {
     isAvailable!: boolean;
     unavailableReason!: string | null;
     conflictingDates!: Date[];
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
 
     init(_data?: any) {
         if (_data) {
@@ -15259,6 +15972,12 @@ export class AdminAvailableVehicleItemDto {
             else {
                 this.conflictingDates = <any>null;
             }
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
         }
     }
 
@@ -15285,6 +16004,12 @@ export class AdminAvailableVehicleItemDto {
             for (let item of this.conflictingDates)
                 data["conflictingDates"].push(item.toISOString());
         }
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         return data;
     }
 }
@@ -15387,6 +16112,12 @@ export class AdminOrderPreviewVehicleDto {
     imageUrl!: string | null;
     merchantId!: number;
     merchantName!: string;
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
 
     init(_data?: any) {
         if (_data) {
@@ -15396,6 +16127,12 @@ export class AdminOrderPreviewVehicleDto {
             this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
             this.merchantId = _data["merchantId"] !== undefined ? _data["merchantId"] : <any>null;
             this.merchantName = _data["merchantName"] !== undefined ? _data["merchantName"] : <any>null;
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
         }
     }
 
@@ -15414,6 +16151,12 @@ export class AdminOrderPreviewVehicleDto {
         data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         data["merchantId"] = this.merchantId !== undefined ? this.merchantId : <any>null;
         data["merchantName"] = this.merchantName !== undefined ? this.merchantName : <any>null;
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         return data;
     }
 }
@@ -15705,7 +16448,7 @@ export class ReassignMerchantOrderCommand {
     }
 }
 
-export class AdminReplaceOrderVehicleCommand {
+export class AdminReplacementOrderVehicleCommand {
     orderId!: number;
     oldVehicleId!: number;
     newVehicleId!: number;
@@ -15718,9 +16461,9 @@ export class AdminReplaceOrderVehicleCommand {
         }
     }
 
-    static fromJS(data: any): AdminReplaceOrderVehicleCommand {
+    static fromJS(data: any): AdminReplacementOrderVehicleCommand {
         data = typeof data === 'object' ? data : {};
-        let result = new AdminReplaceOrderVehicleCommand();
+        let result = new AdminReplacementOrderVehicleCommand();
         result.init(data);
         return result;
     }
@@ -15730,6 +16473,32 @@ export class AdminReplaceOrderVehicleCommand {
         data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
         data["oldVehicleId"] = this.oldVehicleId !== undefined ? this.oldVehicleId : <any>null;
         data["newVehicleId"] = this.newVehicleId !== undefined ? this.newVehicleId : <any>null;
+        return data;
+    }
+}
+
+export class AdminRemoveOrderVehicleCommand {
+    orderId!: number;
+    vehicleId!: number;
+
+    init(_data?: any) {
+        if (_data) {
+            this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): AdminRemoveOrderVehicleCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new AdminRemoveOrderVehicleCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
         return data;
     }
 }
@@ -15793,6 +16562,183 @@ export class AssignDeliveryVehicleItem {
         data = typeof data === 'object' ? data : {};
         data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
         data["deliveryId"] = this.deliveryId !== undefined ? this.deliveryId : <any>null;
+        return data;
+    }
+}
+
+export class MarkVehicleReceivedFromOwnerCommand {
+    orderId!: number;
+    vehicleId!: number;
+    imageUrl!: string | null;
+
+    init(_data?: any) {
+        if (_data) {
+            this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
+            this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): MarkVehicleReceivedFromOwnerCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarkVehicleReceivedFromOwnerCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
+        data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
+        return data;
+    }
+}
+
+export class MarkVehicleDeliveredToCustomerCommand {
+    orderId!: number;
+    vehicleId!: number;
+    imageUrl!: string | null;
+
+    init(_data?: any) {
+        if (_data) {
+            this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
+            this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): MarkVehicleDeliveredToCustomerCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarkVehicleDeliveredToCustomerCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
+        data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
+        return data;
+    }
+}
+
+export class MarkVehicleReceivedFromCustomerCommand {
+    orderId!: number;
+    vehicleId!: number;
+    imageUrl!: string | null;
+
+    init(_data?: any) {
+        if (_data) {
+            this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
+            this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): MarkVehicleReceivedFromCustomerCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarkVehicleReceivedFromCustomerCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
+        data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
+        return data;
+    }
+}
+
+export class MarkVehicleDeliveredToOwnerCommand {
+    orderId!: number;
+    vehicleId!: number;
+    imageUrl!: string | null;
+
+    init(_data?: any) {
+        if (_data) {
+            this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
+            this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): MarkVehicleDeliveredToOwnerCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarkVehicleDeliveredToOwnerCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
+        data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
+        return data;
+    }
+}
+
+export class MarkVehicleNotReceivedByCustomerCommand {
+    orderId!: number;
+    vehicleId!: number;
+    reason!: string;
+    faultParty!: FaultParty;
+
+    init(_data?: any) {
+        if (_data) {
+            this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
+            this.reason = _data["reason"] !== undefined ? _data["reason"] : <any>null;
+            this.faultParty = _data["faultParty"] !== undefined ? _data["faultParty"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): MarkVehicleNotReceivedByCustomerCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarkVehicleNotReceivedByCustomerCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
+        data["reason"] = this.reason !== undefined ? this.reason : <any>null;
+        data["faultParty"] = this.faultParty !== undefined ? this.faultParty : <any>null;
+        return data;
+    }
+}
+
+export class MarkOrderNotDeliveredCommand {
+    orderId!: number;
+    reason!: string;
+    faultParty!: FaultParty;
+
+    init(_data?: any) {
+        if (_data) {
+            this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
+            this.reason = _data["reason"] !== undefined ? _data["reason"] : <any>null;
+            this.faultParty = _data["faultParty"] !== undefined ? _data["faultParty"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): MarkOrderNotDeliveredCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarkOrderNotDeliveredCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
+        data["reason"] = this.reason !== undefined ? this.reason : <any>null;
+        data["faultParty"] = this.faultParty !== undefined ? this.faultParty : <any>null;
         return data;
     }
 }
@@ -17652,7 +18598,6 @@ export class SubCategoryLookupDto {
     name!: string;
     categoryId!: number;
     categoryName!: string;
-    price!: number;
 
     init(_data?: any) {
         if (_data) {
@@ -17660,7 +18605,6 @@ export class SubCategoryLookupDto {
             this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
             this.categoryId = _data["categoryId"] !== undefined ? _data["categoryId"] : <any>null;
             this.categoryName = _data["categoryName"] !== undefined ? _data["categoryName"] : <any>null;
-            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
         }
     }
 
@@ -17677,7 +18621,6 @@ export class SubCategoryLookupDto {
         data["name"] = this.name !== undefined ? this.name : <any>null;
         data["categoryId"] = this.categoryId !== undefined ? this.categoryId : <any>null;
         data["categoryName"] = this.categoryName !== undefined ? this.categoryName : <any>null;
-        data["price"] = this.price !== undefined ? this.price : <any>null;
         return data;
     }
 }
@@ -17686,7 +18629,6 @@ export class CreateSubCategoryCommand {
     name!: string;
     description!: string;
     categoryId!: number;
-    price!: number;
     isOffer!: boolean;
     imageUrl!: string | null;
 
@@ -17695,7 +18637,6 @@ export class CreateSubCategoryCommand {
             this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
             this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
             this.categoryId = _data["categoryId"] !== undefined ? _data["categoryId"] : <any>null;
-            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
             this.isOffer = _data["isOffer"] !== undefined ? _data["isOffer"] : <any>null;
             this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
         }
@@ -17713,7 +18654,6 @@ export class CreateSubCategoryCommand {
         data["name"] = this.name !== undefined ? this.name : <any>null;
         data["description"] = this.description !== undefined ? this.description : <any>null;
         data["categoryId"] = this.categoryId !== undefined ? this.categoryId : <any>null;
-        data["price"] = this.price !== undefined ? this.price : <any>null;
         data["isOffer"] = this.isOffer !== undefined ? this.isOffer : <any>null;
         data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         return data;
@@ -17725,7 +18665,6 @@ export class UpdateSubCategoryCommand {
     name!: string;
     description!: string;
     categoryId!: number;
-    price!: number;
     isOffer!: boolean;
     imageUrl!: string | null;
 
@@ -17735,7 +18674,6 @@ export class UpdateSubCategoryCommand {
             this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
             this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
             this.categoryId = _data["categoryId"] !== undefined ? _data["categoryId"] : <any>null;
-            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
             this.isOffer = _data["isOffer"] !== undefined ? _data["isOffer"] : <any>null;
             this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
         }
@@ -17754,7 +18692,6 @@ export class UpdateSubCategoryCommand {
         data["name"] = this.name !== undefined ? this.name : <any>null;
         data["description"] = this.description !== undefined ? this.description : <any>null;
         data["categoryId"] = this.categoryId !== undefined ? this.categoryId : <any>null;
-        data["price"] = this.price !== undefined ? this.price : <any>null;
         data["isOffer"] = this.isOffer !== undefined ? this.isOffer : <any>null;
         data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         return data;
@@ -17796,6 +18733,12 @@ export class CreateVehicleCommand {
     subCategoryId!: number;
     merchantId!: number;
     status!: number;
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
     imageUrl!: string | null;
 
     init(_data?: any) {
@@ -17805,6 +18748,12 @@ export class CreateVehicleCommand {
             this.subCategoryId = _data["subCategoryId"] !== undefined ? _data["subCategoryId"] : <any>null;
             this.merchantId = _data["merchantId"] !== undefined ? _data["merchantId"] : <any>null;
             this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
             this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
         }
     }
@@ -17823,6 +18772,12 @@ export class CreateVehicleCommand {
         data["subCategoryId"] = this.subCategoryId !== undefined ? this.subCategoryId : <any>null;
         data["merchantId"] = this.merchantId !== undefined ? this.merchantId : <any>null;
         data["status"] = this.status !== undefined ? this.status : <any>null;
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         return data;
     }
@@ -17835,6 +18790,12 @@ export class UpdateVehicleCommand {
     subCategoryId!: number;
     merchantId!: number;
     status!: number;
+    color!: string;
+    type!: string;
+    model!: string;
+    price!: number;
+    speedKmh!: number | null;
+    engineCapacityCc!: number | null;
     imageUrl!: string | null;
 
     init(_data?: any) {
@@ -17845,6 +18806,12 @@ export class UpdateVehicleCommand {
             this.subCategoryId = _data["subCategoryId"] !== undefined ? _data["subCategoryId"] : <any>null;
             this.merchantId = _data["merchantId"] !== undefined ? _data["merchantId"] : <any>null;
             this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
+            this.color = _data["color"] !== undefined ? _data["color"] : <any>null;
+            this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
+            this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
+            this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
+            this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
             this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
         }
     }
@@ -17864,6 +18831,12 @@ export class UpdateVehicleCommand {
         data["subCategoryId"] = this.subCategoryId !== undefined ? this.subCategoryId : <any>null;
         data["merchantId"] = this.merchantId !== undefined ? this.merchantId : <any>null;
         data["status"] = this.status !== undefined ? this.status : <any>null;
+        data["color"] = this.color !== undefined ? this.color : <any>null;
+        data["type"] = this.type !== undefined ? this.type : <any>null;
+        data["model"] = this.model !== undefined ? this.model : <any>null;
+        data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
+        data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         return data;
     }

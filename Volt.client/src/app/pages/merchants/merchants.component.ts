@@ -5,11 +5,16 @@ import { Router, RouterModule } from '@angular/router';
 import { AdminMerchantClient, MerchantDto } from '../../core/services/clientAPI';
 import { LocaleService } from '../../core/services/locale.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog/confirm-dialog.component';
+import {
+  MultiSelectComponent,
+  MultiSelectOption
+} from '../../shared/components/multi-select/multi-select.component';
 
 @Component({
   selector: 'app-merchants',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, RouterModule, TranslatePipe, MultiSelectComponent, ConfirmDialogComponent],
   templateUrl: './merchants.component.html',
   styleUrls: ['./merchants.component.css']
 })
@@ -20,12 +25,24 @@ export class MerchantsComponent implements OnInit {
 
   merchants: MerchantDto[] = [];
   searchTerm = '';
-  /** null = non-deleted (API default); true = deleted only; false = non-deleted only */
-  isDeletedFilter: boolean | null = null;
+  deletedFilterValue: 'active' | 'deleted' = 'active';
   isLoading = false;
   isDeleting = false;
+  pendingDeleteId: number | null = null;
+  showConfirmDialog = false;
   errorMessage = '';
   successMessage = '';
+
+  get deletedFilterOptions(): MultiSelectOption[] {
+    return [
+      { value: 'active', label: this.localeService.translate('merchants.filterNotDeleted') },
+      { value: 'deleted', label: this.localeService.translate('merchants.filterDeleted') }
+    ];
+  }
+
+  get isDeletedFilter(): boolean | null {
+    return this.deletedFilterValue === 'deleted' ? true : null;
+  }
 
   ngOnInit(): void {
     this.loadMerchants();
@@ -56,7 +73,7 @@ export class MerchantsComponent implements OnInit {
 
   clearFilters(): void {
     this.searchTerm = '';
-    this.isDeletedFilter = null;
+    this.deletedFilterValue = 'active';
     this.loadMerchants();
   }
 
@@ -71,20 +88,33 @@ export class MerchantsComponent implements OnInit {
 
   onDelete(merchant: MerchantDto): void {
     if (merchant.isDeleted || this.isDeleting) return;
-    const ok = confirm(this.localeService.translate('merchants.deleteConfirm'));
-    if (!ok) return;
+    this.pendingDeleteId = merchant.merchantId;
+    this.showConfirmDialog = true;
+  }
+
+  onCancelDelete(): void {
+    this.showConfirmDialog = false;
+    this.pendingDeleteId = null;
+  }
+
+  onConfirmDelete(): void {
+    if (this.pendingDeleteId == null || this.isDeleting) return;
 
     this.isDeleting = true;
     this.errorMessage = '';
     this.successMessage = '';
-    this.merchantClient.delete(merchant.merchantId).subscribe({
+    this.merchantClient.delete(this.pendingDeleteId).subscribe({
       next: () => {
         this.isDeleting = false;
+        this.showConfirmDialog = false;
+        this.pendingDeleteId = null;
         this.successMessage = this.localeService.translate('merchants.deleteSuccess');
         this.loadMerchants();
       },
       error: (error: any) => {
         this.isDeleting = false;
+        this.showConfirmDialog = false;
+        this.pendingDeleteId = null;
         this.errorMessage =
           error?.errorMessage ||
           error?.error?.errorMessage ||

@@ -4,7 +4,6 @@ using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
-using Domain.Models;
 using Domain.Services;
 using Infrastructure;
 using Infrastructure.Services;
@@ -27,18 +26,18 @@ namespace Application.Features.Order.Command.PayPalPaymentCommands.CompletePayPa
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
         private readonly IPayPalService _payPalService;
-        private readonly IOrderJournalService _journal;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public CompletePayPalPaymentCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
             IPayPalService payPalService,
-            IOrderJournalService journal)
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _payPalService = payPalService;
-            _journal = journal;
+            _realtime = realtime;
         }
 
         public async Task<Result<CompletePayPalPaymentResponseDto>> Handle(
@@ -111,30 +110,23 @@ namespace Application.Features.Order.Command.PayPalPaymentCommands.CompletePayPa
                     actor);
                 _context.CompanyTreasuries.Add(treasuryRecord);
 
-                var orderTotals = await _context.OrderTotals
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.OrderId == order.OrderId, cancellationToken);
-
-                if (orderTotals != null && orderTotals.ServiceFees > 0)
+                try
                 {
-                    var servicePost = await _journal.PostCreditAsync(
-                        order.OrderId,
-                        LedgerPartyType.Company,
-                        null,
-                        orderTotals.ServiceFees,
-                        OrderJournalEntryKind.CompanyServiceFeeAccrued,
-                        OrderJournalKeys.Build(order.OrderId, "company-service-fee-paypal"),
-                        note: "Company service fee on PayPal payment",
-                        createdBy: actor,
-                        cancellationToken: cancellationToken);
-
-                    if (servicePost.IsFailure)
-                    {
-                        return Result.Failure<CompletePayPalPaymentResponseDto>(servicePost.Error);
-                    }
+                    order.BuildOnlinePaymentCapturedLedgerLines(actor);
+                }
+                catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+                {
+                    return Result.Failure<CompletePayPalPaymentResponseDto>(ex.Message);
                 }
 
                 await _context.SaveChangesAsync(cancellationToken);
+
+                await _realtime.NotifyAsync(
+                    order.OrderId,
+                    "PayPal payment completed",
+                    $"PayPal payment captured for order #{order.OrderCode}.",
+                    NotificationType.OrderUpdated,
+                    cancellationToken: cancellationToken);
 
                 return Result.Success(new CompletePayPalPaymentResponseDto
                 {

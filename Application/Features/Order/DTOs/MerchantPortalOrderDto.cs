@@ -38,7 +38,6 @@ namespace Application.Features.Order.DTOs
         public int OrderId { get; set; }
         public string OrderCode { get; set; } = string.Empty;
         public string SubCategoryName { get; set; } = string.Empty;
-        public decimal SubCategoryPrice { get; set; }
         public string CityName { get; set; } = string.Empty;
         public DateTime ReservationDateFrom { get; set; }
         public DateTime ReservationDateTo { get; set; }
@@ -77,7 +76,25 @@ namespace Application.Features.Order.DTOs
         public int VehicleId { get; set; }
         public string VehicleName { get; set; } = string.Empty;
         public string VehicleCode { get; set; } = string.Empty;
+        public string? ImageUrl { get; set; }
         public int Status { get; set; }
+        public string Color { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        /// <summary>Top speed in km/h. Optional.</summary>
+        public int? SpeedKmh { get; set; }
+        /// <summary>Motor engine capacity in CC. Optional.</summary>
+        public int? EngineCapacityCc { get; set; }
+
+        public bool ReceivedFromOwner { get; set; }
+        public bool DeliveredToCustomer { get; set; }
+        public bool ReceivedFromCustomer { get; set; }
+        public bool DeliveredToOwner { get; set; }
+        public bool DeliveryFailed { get; set; }
+        public string? DeliveryFailureReason { get; set; }
+        public FaultParty? DeliveryFailureFaultParty { get; set; }
+        public MerchantVehicleResponseStatus MerchantResponseStatus { get; set; }
     }
 
     public class MerchantPortalHandoverDto

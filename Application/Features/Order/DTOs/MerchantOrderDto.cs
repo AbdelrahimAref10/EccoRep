@@ -12,5 +12,9 @@ namespace Application.Features.Order.DTOs
         public string? RejectReason { get; set; }
         public DateTime? RespondedAt { get; set; }
         public DateTime CreatedDate { get; set; }
+        public int ConfirmedVehiclesCount { get; set; }
+        public int DeclinedVehiclesCount { get; set; }
+        public int PendingVehiclesCount { get; set; }
+        public List<string> DeclinedVehicleCodes { get; set; } = new();
     }
 }

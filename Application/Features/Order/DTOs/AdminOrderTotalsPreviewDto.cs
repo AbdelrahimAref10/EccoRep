@@ -12,6 +12,7 @@ namespace Application.Features.Order.DTOs
         public bool IsUrgent { get; set; }
         public int VehiclesCount { get; set; }
         public List<AdminOrderPreviewVehicleDto> Vehicles { get; set; } = new();
+        /// <summary>Sum of selected vehicles' daily prices.</summary>
         public decimal UnitPrice { get; set; }
         public decimal SubTotal { get; set; }
         public decimal DeliveryFees { get; set; }
@@ -32,5 +33,13 @@ namespace Application.Features.Order.DTOs
         public string? ImageUrl { get; set; }
         public int MerchantId { get; set; }
         public string MerchantName { get; set; } = string.Empty;
+        public string Color { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
+        public decimal Price { get; set; }
+        /// <summary>Top speed in km/h. Optional.</summary>
+        public int? SpeedKmh { get; set; }
+        /// <summary>Motor engine capacity in CC. Optional.</summary>
+        public int? EngineCapacityCc { get; set; }
     }
 }

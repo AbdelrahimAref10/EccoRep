@@ -51,6 +51,7 @@ import {
   MultiSelectComponent,
   MultiSelectOption
 } from '../../../shared/components/multi-select/multi-select.component';
+import { VehicleSpecsComponent } from '../../../shared/components/vehicle-specs/vehicle-specs.component';
 
 type BrowseStep = 'categories' | 'subcategories' | 'vehicles';
 
@@ -81,7 +82,8 @@ interface BookedCalendarDay {
     ReactiveFormsModule,
     RouterModule,
     TranslatePipe,
-    MultiSelectComponent
+    MultiSelectComponent,
+    VehicleSpecsComponent
   ],
   templateUrl: './order-form.component.html',
   styleUrls: [
@@ -263,7 +265,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
 
     return list.map(sc => ({
       value: sc.subCategoryId,
-      label: `${sc.name} · ${sc.price.toFixed(2)} ${this.localeService.translate('common.currency')}`
+      label: sc.name
     }));
   }
 
@@ -1057,7 +1059,6 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     const stub = new SubCategoryDto();
     stub.subCategoryId = order.subCategoryId;
     stub.name = order.subCategoryName;
-    stub.price = order.subCategoryPrice;
     stub.cityId = order.cityId;
     stub.cityName = order.cityName;
     stub.isActive = true;

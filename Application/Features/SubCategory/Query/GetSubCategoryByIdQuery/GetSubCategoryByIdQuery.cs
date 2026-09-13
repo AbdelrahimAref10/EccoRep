@@ -49,7 +49,6 @@ namespace Application.Features.SubCategory.Query.GetSubCategoryByIdQuery
                 ImageUrl = _imageService.GetImageUrl(subCategory.ImageUrl),
                 IsActive = subCategory.IsActive,
                 IsOffer = subCategory.IsOffer,
-                Price = subCategory.Price,
                 CategoryId = subCategory.CategoryId,
                 CategoryName = subCategory.Category.Name,
                 CityId = subCategory.Category.CityId,

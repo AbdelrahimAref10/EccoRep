@@ -84,7 +84,13 @@ namespace Application.Features.Order.Query.GetCustomerAvailableVehiclesQuery
                     ? _imageService.GetImageUrl(v.ImagePath)
                     : null,
                 Status = (int)v.AvailabilityStatus,
-                ConflictingDates = v.ConflictingDates.ToList()
+                ConflictingDates = v.ConflictingDates.ToList(),
+                Color = v.Color,
+                Type = v.Type,
+                Model = v.Model,
+                Price = v.Price,
+                SpeedKmh = v.SpeedKmh,
+                EngineCapacityCc = v.EngineCapacityCc
             }).ToList();
 
             return Result.Success(items);

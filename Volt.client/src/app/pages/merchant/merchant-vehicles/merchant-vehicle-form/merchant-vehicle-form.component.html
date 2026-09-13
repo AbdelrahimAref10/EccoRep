@@ -67,35 +67,31 @@
 
         <div class="entity-form__row">
           <div class="entity-form__field">
-            <label class="entity-form__label" for="mv-category">
+            <label class="entity-form__label">
               {{ 'nav.categories' | t }}<span class="entity-form__req">*</span>
             </label>
-            <select id="mv-category" class="entity-form__select" formControlName="categoryId">
-              <option [ngValue]="null" disabled>{{ 'merchant.selectCategory' | t }}</option>
-              <option *ngFor="let c of categories" [ngValue]="c.categoryId">{{ c.name }}</option>
-            </select>
+            <app-multi-select
+              formControlName="categoryId"
+              [multiple]="false"
+              [options]="categoryOptions"
+              [placeholder]="'merchant.selectCategory' | t"
+            ></app-multi-select>
             <p *ngIf="vehicleForm.get('categoryId')?.invalid && vehicleForm.get('categoryId')?.touched" class="entity-form__error">
               {{ 'common.required' | t }}
             </p>
           </div>
 
           <div class="entity-form__field">
-            <label class="entity-form__label" for="mv-sub">
+            <label class="entity-form__label">
               {{ 'vehicles.subCategory' | t }}<span class="entity-form__req">*</span>
             </label>
-            <select
-              id="mv-sub"
-              class="entity-form__select"
+            <app-multi-select
               formControlName="subCategoryId"
+              [multiple]="false"
               [disabled]="!vehicleForm.value.categoryId || isLoadingSubs"
-            >
-              <option [ngValue]="null" disabled>
-                {{ isLoadingSubs ? ('common.loading' | t) : ('merchant.selectSubCategory' | t) }}
-              </option>
-              <option *ngFor="let s of subCategories" [ngValue]="s.subCategoryId">
-                {{ s.name }} — {{ s.price }} {{ 'common.currency' | t }}
-              </option>
-            </select>
+              [options]="subCategoryOptions"
+              [placeholder]="isLoadingSubs ? ('common.loading' | t) : ('merchant.selectSubCategory' | t)"
+            ></app-multi-select>
             <p *ngIf="vehicleForm.get('subCategoryId')?.invalid && vehicleForm.get('subCategoryId')?.touched" class="entity-form__error">
               {{ 'vehicles.subCategoryRequired' | t }}
             </p>
@@ -104,12 +100,17 @@
 
         <div class="entity-form__row">
           <div class="entity-form__field">
-            <label class="entity-form__label" for="mv-status">
+            <label class="entity-form__label">
               {{ 'common.status' | t }}<span class="entity-form__req">*</span>
             </label>
-            <select id="mv-status" class="entity-form__select" formControlName="status">
-              <option *ngFor="let opt of statusOptions" [ngValue]="opt.value">{{ opt.key | t }}</option>
-            </select>
+            <app-multi-select
+              formControlName="status"
+              [multiple]="false"
+              [searchable]="false"
+              [clearable]="false"
+              [options]="statusSelectOptions"
+              [placeholder]="'vehicles.selectStatus' | t"
+            ></app-multi-select>
           </div>
         </div>
       </div>
@@ -147,6 +148,99 @@
             <strong>{{ imagePreview ? ('vehicles.changeImage' | t) : ('vehicles.uploadHint' | t) }}</strong>
             <small>{{ 'vehicles.imageFormats' | t }}</small>
           </label>
+        </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card entity-form__card--wide">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'vehicles.specsKicker' | t }}</p>
+        <h2 class="entity-form__card-title">{{ 'vehicles.specsTitle' | t }}</h2>
+        <p class="entity-form__card-text">{{ 'vehicles.specsSubtitle' | t }}</p>
+      </div>
+      <div class="entity-form__card-body">
+        <div class="entity-form__spec">
+          <div class="entity-form__spec-col">
+            <div class="entity-form__spec-block">
+              <div class="entity-form__spec-heading">
+                <h3 class="entity-form__spec-title">{{ 'vehicles.identityTitle' | t }}</h3>
+              </div>
+              <div class="entity-form__row entity-form__row--3">
+                <div class="entity-form__field">
+                  <label class="entity-form__label">{{ 'vehicles.color' | t }}<span class="entity-form__req">*</span></label>
+                  <input type="text" formControlName="color" class="entity-form__input" [placeholder]="'vehicles.colorPlaceholder' | t" />
+                  <p *ngIf="vehicleForm.get('color')?.invalid && vehicleForm.get('color')?.touched" class="entity-form__error">
+                    {{ 'vehicles.colorRequired' | t }}
+                  </p>
+                </div>
+                <div class="entity-form__field">
+                  <label class="entity-form__label">{{ 'vehicles.type' | t }}<span class="entity-form__req">*</span></label>
+                  <input type="text" formControlName="type" class="entity-form__input" [placeholder]="'vehicles.typePlaceholder' | t" />
+                  <p *ngIf="vehicleForm.get('type')?.invalid && vehicleForm.get('type')?.touched" class="entity-form__error">
+                    {{ 'vehicles.typeRequired' | t }}
+                  </p>
+                </div>
+                <div class="entity-form__field">
+                  <label class="entity-form__label">{{ 'vehicles.model' | t }}<span class="entity-form__req">*</span></label>
+                  <input type="text" formControlName="model" class="entity-form__input" [placeholder]="'vehicles.modelPlaceholder' | t" />
+                  <p *ngIf="vehicleForm.get('model')?.invalid && vehicleForm.get('model')?.touched" class="entity-form__error">
+                    {{ 'vehicles.modelRequired' | t }}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="entity-form__spec-block">
+              <div class="entity-form__spec-heading">
+                <h3 class="entity-form__spec-title">{{ 'vehicles.performanceTitle' | t }}</h3>
+                <span class="entity-form__spec-note">{{ 'vehicles.optional' | t }}</span>
+              </div>
+              <div class="entity-form__row">
+                <div class="entity-form__field">
+                  <label class="entity-form__label">{{ 'vehicles.speed' | t }}</label>
+                  <div class="entity-form__affix">
+                    <input type="number" formControlName="speedKmh" class="entity-form__input" min="0" step="1" />
+                    <span class="entity-form__affix-addon entity-form__affix-addon--trail">{{ 'vehicles.kmh' | t }}</span>
+                  </div>
+                </div>
+                <div class="entity-form__field">
+                  <label class="entity-form__label">{{ 'vehicles.engine' | t }}</label>
+                  <div class="entity-form__affix">
+                    <input type="number" formControlName="engineCapacityCc" class="entity-form__input" min="0" step="1" />
+                    <span class="entity-form__affix-addon entity-form__affix-addon--trail">{{ 'vehicles.cc' | t }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="entity-form__rate">
+            <div>
+              <p class="entity-form__rate-kicker">{{ 'vehicles.price' | t }}</p>
+              <h3 class="entity-form__rate-title">{{ 'vehicles.dailyRate' | t }}</h3>
+              <p class="entity-form__rate-text">{{ 'vehicles.dailyRateHint' | t }}</p>
+            </div>
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'vehicles.price' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <div class="entity-form__affix entity-form__affix--rate">
+                <span class="entity-form__affix-addon entity-form__affix-addon--lead">{{ 'common.currency' | t }}</span>
+                <input
+                  type="number"
+                  formControlName="price"
+                  class="entity-form__input"
+                  min="0"
+                  step="0.01"
+                  [placeholder]="'vehicles.pricePlaceholder' | t"
+                />
+                <span class="entity-form__affix-addon entity-form__affix-addon--trail">{{ 'vehicles.perDaySlash' | t }}</span>
+              </div>
+              <p *ngIf="vehicleForm.get('price')?.invalid && vehicleForm.get('price')?.touched" class="entity-form__error">
+                {{ 'vehicles.priceRequired' | t }}
+              </p>
+            </div>
+          </aside>
         </div>
       </div>
     </section>

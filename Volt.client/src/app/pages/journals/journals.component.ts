@@ -15,11 +15,15 @@ import {
 } from '../../core/services/clientAPI';
 import { LocaleService } from '../../core/services/locale.service';
 import { TranslatePipe } from '../../shared/pipes/translate.pipe';
+import {
+  MultiSelectComponent,
+  MultiSelectOption
+} from '../../shared/components/multi-select/multi-select.component';
 
 @Component({
   selector: 'app-journals',
   standalone: true,
-  imports: [CommonModule, FormsModule, TranslatePipe],
+  imports: [CommonModule, FormsModule, TranslatePipe, MultiSelectComponent],
   templateUrl: './journals.component.html',
   styleUrls: ['./journals.component.css', '../../shared/styles/entity-form.css']
 })
@@ -35,7 +39,7 @@ export class JournalsComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  filterOrderId: number | null = null;
+  filterOrderCode = '';
   filterDeliveryId: number | null = null;
   filterMerchantId: number | null = null;
 
@@ -43,6 +47,26 @@ export class JournalsComponent implements OnInit {
 
   readonly JournalDirection = JournalDirection;
   readonly LedgerPartyType = LedgerPartyType;
+
+  get deliveryOptions(): MultiSelectOption[] {
+    return this.deliveries
+      .filter(d => d.deliveryId != null)
+      .map(d => ({
+        value: d.deliveryId as number,
+        label: d.fullName || String(d.deliveryId),
+        description: d.mobileNumber || '—'
+      }));
+  }
+
+  get merchantOptions(): MultiSelectOption[] {
+    return this.merchants
+      .filter(m => m.merchantId != null)
+      .map(m => ({
+        value: m.merchantId as number,
+        label: m.fullName || String(m.merchantId),
+        description: m.mobileNumber || '—'
+      }));
+  }
 
   ngOnInit(): void {
     this.loadLookups();
@@ -87,7 +111,7 @@ export class JournalsComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.filterOrderId = null;
+    this.filterOrderCode = '';
     this.filterDeliveryId = null;
     this.filterMerchantId = null;
     this.loadJournals();
@@ -97,11 +121,11 @@ export class JournalsComponent implements OnInit {
     this.isLoading = true;
     this.errorMessage = '';
 
-    const orderId = this.filterOrderId && this.filterOrderId > 0 ? this.filterOrderId : undefined;
+    const orderCode = this.filterOrderCode.trim() || undefined;
     const deliveryId = this.filterDeliveryId && this.filterDeliveryId > 0 ? this.filterDeliveryId : undefined;
     const merchantId = this.filterMerchantId && this.filterMerchantId > 0 ? this.filterMerchantId : undefined;
 
-    this.settlementClient.getJournals(orderId, deliveryId, merchantId).subscribe({
+    this.settlementClient.getJournals(orderCode, deliveryId, merchantId).subscribe({
       next: (data) => {
         this.result = data;
         this.isLoading = false;

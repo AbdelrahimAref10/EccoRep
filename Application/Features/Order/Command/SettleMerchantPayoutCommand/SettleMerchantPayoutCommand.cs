@@ -22,15 +22,18 @@ namespace Application.Features.Order.Command.SettleMerchantPayoutCommand
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
         private readonly IOrderJournalService _journal;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public SettleMerchantPayoutCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IOrderJournalService journal)
+            IOrderJournalService journal,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _journal = journal;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(SettleMerchantPayoutCommand request, CancellationToken cancellationToken)
@@ -88,6 +91,15 @@ namespace Application.Features.Order.Command.SettleMerchantPayoutCommand
                 return Result.Failure<bool>(postResult.Error);
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _realtime.NotifyAsync(
+                request.OrderId,
+                "Merchant payout settled",
+                $"Merchant payout was settled on order {request.OrderId}.",
+                NotificationType.OrderUpdated,
+                new[] { request.MerchantId },
+                cancellationToken: cancellationToken);
+
             return Result.Success(true);
         }
     }

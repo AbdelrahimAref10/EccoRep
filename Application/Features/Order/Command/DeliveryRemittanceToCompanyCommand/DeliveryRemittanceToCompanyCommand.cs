@@ -30,15 +30,18 @@ namespace Application.Features.Order.Command.DeliveryRemittanceToCompanyCommand
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
         private readonly IOrderJournalService _journal;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public DeliveryRemittanceToCompanyCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IOrderJournalService journal)
+            IOrderJournalService journal,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _journal = journal;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(
@@ -110,6 +113,14 @@ namespace Application.Features.Order.Command.DeliveryRemittanceToCompanyCommand
                     createdBy));
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _realtime.NotifyAsync(
+                request.OrderId,
+                "Delivery remittance",
+                $"Delivery remittance recorded on order #{order.OrderCode}.",
+                NotificationType.OrderUpdated,
+                cancellationToken: cancellationToken);
+
             return Result.Success(true);
         }
     }

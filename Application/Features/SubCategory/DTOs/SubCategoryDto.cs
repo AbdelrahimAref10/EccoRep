@@ -8,7 +8,6 @@ namespace Application.Features.SubCategory.DTOs
         public string? ImageUrl { get; set; }
         public bool IsActive { get; set; }
         public bool IsOffer { get; set; }
-        public decimal Price { get; set; }
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
         public int CityId { get; set; }
@@ -22,7 +21,6 @@ namespace Application.Features.SubCategory.DTOs
         public string Name { get; set; } = string.Empty;
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
-        public decimal Price { get; set; }
     }
 }
 

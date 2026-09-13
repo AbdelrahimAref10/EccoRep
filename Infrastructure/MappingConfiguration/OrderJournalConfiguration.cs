@@ -18,6 +18,7 @@ namespace Infrastructure.MappingConfiguration
                 .IsRequired();
 
             builder.Property(x => x.OrderId).HasColumnName("OrderId");
+            builder.Property(x => x.VehicleId).HasColumnName("VehicleId");
             builder.Property(x => x.PartyType).HasColumnName("PartyType").IsRequired();
             builder.Property(x => x.PartyId).HasColumnName("PartyId");
             builder.Property(x => x.Direction).HasColumnName("Direction").IsRequired();
@@ -42,10 +43,19 @@ namespace Infrastructure.MappingConfiguration
             builder.HasIndex(x => new { x.PartyType, x.PartyId, x.CreatedDate })
                 .HasDatabaseName("IX_VO_OrderJournal_Party_Created");
 
+            builder.HasIndex(x => new { x.OrderId, x.VehicleId })
+                .HasDatabaseName("IX_VO_OrderJournal_Order_Vehicle");
+
             builder.HasOne(x => x.Order)
                 .WithMany(o => o.OrderJournals)
                 .HasForeignKey(x => x.OrderId)
                 .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired(false);
+
+            builder.HasOne(x => x.Vehicle)
+                .WithMany()
+                .HasForeignKey(x => x.VehicleId)
+                .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);
         }
     }

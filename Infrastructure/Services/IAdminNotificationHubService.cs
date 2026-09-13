@@ -9,7 +9,8 @@ namespace Infrastructure.Services
             string title,
             string message,
             NotificationType notificationType,
-            int? orderId = null);
+            int? orderId = null,
+            string? orderCode = null);
     }
 }
 

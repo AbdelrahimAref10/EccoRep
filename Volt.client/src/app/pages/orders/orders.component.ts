@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, switchMap, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, filter, switchMap, takeUntil } from 'rxjs';
 import { AdminOrderClient, OrderDto, PagedResultOfOrderDto, OrderState, PaymentMethod, CityClient, CityDto, PagedResultOfCityDto } from '../../core/services/clientAPI';
 import { AdminNotificationService } from '../../core/services/admin-notification.service';
 import { LocaleService } from '../../core/services/locale.service';
@@ -98,11 +98,13 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.triggerSearch();
 
     this.adminNotifications.incoming$
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(notification => {
-        if (notification) {
-          this.triggerSearch();
-        }
+      .pipe(
+        filter((notification): notification is NonNullable<typeof notification> => !!notification),
+        debounceTime(300),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.triggerSearch();
       });
   }
 
@@ -117,9 +119,10 @@ export class OrdersComponent implements OnInit, OnDestroy {
       debounceTime(300),
       distinctUntilChanged(),
       switchMap((orderCode) => {
-        this.isLoading = true;
+        if (this.allOrders.length === 0) {
+          this.isLoading = true;
+        }
         this.errorMessage = '';
-        this.successMessage = '';
 
         // Load all matching orders (no state filter) — state/city filtering is client-side.
         return this.orderClient.getAllOrders(

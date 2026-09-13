@@ -15,7 +15,6 @@ namespace Application.Features.SubCategory.Command.UpdateSubCategoryCommand
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public int CategoryId { get; set; }
-        public decimal Price { get; set; }
         public bool IsOffer { get; set; } = false;
         public string? ImageUrl { get; set; }
     }
@@ -85,7 +84,6 @@ namespace Application.Features.SubCategory.Command.UpdateSubCategoryCommand
                 request.Name,
                 request.Description,
                 request.CategoryId,
-                request.Price,
                 imageUrl,
                 request.IsOffer,
                 _userSession.UserName ?? "System"

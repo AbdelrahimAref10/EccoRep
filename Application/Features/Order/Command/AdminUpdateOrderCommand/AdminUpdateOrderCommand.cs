@@ -1,5 +1,6 @@
 using Application.Features.Order.Common;
 using Application.Features.Order.DTOs;
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
@@ -10,7 +11,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -44,17 +44,20 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
         private readonly IUserSession _userSession;
         private readonly INotificationService _notificationService;
         private readonly IDateTimeProvider _dateTimeProvider;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public AdminUpdateOrderCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
             INotificationService notificationService,
-            IDateTimeProvider dateTimeProvider)
+            IDateTimeProvider dateTimeProvider,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _notificationService = notificationService;
             _dateTimeProvider = dateTimeProvider;
+            _realtime = realtime;
         }
 
         public async Task<Result<OrderDto>> Handle(AdminUpdateOrderCommand request, CancellationToken cancellationToken)
@@ -73,6 +76,8 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                 .AsTracking()
                 .Include(o => o.Customer)
                 .Include(o => o.OrderPayments)
+                .Include(o => o.OrderVehicles)
+                    .ThenInclude(ov => ov.Vehicle)
                 .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
 
             if (order == null)
@@ -128,17 +133,38 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                 return Result.Failure<OrderDto>("City not found");
             }
 
-            var availabilityResult = await ValidateVehicleAvailabilityAsync(
-                request.SubCategoryId,
-                request.ReservationDateFrom,
-                request.ReservationDateTo,
-                request.VehiclesCount,
-                excludeOrderId: request.OrderId,
-                cancellationToken);
-
-            if (availabilityResult.IsFailure)
+            var assignedVehicles = order.OrderVehicles.Select(ov => ov.Vehicle).ToList();
+            if (assignedVehicles.Count == 0)
             {
-                return Result.Failure<OrderDto>(availabilityResult.Error);
+                return Result.Failure<OrderDto>("Order has no assigned vehicles");
+            }
+
+            var assignedVehicleIds = assignedVehicles.Select(v => v.VehicleId).ToList();
+            var from = request.ReservationDateFrom.Date;
+            var to = request.ReservationDateTo.Date;
+
+            var stillBookedOverlaps = await _context.ReservedVehiclesPerDays
+                .AsNoTracking()
+                .Include(rv => rv.Order)
+                .Where(rv => assignedVehicleIds.Contains(rv.VehicleId)
+                    && rv.OrderId != request.OrderId
+                    && rv.State == ReservedVehicleState.StillBooked
+                    && rv.Order.OrderState != OrderState.Completed && rv.Order.OrderState != OrderState.Cancelled
+                    && rv.DateFrom <= to
+                    && rv.DateTo >= from)
+                .Select(rv => new ValueTuple<int, DateTime, DateTime>(rv.VehicleId, rv.DateFrom, rv.DateTo))
+                .ToListAsync(cancellationToken);
+
+            var availability = Domain.Models.Order.EnsureSelectedVehiclesAreAvailable(
+                assignedVehicles,
+                request.SubCategoryId,
+                from,
+                to,
+                stillBookedOverlaps);
+
+            if (availability.IsFailure)
+            {
+                return Result.Failure<OrderDto>(availability.Error);
             }
 
             var passportImage = string.IsNullOrWhiteSpace(request.PassportImage)
@@ -150,21 +176,14 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                 return Result.Failure<OrderDto>("Passport image is required");
             }
 
-            var from = request.ReservationDateFrom.Date;
-            var to = request.ReservationDateTo.Date;
-            var reservationDays = Math.Max(1, (int)(to - from).TotalDays + 1);
+            var reservationDays = Domain.Models.Order.InclusiveReservationDays(from, to);
 
-            // Same pricing method used by CalculateTotals preview and create.
-            // Keep previous debt already attached to this order.
             var pricing = Domain.Models.Order.CalculatePricing(
-                subCategory.Price,
-                request.VehiclesCount,
+                assignedVehicles.Select(v => v.Price).ToList(),
                 city,
                 request.IsUrgent,
                 reservationDays,
                 order.PreviousDebt);
-
-            var finalTotal = pricing.Total;
 
             try
             {
@@ -176,9 +195,7 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                     request.CityId,
                     request.ReservationDateFrom,
                     request.ReservationDateTo,
-                    pricing.VehiclesCount,
-                    pricing.SubTotal,
-                    finalTotal,
+                    pricing,
                     passportImage,
                     request.HotelName,
                     request.HotelAddress,
@@ -194,40 +211,23 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                     .FirstOrDefaultAsync(ot => ot.OrderId == order.OrderId, cancellationToken);
 
                 if (orderTotals != null)
-                {
-                    orderTotals.Update(
-                        pricing.SubTotal,
-                        pricing.ServiceFees,
-                        pricing.DeliveryFees,
-                        pricing.UrgentFees,
-                        pricing.TieredDiscountAmount,
-                        finalTotal
-                    );
-                }
+                    orderTotals.Apply(pricing);
                 else
                 {
-                    orderTotals = Domain.Models.OrderTotals.Create(
-                        order.OrderId,
-                        pricing.SubTotal,
-                        pricing.ServiceFees,
-                        pricing.DeliveryFees,
-                        pricing.UrgentFees,
-                        pricing.TieredDiscountAmount,
-                        finalTotal
-                    );
+                    orderTotals = Domain.Models.OrderTotals.FromPricing(order.OrderId, pricing);
                     await _context.OrderTotals.AddAsync(orderTotals, cancellationToken);
                 }
 
                 if (orderPayment != null)
                 {
-                    orderPayment.Update((int)PaymentMethod.Cash, finalTotal, actor);
+                    orderPayment.Update((int)PaymentMethod.Cash, pricing.Total, actor);
                 }
                 else
                 {
                     orderPayment = Domain.Models.OrderPayment.Create(
                         order.OrderId,
                         (int)PaymentMethod.Cash,
-                        finalTotal,
+                        pricing.Total,
                         actor
                     );
                     await _context.OrderPayments.AddAsync(orderPayment, cancellationToken);
@@ -236,6 +236,13 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                 await _context.SaveChangesAsync(cancellationToken);
 
                 await SendOrderUpdatedNotification(customer, order, cancellationToken);
+
+                await _realtime.NotifyAsync(
+                    order.OrderId,
+                    "Order updated",
+                    $"Order #{order.OrderCode} was updated by admin.",
+                    NotificationType.OrderUpdated,
+                    cancellationToken: cancellationToken);
 
                 return Result.Success(new OrderDto
                 {
@@ -268,47 +275,6 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
             {
                 return Result.Failure<OrderDto>($"Error updating order: {ex.Message}");
             }
-        }
-
-        private async Task<Result> ValidateVehicleAvailabilityAsync(
-            int subCategoryId,
-            DateTime reservationDateFrom,
-            DateTime reservationDateTo,
-            int vehiclesCount,
-            int? excludeOrderId,
-            CancellationToken cancellationToken)
-        {
-            var from = reservationDateFrom.Date;
-            var to = reservationDateTo.Date;
-
-            var bookableVehiclesCount = await _context.Vehicles
-                .CountAsync(v => v.SubCategoryId == subCategoryId
-                    && v.Status != VehicleStatus.UnderMaintenance, cancellationToken);
-
-            var reservedQuery = _context.ReservedVehiclesPerDays
-                .AsNoTracking()
-                .Include(rv => rv.Order)
-                .Where(rv => rv.SubCategoryId == subCategoryId
-                    && rv.State == ReservedVehicleState.StillBooked
-                    && rv.Order.OrderState != OrderState.Completed && rv.Order.OrderState != OrderState.Cancelled
-                    && rv.DateFrom <= to
-                    && rv.DateTo >= from);
-
-            if (excludeOrderId.HasValue)
-            {
-                reservedQuery = reservedQuery.Where(rv => rv.OrderId != excludeOrderId.Value);
-            }
-
-            var stillBookedOverlaps = await reservedQuery
-                .Select(rv => new ValueTuple<DateTime, DateTime>(rv.DateFrom, rv.DateTo))
-                .ToListAsync(cancellationToken);
-
-            return Domain.Models.Order.EnsureSubCategoryHasCapacity(
-                vehiclesCount,
-                bookableVehiclesCount,
-                from,
-                to,
-                stillBookedOverlaps);
         }
 
         private async Task SendOrderUpdatedNotification(Domain.Models.Customer customer, Domain.Models.Order order, CancellationToken cancellationToken)

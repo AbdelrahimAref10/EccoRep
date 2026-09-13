@@ -1,11 +1,12 @@
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
+using Domain.Events;
 using System.Globalization;
 
 namespace Domain.Models
 {
-    public class Order : IAuditable
+    public class Order : AggregateRoot, IAuditable
     {
         // Private setters for encapsulation
         public int OrderId { get; private set; }
@@ -33,6 +34,17 @@ namespace Domain.Models
         public FaultParty? ReceiptFaultParty { get; private set; }
         public string? ReceiptRejectNote { get; private set; }
 
+        /// <summary>Cash: order total debit already posted to the first delivery. PayPal: company debit at capture.</summary>
+        public bool OrderTotalDebitedToCompany { get; private set; }
+
+        /// <summary>Full order service fee already credited to company (once, on first customer delivery).</summary>
+        public bool CompanyServiceFeeAccrued { get; private set; }
+
+        /// <summary>Admin marked whole order as not delivered (journals posted as delivered + fault debit).</summary>
+        public bool OrderDeliveryFailed { get; private set; }
+        public string? OrderDeliveryFailureReason { get; private set; }
+        public FaultParty? OrderDeliveryFailureFaultParty { get; private set; }
+
         // Navigation properties
         public Customer Customer { get; private set; } = null!;
         public SubCategory SubCategory { get; private set; } = null!;
@@ -55,18 +67,17 @@ namespace Domain.Models
         // Private constructor for EF Core
         private Order() { }
         public static OrderPricingBreakdown CalculatePricing(
-            decimal subCategoryUnitPrice,
-            int vehiclesCount,
+            IReadOnlyCollection<decimal> vehicleDailyPrices,
             City city,
             bool isUrgent,
             int reservationDays,
             decimal previousDebt = 0)
         {
-            if (subCategoryUnitPrice < 0)
-                throw new ArgumentException("SubCategory unit price cannot be negative", nameof(subCategoryUnitPrice));
+            if (vehicleDailyPrices == null || vehicleDailyPrices.Count == 0)
+                throw new ArgumentException("At least one vehicle price is required", nameof(vehicleDailyPrices));
 
-            if (vehiclesCount <= 0)
-                throw new ArgumentException("Vehicles count must be greater than zero", nameof(vehiclesCount));
+            if (vehicleDailyPrices.Any(price => price < 0))
+                throw new ArgumentException("Vehicle price cannot be negative", nameof(vehicleDailyPrices));
 
             if (city == null)
                 throw new ArgumentNullException(nameof(city));
@@ -77,8 +88,10 @@ namespace Domain.Models
             if (previousDebt < 0)
                 throw new ArgumentException("Previous debt cannot be negative", nameof(previousDebt));
 
-            // Rental subtotal = unit price × vehicles × inclusive reservation days
-            var subTotal = subCategoryUnitPrice * vehiclesCount * reservationDays;
+            var vehiclesCount = vehicleDailyPrices.Count;
+            // Daily rental of the selected fleet, then multiplied by inclusive reservation days
+            var dailyRentalTotal = vehicleDailyPrices.Sum();
+            var subTotal = dailyRentalTotal * reservationDays;
             var tieredDiscountPercentage = city.CalculateTieredDiscount(reservationDays);
             // Delivery is charged once per vehicle for the reservation (not per day)
             var deliveryFees = (city.DeliveryFees ?? 0) * vehiclesCount;
@@ -91,7 +104,7 @@ namespace Domain.Models
             var total = rentalTotal + previousDebt;
 
             return new OrderPricingBreakdown(
-                unitPrice: subCategoryUnitPrice,
+                unitPrice: dailyRentalTotal,
                 vehiclesCount: vehiclesCount,
                 subTotal: subTotal,
                 deliveryFees: deliveryFees,
@@ -236,6 +249,62 @@ namespace Domain.Models
             return leftFrom.Date <= rightTo.Date && leftTo.Date >= rightFrom.Date;
         }
 
+        public static int InclusiveReservationDays(DateTime from, DateTime to)
+            => Math.Max(1, (int)(to.Date - from.Date).TotalDays + 1);
+
+        public decimal CalculateVehicleRental(decimal dailyPrice)
+        {
+            if (dailyPrice < 0)
+                throw new ArgumentException("Vehicle price cannot be negative", nameof(dailyPrice));
+
+            return dailyPrice * InclusiveReservationDays(ReservationDateFrom, ReservationDateTo);
+        }
+
+        /// <summary>
+        /// Single place that writes VehiclesCount / OrderSubTotal / OrderTotal / PreviousDebt.
+        /// Create, update, replacement, and remove all go through this.
+        /// </summary>
+        private void ApplyPricing(OrderPricingBreakdown pricing, string? modifiedBy = null)
+        {
+            if (pricing == null)
+                throw new ArgumentNullException(nameof(pricing));
+
+            if (pricing.VehiclesCount <= 0)
+                throw new ArgumentException("Vehicles count must be greater than zero", nameof(pricing));
+
+            VehiclesCount = pricing.VehiclesCount;
+            OrderSubTotal = pricing.SubTotal;
+            OrderTotal = pricing.Total;
+            PreviousDebt = pricing.PreviousDebt;
+            LastModifiedBy = modifiedBy;
+            LastModifiedDate = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Recalculates payable totals from the vehicles currently on the order and city fees.
+        /// Call after replacement / remove / any fleet change before Confirmed.
+        /// </summary>
+        public OrderPricingBreakdown RecalculateTotals(City city, string? modifiedBy = null)
+        {
+            if (OrderState is not (OrderState.Pending or OrderState.MerchantPending or OrderState.MerchantConfirmed))
+                throw new InvalidOperationException($"Cannot recalculate pricing in {OrderState} state.");
+
+            var vehicles = OrderVehicles?.Select(ov => ov.Vehicle).ToList() ?? new List<Vehicle>();
+            if (vehicles.Count == 0 || vehicles.Any(v => v == null))
+                throw new InvalidOperationException("Assigned vehicles with prices are required to recalculate totals.");
+
+            var days = InclusiveReservationDays(ReservationDateFrom, ReservationDateTo);
+            var pricing = CalculatePricing(
+                vehicles.Select(v => v.Price).ToList(),
+                city,
+                IsUrgent,
+                days,
+                PreviousDebt);
+
+            ApplyPricing(pricing, modifiedBy);
+            return pricing;
+        }
+
         // Factory method for creating orders
         public static Order Create(
             int customerId,
@@ -243,9 +312,7 @@ namespace Domain.Models
             int cityId,
             DateTime reservationDateFrom,
             DateTime reservationDateTo,
-            int vehiclesCount,
-            decimal orderSubTotal,
-            decimal orderTotal,
+            OrderPricingBreakdown pricing,
             string passportImage,
             string hotelName,
             string hotelAddress,
@@ -254,9 +321,11 @@ namespace Domain.Models
             string orderCode,
             string? hotelPhone = null,
             string? notes = null,
-            string? createdBy = null,
-            decimal previousDebt = 0)
+            string? createdBy = null)
         {
+            if (pricing == null)
+                throw new ArgumentNullException(nameof(pricing));
+
             if (customerId <= 0)
                 throw new ArgumentException("Customer ID must be greater than zero", nameof(customerId));
 
@@ -268,18 +337,6 @@ namespace Domain.Models
 
             if (reservationDateFrom.Date > reservationDateTo.Date)
                 throw new ArgumentException("Reservation date from must be on or before reservation date to", nameof(reservationDateFrom));
-
-            if (vehiclesCount <= 0)
-                throw new ArgumentException("Vehicles count must be greater than zero", nameof(vehiclesCount));
-
-            if (orderSubTotal < 0)
-                throw new ArgumentException("Order sub total cannot be negative", nameof(orderSubTotal));
-
-            if (orderTotal < 0)
-                throw new ArgumentException("Order total cannot be negative", nameof(orderTotal));
-
-            if (previousDebt < 0)
-                throw new ArgumentException("Previous debt cannot be negative", nameof(previousDebt));
 
             if (string.IsNullOrWhiteSpace(passportImage))
                 throw new ArgumentException("Passport image is required", nameof(passportImage));
@@ -296,7 +353,7 @@ namespace Domain.Models
             if (!Enum.IsDefined(typeof(PaymentMethod), paymentMethodId))
                 throw new ArgumentException("Invalid payment method", nameof(paymentMethodId));
 
-            return new Order
+            var order = new Order
             {
                 OrderCode = orderCode,
                 CustomerId = customerId,
@@ -304,10 +361,6 @@ namespace Domain.Models
                 CityId = cityId,
                 ReservationDateFrom = reservationDateFrom,
                 ReservationDateTo = reservationDateTo,
-                VehiclesCount = vehiclesCount,
-                OrderSubTotal = orderSubTotal,
-                OrderTotal = orderTotal,
-                PreviousDebt = previousDebt,
                 MoneyRefunded = false,
                 PassportImage = NormalizePassportImage(passportImage),
                 HotelName = hotelName.Trim(),
@@ -321,12 +374,25 @@ namespace Domain.Models
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
             };
+
+            order.ApplyPricing(pricing, createdBy);
+            return order;
         }
 
         public static bool CanCancelInState(OrderState state) =>
             state == OrderState.Pending
             || state == OrderState.MerchantPending
-            || state == OrderState.MerchantConfirmed;
+            || state == OrderState.MerchantConfirmed
+            || state == OrderState.Confirmed
+            || state == OrderState.DeliveryAssigned;
+
+        /// <summary>
+        /// Cancel allowed until the first vehicle is received from owner (that moves order to OnWay).
+        /// </summary>
+        public bool CanCancel() =>
+            OrderState != OrderState.Cancelled
+            && CanCancelInState(OrderState)
+            && !OrderVehicles.Any(v => v.ReceivedFromOwner);
 
         public static bool IsTerminalOrPastConfirm(OrderState state) =>
             state == OrderState.Confirmed
@@ -432,8 +498,9 @@ namespace Domain.Models
             if (OrderState == OrderState.Cancelled)
                 throw new InvalidOperationException("Order is already cancelled.");
 
-            if (!CanCancelInState(OrderState))
-                throw new InvalidOperationException($"Cannot cancel order in {OrderState} state. Cancel is only allowed before Confirmed.");
+            if (!CanCancel())
+                throw new InvalidOperationException(
+                    $"Cannot cancel order in {OrderState} state. Cancel stops once any vehicle is received from the merchant.");
 
             OrderState = OrderState.Cancelled;
 
@@ -441,6 +508,58 @@ namespace Domain.Models
             MoneyRefunded = PaymentMethodId == (int)PaymentMethod.Cash;
             LastModifiedBy = modifiedBy;
             LastModifiedDate = DateTime.UtcNow;
+        }
+
+        /// <summary>Marks company OrderTotal debit as posted (cash first delivery or PayPal capture).</summary>
+        public void MarkOrderTotalDebitedToCompany(string? modifiedBy = null)
+        {
+            if (OrderTotalDebitedToCompany)
+                return;
+
+            OrderTotalDebitedToCompany = true;
+            LastModifiedBy = modifiedBy;
+            LastModifiedDate = DateTime.UtcNow;
+        }
+
+        public void MarkCompanyServiceFeeAccrued(string? modifiedBy = null)
+        {
+            if (CompanyServiceFeeAccrued)
+                return;
+
+            CompanyServiceFeeAccrued = true;
+            LastModifiedBy = modifiedBy;
+            LastModifiedDate = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// PayPal capture: company debit OrderTotal once. Returns ledger lines (no DB write).
+        /// </summary>
+        public IReadOnlyList<OrderLedgerLine> BuildOnlinePaymentCapturedLedgerLines(string? createdBy = null)
+        {
+            if (PaymentMethodId != (int)PaymentMethod.PayPal)
+                throw new InvalidOperationException("Online payment ledger is only for PayPal orders.");
+
+            if (OrderTotalDebitedToCompany || OrderTotal <= 0)
+                return Array.Empty<OrderLedgerLine>();
+
+            MarkOrderTotalDebitedToCompany(createdBy);
+
+            var lines = new[]
+            {
+                new OrderLedgerLine(
+                    OrderId,
+                    vehicleId: null,
+                    LedgerPartyType.Company,
+                    partyId: null,
+                    JournalDirection.Debit,
+                    OrderTotal,
+                    OrderJournalEntryKind.OrderTotalDebitedToCompany,
+                    $"order:{OrderId}:order-total-debit:paypal",
+                    note: "PayPal payment captured — order total debit to company")
+            };
+
+            RaiseDomainEvent(new OrderLedgerPostsRequested(OrderId, lines, createdBy));
+            return lines;
         }
 
         public void MarkMoneyRefunded(string? modifiedBy = null)
@@ -462,6 +581,7 @@ namespace Domain.Models
 
         /// <summary>
         /// Updates order details. Allowed only while the order is still Pending.
+        /// Money always comes from <see cref="ApplyPricing"/>.
         /// </summary>
         public void Update(
             int customerId,
@@ -469,9 +589,7 @@ namespace Domain.Models
             int cityId,
             DateTime reservationDateFrom,
             DateTime reservationDateTo,
-            int vehiclesCount,
-            decimal orderSubTotal,
-            decimal orderTotal,
+            OrderPricingBreakdown pricing,
             string passportImage,
             string hotelName,
             string hotelAddress,
@@ -496,15 +614,6 @@ namespace Domain.Models
             if (reservationDateFrom.Date > reservationDateTo.Date)
                 throw new ArgumentException("Reservation date from must be on or before reservation date to", nameof(reservationDateFrom));
 
-            if (vehiclesCount <= 0)
-                throw new ArgumentException("Vehicles count must be greater than zero", nameof(vehiclesCount));
-
-            if (orderSubTotal < 0)
-                throw new ArgumentException("Order sub total cannot be negative", nameof(orderSubTotal));
-
-            if (orderTotal < 0)
-                throw new ArgumentException("Order total cannot be negative", nameof(orderTotal));
-
             if (string.IsNullOrWhiteSpace(passportImage))
                 throw new ArgumentException("Passport image is required", nameof(passportImage));
 
@@ -522,9 +631,6 @@ namespace Domain.Models
             CityId = cityId;
             ReservationDateFrom = reservationDateFrom;
             ReservationDateTo = reservationDateTo;
-            VehiclesCount = vehiclesCount;
-            OrderSubTotal = orderSubTotal;
-            OrderTotal = orderTotal;
             PassportImage = NormalizePassportImage(passportImage);
             HotelName = hotelName.Trim();
             HotelAddress = hotelAddress.Trim();
@@ -532,6 +638,346 @@ namespace Domain.Models
             IsUrgent = isUrgent;
             PaymentMethodId = paymentMethodId;
             Notes = notes;
+            ApplyPricing(pricing, modifiedBy);
+        }
+
+        // ─── Per-vehicle lifecycle (domain owns sequencing + ledger instructions) ───
+
+        public void MarkVehicleReceivedFromOwner(
+            VehicleSettlementSnapshot snapshot,
+            string? imageUrl,
+            string? modifiedBy = null)
+        {
+            EnsureOperationalStateForPickup();
+            var ov = RequireOrderVehicle(snapshot.VehicleId);
+
+            var wasFirst = !OrderVehicles.Any(v => v.ReceivedFromOwner);
+            ov.MarkReceivedFromOwner(imageUrl, modifiedBy);
+
+            var lines = new List<OrderLedgerLine>();
+            if (snapshot.MerchantCashOnReceive && snapshot.VehicleRental > 0)
+            {
+                lines.Add(new OrderLedgerLine(
+                    OrderId,
+                    snapshot.VehicleId,
+                    LedgerPartyType.Merchant,
+                    snapshot.MerchantId,
+                    JournalDirection.Debit,
+                    snapshot.VehicleRental,
+                    OrderJournalEntryKind.MerchantPaidByDeliveryCashOnReceive,
+                    $"order:{OrderId}:vehicle:{snapshot.VehicleId}:cash-on-receive",
+                    note: "Cash on receive — merchant debit vehicle rental"));
+            }
+
+            if (wasFirst && OrderState == OrderState.DeliveryAssigned)
+                MarkOnWay(modifiedBy);
+
+            RaiseDomainEvent(new OrderVehicleReceivedFromOwnerEvent(
+                OrderId,
+                snapshot.VehicleId,
+                becameOnWay: wasFirst,
+                merchantCashOnReceive: snapshot.MerchantCashOnReceive,
+                lines,
+                modifiedBy));
+            Touch(modifiedBy);
+        }
+
+        public void MarkVehicleDeliveredToCustomer(
+            VehicleSettlementSnapshot snapshot,
+            string? imageUrl,
+            string? modifiedBy = null)
+        {
+            EnsureOperationalStateForCustomerDelivery();
+            var ov = RequireOrderVehicle(snapshot.VehicleId);
+            ov.MarkDeliveredToCustomer(imageUrl, modifiedBy);
+
+            var lines = BuildCustomerDeliveryAccrualLines(snapshot, modifiedBy);
+
+            if (OrderVehicles.All(v => v.DeliveredToCustomer) && OrderState == OrderState.OnWay)
+                MarkCustomerReceived(modifiedBy);
+
+            RaiseDomainEvent(new OrderVehicleDeliveredToCustomerEvent(
+                OrderId,
+                snapshot.VehicleId,
+                becameCustomerReceived: OrderState == OrderState.CustomerReceived,
+                lines,
+                modifiedBy));
+            Touch(modifiedBy);
+        }
+
+        public void MarkVehicleReceivedFromCustomer(int vehicleId, string? imageUrl, string? modifiedBy = null)
+        {
+            if (OrderState is not (OrderState.CustomerReceived or OrderState.OnWay or OrderState.Completed))
+            {
+                // Allow receive-from-customer once vehicle was delivered; order may still be OnWay if not all delivered.
+                var ovEarly = RequireOrderVehicle(vehicleId);
+                if (!ovEarly.DeliveredToCustomer)
+                    throw new InvalidOperationException($"Cannot receive from customer in order state {OrderState}.");
+            }
+
+            var ov = RequireOrderVehicle(vehicleId);
+            ov.MarkReceivedFromCustomer(imageUrl, modifiedBy);
+            Touch(modifiedBy);
+        }
+
+        public void MarkVehicleDeliveredToOwner(int vehicleId, string? imageUrl, string? modifiedBy = null)
+        {
+            var ov = RequireOrderVehicle(vehicleId);
+            ov.MarkDeliveredToOwner(imageUrl, modifiedBy);
+
+            if (OrderVehicles.All(v => v.DeliveredToOwner) && OrderState == OrderState.CustomerReceived)
+                Complete(modifiedBy);
+
+            Touch(modifiedBy);
+        }
+
+        /// <summary>
+        /// Vehicle not received by customer: post delivery accruals as if delivered, then debit fault party
+        /// for vehicle rental + delivery fee.
+        /// </summary>
+        public void MarkVehicleNotReceivedByCustomer(
+            VehicleSettlementSnapshot snapshot,
+            string reason,
+            FaultParty faultParty,
+            string? modifiedBy = null)
+        {
+            EnsureOperationalStateForCustomerDelivery();
+            var ov = RequireOrderVehicle(snapshot.VehicleId);
+            ov.MarkDeliveryFailed(reason, faultParty, modifiedBy);
+
+            var lines = BuildCustomerDeliveryAccrualLines(snapshot, modifiedBy);
+            var faultAmount = snapshot.VehicleRental + snapshot.DeliveryFeeShare;
+            if (faultAmount > 0)
+            {
+                lines.Add(BuildNonDeliveryFaultLine(
+                    snapshot.VehicleId,
+                    faultAmount,
+                    faultParty,
+                    snapshot.MerchantId,
+                    snapshot.DeliveryId,
+                    $"order:{OrderId}:vehicle:{snapshot.VehicleId}:non-delivery-fault",
+                    reason));
+            }
+
+            if (OrderVehicles.All(v => v.DeliveredToCustomer) && OrderState == OrderState.OnWay)
+                MarkCustomerReceived(modifiedBy);
+
+            if (lines.Count > 0)
+                RaiseDomainEvent(new OrderLedgerPostsRequested(OrderId, lines, modifiedBy));
+
+            Touch(modifiedBy);
+        }
+
+        /// <summary>
+        /// Whole order not delivered: post accruals for every vehicle, cash/paypal order-total rules,
+        /// then one fault debit chosen by admin.
+        /// </summary>
+        public void MarkOrderNotDelivered(
+            IReadOnlyList<VehicleSettlementSnapshot> snapshots,
+            string reason,
+            FaultParty faultParty,
+            string? modifiedBy = null)
+        {
+            if (snapshots == null || snapshots.Count == 0)
+                throw new ArgumentException("At least one vehicle settlement is required", nameof(snapshots));
+
+            if (OrderState is not (OrderState.DeliveryAssigned or OrderState.OnWay))
+                throw new InvalidOperationException(
+                    $"Cannot mark order not delivered in {OrderState}. Order must be DeliveryAssigned or OnWay.");
+
+            if (string.IsNullOrWhiteSpace(reason))
+                throw new ArgumentException("Failure reason is required", nameof(reason));
+
+            if (faultParty is FaultParty.None or FaultParty.Customer)
+                throw new ArgumentException("Fault party must be Merchant, Delivery, or Company", nameof(faultParty));
+
+            var lines = new List<OrderLedgerLine>();
+            foreach (var snapshot in snapshots)
+            {
+                var ov = RequireOrderVehicle(snapshot.VehicleId);
+                if (!ov.ReceivedFromOwner)
+                    throw new InvalidOperationException($"Vehicle {snapshot.VehicleId} must be received from owner first.");
+
+                ov.MarkDeliveryFailed(reason, faultParty, modifiedBy);
+                lines.AddRange(BuildCustomerDeliveryAccrualLines(snapshot, modifiedBy));
+            }
+
+            var faultTotal = snapshots.Sum(s => s.VehicleRental + s.DeliveryFeeShare);
+            if (faultTotal > 0)
+            {
+                int? partyId = faultParty switch
+                {
+                    FaultParty.Delivery => snapshots[0].DeliveryId,
+                    FaultParty.Merchant => snapshots[0].MerchantId,
+                    _ => null
+                };
+
+                lines.Add(BuildNonDeliveryFaultLine(
+                    vehicleId: null,
+                    faultTotal,
+                    faultParty,
+                    snapshots[0].MerchantId,
+                    snapshots[0].DeliveryId,
+                    $"order:{OrderId}:order-non-delivery-fault",
+                    reason,
+                    partyIdOverride: partyId));
+            }
+
+            OrderDeliveryFailed = true;
+            OrderDeliveryFailureReason = reason.Trim();
+            OrderDeliveryFailureFaultParty = faultParty;
+
+            if (OrderState == OrderState.DeliveryAssigned)
+                MarkOnWay(modifiedBy);
+
+            if (OrderState == OrderState.OnWay)
+                MarkCustomerReceived(modifiedBy);
+
+            if (lines.Count > 0)
+                RaiseDomainEvent(new OrderLedgerPostsRequested(OrderId, lines, modifiedBy));
+
+            Touch(modifiedBy);
+        }
+
+        private List<OrderLedgerLine> BuildCustomerDeliveryAccrualLines(
+            VehicleSettlementSnapshot snapshot,
+            string? modifiedBy)
+        {
+            var lines = new List<OrderLedgerLine>();
+            var vid = snapshot.VehicleId;
+
+            if (snapshot.VehicleRental > 0)
+            {
+                lines.Add(new OrderLedgerLine(
+                    OrderId,
+                    vid,
+                    LedgerPartyType.Merchant,
+                    snapshot.MerchantId,
+                    JournalDirection.Credit,
+                    snapshot.VehicleRental,
+                    OrderJournalEntryKind.MerchantRentalAccrued,
+                    $"order:{OrderId}:vehicle:{vid}:merchant-rental",
+                    note: "Merchant vehicle rental credit on customer delivery"));
+            }
+
+            // Service fee is Ecco profit only — never split or deducted from merchant rent.
+            // Post the full order amount once on the first customer delivery (cash or online).
+            if (!CompanyServiceFeeAccrued && snapshot.OrderServiceFees > 0)
+            {
+                MarkCompanyServiceFeeAccrued(modifiedBy);
+                lines.Add(new OrderLedgerLine(
+                    OrderId,
+                    vehicleId: null,
+                    LedgerPartyType.Company,
+                    null,
+                    JournalDirection.Credit,
+                    snapshot.OrderServiceFees,
+                    OrderJournalEntryKind.CompanyServiceFeeAccrued,
+                    $"order:{OrderId}:company-service-fee",
+                    note: "Company service fee credit on first customer delivery"));
+            }
+
+            if (snapshot.DeliveryFeeShare > 0)
+            {
+                lines.Add(new OrderLedgerLine(
+                    OrderId,
+                    vid,
+                    LedgerPartyType.Delivery,
+                    snapshot.DeliveryId,
+                    JournalDirection.Credit,
+                    snapshot.DeliveryFeeShare,
+                    OrderJournalEntryKind.DeliveryFeeAccrued,
+                    $"order:{OrderId}:vehicle:{vid}:delivery-fee",
+                    note: "Delivery fee credit on customer delivery"));
+            }
+
+            // Cash: the courier collected the full order amount from the customer.
+            // Debit that delivery once on first customer handoff. Online orders debit
+            // the company at payment capture — never here.
+            if (PaymentMethodId == (int)PaymentMethod.Cash
+                && !OrderTotalDebitedToCompany
+                && OrderTotal > 0)
+            {
+                if (snapshot.DeliveryId <= 0)
+                    throw new InvalidOperationException("Delivery ID is required to debit cash collected from the customer.");
+
+                MarkOrderTotalDebitedToCompany(modifiedBy);
+                lines.Add(new OrderLedgerLine(
+                    OrderId,
+                    vehicleId: null,
+                    LedgerPartyType.Delivery,
+                    snapshot.DeliveryId,
+                    JournalDirection.Debit,
+                    OrderTotal,
+                    OrderJournalEntryKind.CashCollectedFromCustomer,
+                    $"order:{OrderId}:order-total-debit:cash",
+                    note: "Cash — order total debit to delivery on first customer delivery"));
+            }
+
+            return lines;
+        }
+
+        private OrderLedgerLine BuildNonDeliveryFaultLine(
+            int? vehicleId,
+            decimal amount,
+            FaultParty faultParty,
+            int merchantId,
+            int deliveryId,
+            string idempotencyKey,
+            string reason,
+            int? partyIdOverride = null)
+        {
+            var (partyType, partyId) = faultParty switch
+            {
+                FaultParty.Merchant => (LedgerPartyType.Merchant, partyIdOverride ?? merchantId),
+                FaultParty.Delivery => (LedgerPartyType.Delivery, partyIdOverride ?? deliveryId),
+                FaultParty.Company => (LedgerPartyType.Company, (int?)null),
+                _ => throw new ArgumentException("Unsupported fault party", nameof(faultParty))
+            };
+
+            return new OrderLedgerLine(
+                OrderId,
+                vehicleId,
+                partyType,
+                partyId,
+                JournalDirection.Debit,
+                amount,
+                OrderJournalEntryKind.NonDeliveryFaultDebit,
+                idempotencyKey,
+                note: reason,
+                faultParty: faultParty);
+        }
+
+        private OrderVehicle RequireOrderVehicle(int vehicleId)
+        {
+            var ov = OrderVehicles.FirstOrDefault(v => v.VehicleId == vehicleId);
+            if (ov == null)
+                throw new InvalidOperationException($"Vehicle {vehicleId} is not on this order.");
+            return ov;
+        }
+
+        private void EnsureOperationalStateForPickup()
+        {
+            if (OrderState is not (OrderState.DeliveryAssigned or OrderState.OnWay))
+                throw new InvalidOperationException(
+                    $"Cannot receive from owner in {OrderState}. Order must be DeliveryAssigned (or already OnWay).");
+        }
+
+        private void EnsureOperationalStateForCustomerDelivery()
+        {
+            if (OrderState is not (OrderState.OnWay or OrderState.DeliveryAssigned or OrderState.CustomerReceived))
+                throw new InvalidOperationException(
+                    $"Cannot deliver to customer in {OrderState}. Order must be OnWay after pickup.");
+
+            // Strict sequence: order-level customer delivery accruals require OnWay (first pickup done),
+            // except order-not-delivered may force OnWay first.
+            if (OrderState == OrderState.DeliveryAssigned)
+                throw new InvalidOperationException(
+                    "Cannot deliver to customer before at least one vehicle is received from owner (OnWay).");
+        }
+
+        private void Touch(string? modifiedBy)
+        {
             LastModifiedBy = modifiedBy;
             LastModifiedDate = DateTime.UtcNow;
         }

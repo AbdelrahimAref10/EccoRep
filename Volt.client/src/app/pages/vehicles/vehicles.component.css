@@ -447,10 +447,16 @@
   overflow-x: auto;
 }
 
-.vehicles__table {
+.vehicles__price {
+  font-weight: 780;
+  color: var(--volt-accent-strong, #0f766e);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.vehicles__tile-body app-vehicle-specs {
+  display: block;
   width: 100%;
-  border-collapse: collapse;
-  min-width: 760px;
 }
 
 .vehicles__table thead th {

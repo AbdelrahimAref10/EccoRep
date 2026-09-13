@@ -61,23 +61,23 @@
     </div>
 
     <div class="list-filters__field">
-      <select class="entity-form__select m-vehicles__select" [(ngModel)]="selectedCategoryId" (ngModelChange)="onCategoryChange()">
-        <option [ngValue]="null">{{ 'merchant.allCategories' | t }}</option>
-        <option *ngFor="let c of categories" [ngValue]="c.categoryId">{{ c.name }}</option>
-      </select>
+      <app-multi-select
+        [multiple]="false"
+        [options]="categoryOptions"
+        [(ngModel)]="selectedCategoryId"
+        (ngModelChange)="onCategoryChange()"
+        [placeholder]="'merchant.allCategories' | t"
+      ></app-multi-select>
     </div>
 
     <div class="list-filters__field">
-      <select
-        class="entity-form__select m-vehicles__select"
-        [(ngModel)]="selectedSubCategoryId"
+      <app-multi-select
+        [multiple]="false"
         [disabled]="!selectedCategoryId"
-      >
-        <option [ngValue]="null">{{ 'merchant.allSubCategories' | t }}</option>
-        <option *ngFor="let s of subCategories" [ngValue]="s.subCategoryId">
-          {{ s.name }} — {{ s.price }}
-        </option>
-      </select>
+        [options]="subCategoryOptions"
+        [(ngModel)]="selectedSubCategoryId"
+        [placeholder]="'merchant.allSubCategories' | t"
+      ></app-multi-select>
     </div>
 
     <button type="button" class="list-filters__search-btn" (click)="applyFilters()">
@@ -156,14 +156,27 @@
 
         <div class="vehicles__tile-body">
           <h3 class="vehicles__tile-title">{{ vehicle.name }}</h3>
-          <p class="vehicles__tile-desc">#{{ vehicle.vehicleCode }}</p>
+          <p class="vehicles__tile-code">#{{ vehicle.vehicleCode }}</p>
           <div class="vehicles__tile-meta">
             <span class="vehicles__tile-subs">{{ vehicle.categoryName }}</span>
             <span class="vehicles__tile-subs">{{ vehicle.subCategoryName }}</span>
           </div>
+          <app-vehicle-specs
+            [compact]="true"
+            [showPrice]="false"
+            [color]="vehicle.color"
+            [type]="vehicle.type"
+            [model]="vehicle.model"
+            [speedKmh]="vehicle.speedKmh"
+            [engineCapacityCc]="vehicle.engineCapacityCc"
+          ></app-vehicle-specs>
         </div>
 
         <div class="vehicles__tile-footer">
+          <div class="vehicles__tile-price">
+            <span class="vehicles__tile-price-value">{{ vehicle.price | number:'1.2-2' }}</span>
+            <span class="vehicles__tile-price-unit">{{ 'common.currency' | t }} / {{ 'vehicles.perDay' | t }}</span>
+          </div>
           <div class="vehicles__actions">
             <button
               type="button"
@@ -201,6 +214,7 @@
               <th scope="col">{{ 'vehicles.code' | t }}</th>
               <th scope="col">{{ 'nav.categories' | t }}</th>
               <th scope="col">{{ 'vehicles.subCategory' | t }}</th>
+              <th scope="col">{{ 'vehicles.price' | t }}</th>
               <th scope="col">{{ 'common.status' | t }}</th>
               <th scope="col">{{ 'common.actions' | t }}</th>
             </tr>
@@ -221,6 +235,9 @@
               <td><span class="vehicles__code">#{{ vehicle.vehicleCode }}</span></td>
               <td>{{ vehicle.categoryName }}</td>
               <td>{{ vehicle.subCategoryName }}</td>
+              <td>
+                <span class="vehicles__price">{{ vehicle.price | number:'1.2-2' }} {{ 'common.currency' | t }}</span>
+              </td>
               <td>
                 <span class="vehicles__status" [ngClass]="statusClass(vehicle.status)">
                   {{ statusLabel(vehicle.status) }}

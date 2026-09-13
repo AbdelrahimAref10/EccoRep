@@ -313,3 +313,15 @@
     </section>
   </div>
 </div>
+
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog"
+  [title]="confirmDialogTitle"
+  [message]="confirmDialogMessage"
+  [type]="confirmDialogType"
+  [isLoading]="!!actionLoading"
+  [confirmText]="confirmDialogConfirmText"
+  [cancelText]="'common.cancel' | t"
+  (confirm)="onConfirmAction()"
+  (cancel)="onCancelConfirm()"
+></app-confirm-dialog>

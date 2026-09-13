@@ -115,6 +115,25 @@ namespace Infrastructure.MappingConfiguration
                 .HasColumnName("ReceiptRejectNote")
                 .HasMaxLength(1000);
 
+            builder.Property(o => o.OrderTotalDebitedToCompany)
+                .HasColumnName("OrderTotalDebitedToCompany")
+                .IsRequired();
+
+            builder.Property(o => o.CompanyServiceFeeAccrued)
+                .HasColumnName("CompanyServiceFeeAccrued")
+                .IsRequired();
+
+            builder.Property(o => o.OrderDeliveryFailed)
+                .HasColumnName("OrderDeliveryFailed")
+                .IsRequired();
+
+            builder.Property(o => o.OrderDeliveryFailureReason)
+                .HasColumnName("OrderDeliveryFailureReason")
+                .HasMaxLength(1000);
+
+            builder.Property(o => o.OrderDeliveryFailureFaultParty)
+                .HasColumnName("OrderDeliveryFailureFaultParty");
+
             // Configure audit properties
             builder.Property(o => o.CreatedBy)
                 .HasColumnName("CreatedBy")

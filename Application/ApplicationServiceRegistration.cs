@@ -12,6 +12,8 @@ namespace Application
             services.AddScoped<Features.AdminReport.Export.IReportExportService, Features.AdminReport.Export.ReportExportService>();
             services.AddScoped<Features.Order.Services.IVehicleReservationQueryService, Features.Order.Services.VehicleReservationQueryService>();
             services.AddScoped<Features.Order.Services.IOrderJournalService, Features.Order.Services.OrderJournalService>();
+            services.AddScoped<Features.Order.Services.IOrderRealtimeNotifier, Features.Order.Services.OrderRealtimeNotifier>();
+            services.AddScoped<Domain.Common.IDomainEventDispatcher, Common.DomainEvents.DomainEventDispatcher>();
 
             services.AddScoped<Features.Customer.Command.AdminCreateCustomerCommand.AdminCreateCustomerCommandValidator>();
             services.AddScoped<Features.Customer.Command.UpdateCustomerCommand.UpdateCustomerCommandValidator>();

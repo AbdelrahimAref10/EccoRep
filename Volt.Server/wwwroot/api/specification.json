@@ -875,6 +875,17 @@
             "x-position": 1
           }
         ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptMerchantOrderCommand"
+              }
+            }
+          },
+          "x-position": 2
+        },
         "responses": {
           "200": {
             "description": "",
@@ -4373,12 +4384,12 @@
         }
       }
     },
-    "/api/AdminOrder/{orderId}/ReplaceVehicle": {
+    "/api/AdminOrder/{orderId}/Replacement": {
       "post": {
         "tags": [
           "AdminOrder"
         ],
-        "operationId": "AdminOrder_ReplaceVehicle",
+        "operationId": "AdminOrder_Replacement",
         "parameters": [
           {
             "name": "orderId",
@@ -4396,7 +4407,61 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AdminReplaceOrderVehicleCommand"
+                "$ref": "#/components/schemas/AdminReplacementOrderVehicleCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AdminOrder/{orderId}/RemoveVehicle": {
+      "post": {
+        "tags": [
+          "AdminOrder"
+        ],
+        "operationId": "AdminOrder_RemoveVehicle",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminRemoveOrderVehicleCommand"
               }
             }
           },
@@ -4505,6 +4570,376 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/MarkMerchantHandoverToDeliveryCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 2
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/ReceivedFromOwner": {
+      "post": {
+        "tags": [
+          "AdminOrder"
+        ],
+        "operationId": "AdminOrder_MarkVehicleReceivedFromOwner",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkVehicleReceivedFromOwnerCommand"
+              }
+            }
+          },
+          "x-position": 3
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/DeliveredToCustomer": {
+      "post": {
+        "tags": [
+          "AdminOrder"
+        ],
+        "operationId": "AdminOrder_MarkVehicleDeliveredToCustomer",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkVehicleDeliveredToCustomerCommand"
+              }
+            }
+          },
+          "x-position": 3
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/ReceivedFromCustomer": {
+      "post": {
+        "tags": [
+          "AdminOrder"
+        ],
+        "operationId": "AdminOrder_MarkVehicleReceivedFromCustomer",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkVehicleReceivedFromCustomerCommand"
+              }
+            }
+          },
+          "x-position": 3
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/DeliveredToOwner": {
+      "post": {
+        "tags": [
+          "AdminOrder"
+        ],
+        "operationId": "AdminOrder_MarkVehicleDeliveredToOwner",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkVehicleDeliveredToOwnerCommand"
+              }
+            }
+          },
+          "x-position": 3
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AdminOrder/{orderId}/vehicles/{vehicleId}/NotReceivedByCustomer": {
+      "post": {
+        "tags": [
+          "AdminOrder"
+        ],
+        "operationId": "AdminOrder_MarkVehicleNotReceivedByCustomer",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          },
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 2
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkVehicleNotReceivedByCustomerCommand"
+              }
+            }
+          },
+          "required": true,
+          "x-position": 3
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/AdminOrder/{orderId}/NotDelivered": {
+      "post": {
+        "tags": [
+          "AdminOrder"
+        ],
+        "operationId": "AdminOrder_MarkOrderNotDelivered",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "x-position": 1
+          }
+        ],
+        "requestBody": {
+          "x-name": "command",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkOrderNotDeliveredCommand"
               }
             }
           },
@@ -6198,11 +6633,10 @@
         "operationId": "AdminSettlement_GetJournals",
         "parameters": [
           {
-            "name": "OrderId",
+            "name": "OrderCode",
             "in": "query",
             "schema": {
-              "type": "integer",
-              "format": "int32",
+              "type": "string",
               "nullable": true
             },
             "x-position": 1
@@ -9079,7 +9513,8 @@
           "OrderCustomerReceived",
           "OrderCompleted",
           "OrderCancelled",
-          "OrderMerchantPending"
+          "OrderMerchantPending",
+          "OrderUpdated"
         ],
         "enum": [
           1,
@@ -9088,7 +9523,8 @@
           4,
           5,
           6,
-          7
+          7,
+          8
         ]
       },
       "MerchantDashboardSummaryDto": {
@@ -9171,10 +9607,6 @@
           },
           "isOffer": {
             "type": "boolean"
-          },
-          "price": {
-            "type": "number",
-            "format": "decimal"
           },
           "categoryId": {
             "type": "integer",
@@ -9259,10 +9691,6 @@
           "subCategoryName": {
             "type": "string"
           },
-          "subCategoryPrice": {
-            "type": "number",
-            "format": "decimal"
-          },
           "categoryId": {
             "type": "integer",
             "format": "int32"
@@ -9283,6 +9711,29 @@
           },
           "merchantName": {
             "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
@@ -9303,6 +9754,29 @@
           "status": {
             "type": "integer",
             "format": "int32"
+          },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "imageUrl": {
             "type": "string",
@@ -9331,6 +9805,29 @@
           "status": {
             "type": "integer",
             "format": "int32"
+          },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "imageUrl": {
             "type": "string",
@@ -9484,12 +9981,14 @@
         "x-enumNames": [
           "Pending",
           "Accepted",
-          "Rejected"
+          "Rejected",
+          "PartiallyAccepted"
         ],
         "enum": [
           0,
           1,
-          2
+          2,
+          3
         ]
       },
       "MerchantPortalOrderDetailDto": {
@@ -9505,10 +10004,6 @@
           },
           "subCategoryName": {
             "type": "string"
-          },
-          "subCategoryPrice": {
-            "type": "number",
-            "format": "decimal"
           },
           "cityName": {
             "type": "string"
@@ -9625,11 +10120,100 @@
           "vehicleCode": {
             "type": "string"
           },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
           "status": {
             "type": "integer",
             "format": "int32"
+          },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "receivedFromOwner": {
+            "type": "boolean"
+          },
+          "deliveredToCustomer": {
+            "type": "boolean"
+          },
+          "receivedFromCustomer": {
+            "type": "boolean"
+          },
+          "deliveredToOwner": {
+            "type": "boolean"
+          },
+          "deliveryFailed": {
+            "type": "boolean"
+          },
+          "deliveryFailureReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "deliveryFailureFaultParty": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FaultParty"
+              }
+            ]
+          },
+          "merchantResponseStatus": {
+            "$ref": "#/components/schemas/MerchantVehicleResponseStatus"
           }
         }
+      },
+      "FaultParty": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "None",
+          "Customer",
+          "Merchant",
+          "Delivery",
+          "Company"
+        ],
+        "enum": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      },
+      "MerchantVehicleResponseStatus": {
+        "type": "integer",
+        "description": "",
+        "x-enumNames": [
+          "Pending",
+          "Confirmed",
+          "Declined"
+        ],
+        "enum": [
+          0,
+          1,
+          2
+        ]
       },
       "MerchantOrderPaymentDetailDto": {
         "type": "object",
@@ -9658,10 +10242,6 @@
             "type": "string"
           },
           "vehicleRental": {
-            "type": "number",
-            "format": "decimal"
-          },
-          "serviceFeeShare": {
             "type": "number",
             "format": "decimal"
           },
@@ -9713,6 +10293,11 @@
             "format": "int32"
           },
           "orderId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "vehicleId": {
             "type": "integer",
             "format": "int32",
             "nullable": true
@@ -9802,7 +10387,9 @@
           "FaultClawback",
           "CustomerRejectedReceiptNote",
           "DeliveryCashFloatReceived",
-          "DeliveryCashFloatReturned"
+          "DeliveryCashFloatReturned",
+          "OrderTotalDebitedToCompany",
+          "NonDeliveryFaultDebit"
         ],
         "enum": [
           1,
@@ -9817,25 +10404,9 @@
           10,
           11,
           12,
-          13
-        ]
-      },
-      "FaultParty": {
-        "type": "integer",
-        "description": "",
-        "x-enumNames": [
-          "None",
-          "Customer",
-          "Merchant",
-          "Delivery",
-          "Company"
-        ],
-        "enum": [
-          0,
-          1,
-          2,
-          3,
-          4
+          13,
+          14,
+          15
         ]
       },
       "PartyLedgerDto": {
@@ -9909,6 +10480,10 @@
             "format": "int32",
             "nullable": true
           },
+          "orderCode": {
+            "type": "string",
+            "nullable": true
+          },
           "partyType": {
             "$ref": "#/components/schemas/LedgerPartyType"
           },
@@ -9956,6 +10531,24 @@
           }
         }
       },
+      "AcceptMerchantOrderCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "confirmedVehicleIds": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        }
+      },
       "RejectMerchantOrderCommand": {
         "type": "object",
         "additionalProperties": false,
@@ -9983,6 +10576,10 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
           }
         }
       },
@@ -10386,6 +10983,29 @@
               "type": "string",
               "format": "date-time"
             }
+          },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
@@ -11846,10 +12466,6 @@
           "subCategoryName": {
             "type": "string"
           },
-          "subCategoryPrice": {
-            "type": "number",
-            "format": "decimal"
-          },
           "cityId": {
             "type": "integer",
             "format": "int32"
@@ -11962,6 +12578,24 @@
             "type": "string",
             "nullable": true
           },
+          "orderTotalDebitedToCompany": {
+            "type": "boolean"
+          },
+          "orderDeliveryFailed": {
+            "type": "boolean"
+          },
+          "orderDeliveryFailureReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "orderDeliveryFailureFaultParty": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FaultParty"
+              }
+            ]
+          },
           "merchantOrders": {
             "type": "array",
             "items": {
@@ -12022,6 +12656,75 @@
           "status": {
             "type": "integer",
             "format": "int32"
+          },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "receivedFromOwner": {
+            "type": "boolean"
+          },
+          "receivedFromOwnerImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "deliveredToCustomer": {
+            "type": "boolean"
+          },
+          "deliveredToCustomerImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "receivedFromCustomer": {
+            "type": "boolean"
+          },
+          "receivedFromCustomerImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "deliveredToOwner": {
+            "type": "boolean"
+          },
+          "deliveredToOwnerImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "deliveryFailed": {
+            "type": "boolean"
+          },
+          "deliveryFailureReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "deliveryFailureFaultParty": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FaultParty"
+              }
+            ]
+          },
+          "merchantResponseStatus": {
+            "$ref": "#/components/schemas/MerchantVehicleResponseStatus"
           }
         }
       },
@@ -12223,6 +12926,24 @@
           "createdDate": {
             "type": "string",
             "format": "date-time"
+          },
+          "confirmedVehiclesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "declinedVehiclesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingVehiclesCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "declinedVehicleCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -12382,6 +13103,29 @@
               "type": "string",
               "format": "date-time"
             }
+          },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
@@ -12493,6 +13237,29 @@
           },
           "merchantName": {
             "type": "string"
+          },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         }
       },
@@ -12700,7 +13467,7 @@
           }
         }
       },
-      "AdminReplaceOrderVehicleCommand": {
+      "AdminReplacementOrderVehicleCommand": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
@@ -12713,6 +13480,20 @@
             "format": "int32"
           },
           "newVehicleId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AdminRemoveOrderVehicleCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vehicleId": {
             "type": "integer",
             "format": "int32"
           }
@@ -12745,6 +13526,114 @@
           "deliveryId": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "MarkVehicleReceivedFromOwnerCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "MarkVehicleDeliveredToCustomerCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "MarkVehicleReceivedFromCustomerCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "MarkVehicleDeliveredToOwnerCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "MarkVehicleNotReceivedByCustomerCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "vehicleId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "faultParty": {
+            "$ref": "#/components/schemas/FaultParty"
+          }
+        }
+      },
+      "MarkOrderNotDeliveredCommand": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "orderId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "faultParty": {
+            "$ref": "#/components/schemas/FaultParty"
           }
         }
       },
@@ -14182,10 +15071,6 @@
           },
           "categoryName": {
             "type": "string"
-          },
-          "price": {
-            "type": "number",
-            "format": "decimal"
           }
         }
       },
@@ -14202,10 +15087,6 @@
           "categoryId": {
             "type": "integer",
             "format": "int32"
-          },
-          "price": {
-            "type": "number",
-            "format": "decimal"
           },
           "isOffer": {
             "type": "boolean"
@@ -14233,10 +15114,6 @@
           "categoryId": {
             "type": "integer",
             "format": "int32"
-          },
-          "price": {
-            "type": "number",
-            "format": "decimal"
           },
           "isOffer": {
             "type": "boolean"
@@ -14287,6 +15164,29 @@
             "type": "integer",
             "format": "int32"
           },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "imageUrl": {
             "type": "string",
             "nullable": true
@@ -14318,6 +15218,29 @@
           "status": {
             "type": "integer",
             "format": "int32"
+          },
+          "color": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number",
+            "format": "decimal"
+          },
+          "speedKmh": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "engineCapacityCc": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           },
           "imageUrl": {
             "type": "string",

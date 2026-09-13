@@ -28,11 +28,11 @@ namespace Application.Features.Order.Command.UpdateOrderStateCommand
                 return Result.Failure("Invalid order state");
             }
 
-            // Only allow specific state transitions
-            var validTransitions = new[] { OrderState.OnWay, OrderState.CustomerReceived, OrderState.Completed };
+            // Admin Confirm only — lifecycle states are driven per-vehicle.
+            var validTransitions = new[] { OrderState.Confirmed };
             if (!validTransitions.Contains(request.NewState))
             {
-                return Result.Failure($"Invalid state transition. Allowed states: {string.Join(", ", validTransitions)}");
+                return Result.Failure("Invalid state transition. Use UpdateState only for Confirmed; vehicle lifecycle endpoints for delivery/completion.");
             }
 
             var orderExists = await _context.Orders

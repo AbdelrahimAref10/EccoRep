@@ -1,3 +1,5 @@
+using Application.Features.Order.Common;
+using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
@@ -5,36 +7,42 @@ using Domain.Models;
 using Infrastructure;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Application.Features.Order.Command.AdminReplaceOrderVehicleCommand
+namespace Application.Features.Order.Command.AdminReplacementOrderVehicleCommand
 {
     /// <summary>
-    /// Admin replaces one order vehicle with another available in the order date range.
+    /// Admin replacement of one order vehicle with another available in the reservation range.
+    /// After the fleet change, totals are recalculated on the Order aggregate.
     /// Allowed while order is still Pending / MerchantPending / MerchantConfirmed.
-    /// Syncs merchant invitations to match vehicles remaining on the order.
     /// </summary>
-    public record AdminReplaceOrderVehicleCommand : IRequest<Result<bool>>
+    public record AdminReplacementOrderVehicleCommand : IRequest<Result<bool>>
     {
         public int OrderId { get; set; }
         public int OldVehicleId { get; set; }
         public int NewVehicleId { get; set; }
     }
 
-    public class AdminReplaceOrderVehicleCommandHandler : IRequestHandler<AdminReplaceOrderVehicleCommand, Result<bool>>
+    public class AdminReplacementOrderVehicleCommandHandler : IRequestHandler<AdminReplacementOrderVehicleCommand, Result<bool>>
     {
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
+        private readonly IOrderRealtimeNotifier _realtime;
 
-        public AdminReplaceOrderVehicleCommandHandler(DatabaseContext context, IUserSession userSession)
+        public AdminReplacementOrderVehicleCommandHandler(
+            DatabaseContext context,
+            IUserSession userSession,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
+            _realtime = realtime;
         }
 
-        public async Task<Result<bool>> Handle(AdminReplaceOrderVehicleCommand request, CancellationToken cancellationToken)
+        public async Task<Result<bool>> Handle(AdminReplacementOrderVehicleCommand request, CancellationToken cancellationToken)
         {
             if (request.OldVehicleId <= 0 || request.NewVehicleId <= 0)
                 return Result.Failure<bool>("Old and new vehicle IDs are required");
@@ -44,7 +52,9 @@ namespace Application.Features.Order.Command.AdminReplaceOrderVehicleCommand
 
             var order = await _context.Orders
                 .AsTracking()
+                .Include(o => o.OrderPayments)
                 .Include(o => o.OrderVehicles)
+                    .ThenInclude(ov => ov.Vehicle)
                 .Include(o => o.ReservedVehiclesPerDays)
                 .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
 
@@ -57,7 +67,7 @@ namespace Application.Features.Order.Command.AdminReplaceOrderVehicleCommand
                 OrderState.MerchantConfirmed))
             {
                 return Result.Failure<bool>(
-                    $"Cannot replace vehicles after Confirmed. Current state: {order.OrderState}");
+                    $"Cannot run vehicle replacement after Confirmed. Current state: {order.OrderState}");
             }
 
             var oldLink = order.OrderVehicles.FirstOrDefault(ov => ov.VehicleId == request.OldVehicleId);
@@ -116,9 +126,11 @@ namespace Application.Features.Order.Command.AdminReplaceOrderVehicleCommand
                 .ToList();
 
             _context.OrderVehicles.Remove(oldLink);
-            await _context.OrderVehicles.AddAsync(
-                OrderVehicle.Create(order.OrderId, request.NewVehicleId, modifiedBy),
-                cancellationToken);
+            order.OrderVehicles.Remove(oldLink);
+            var newLink = OrderVehicle.Create(order.OrderId, request.NewVehicleId, modifiedBy);
+            newLink.AttachVehicle(newVehicle);
+            await _context.OrderVehicles.AddAsync(newLink, cancellationToken);
+            order.OrderVehicles.Add(newLink);
 
             var oldReservations = order.ReservedVehiclesPerDays
                 .Where(r => r.VehicleId == request.OldVehicleId)
@@ -173,10 +185,10 @@ namespace Application.Features.Order.Command.AdminReplaceOrderVehicleCommand
             {
                 foreach (var invite in invitations.Where(i => !remainingMerchantIds.Contains(i.MerchantId)).ToList())
                 {
-                    if (invite.ResponseStatus == MerchantOrderResponseStatus.Accepted)
+                    if (invite.ResponseStatus is MerchantOrderResponseStatus.Accepted or MerchantOrderResponseStatus.PartiallyAccepted)
                         _context.MerchantOrders.Remove(invite);
                     else if (invite.ResponseStatus != MerchantOrderResponseStatus.Rejected)
-                        invite.Reject("Vehicle replaced — merchant no longer on order", modifiedBy);
+                        invite.Reject("Vehicle replacement — merchant no longer on order", modifiedBy);
                 }
 
                 foreach (var merchantId in remainingMerchantIds)
@@ -184,9 +196,9 @@ namespace Application.Features.Order.Command.AdminReplaceOrderVehicleCommand
                     var existing = invitations.FirstOrDefault(i => i.MerchantId == merchantId);
                     if (existing == null)
                     {
-                        await _context.MerchantOrders.AddAsync(
-                            MerchantOrder.Create(request.OrderId, merchantId, modifiedBy),
-                            cancellationToken);
+                        var created = MerchantOrder.Create(request.OrderId, merchantId, modifiedBy);
+                        await _context.MerchantOrders.AddAsync(created, cancellationToken);
+                        invitations.Add(created);
                     }
                     else if (existing.ResponseStatus == MerchantOrderResponseStatus.Rejected
                              && merchantId == newVehicle.MerchantId)
@@ -195,13 +207,41 @@ namespace Application.Features.Order.Command.AdminReplaceOrderVehicleCommand
                     }
                 }
 
+                foreach (var invite in invitations.Where(i => remainingMerchantIds.Contains(i.MerchantId)))
+                {
+                    var merchantVehicles = order.OrderVehicles
+                        .Where(ov => ov.Vehicle.MerchantId == invite.MerchantId)
+                        .ToList();
+                    OrderFleetFinancialHelper.SyncInvitation(invite, merchantVehicles, modifiedBy);
+                }
+
                 if (order.OrderState is OrderState.MerchantConfirmed or OrderState.Pending)
                     order.MarkMerchantPending(modifiedBy);
             }
 
+            try
+            {
+                await OrderFleetFinancialHelper.RecalculateFromAssignedVehiclesAsync(
+                    _context,
+                    order,
+                    modifiedBy,
+                    cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                return Result.Failure<bool>(ex.Message);
+            }
+
             var save = await _context.SaveChangesAsyncWithResult(cancellationToken);
             if (!save.IsSuccess)
-                return Result.Failure<bool>(save.ErrorMessage ?? "Failed to replace vehicle");
+                return Result.Failure<bool>(save.ErrorMessage ?? "Failed vehicle replacement");
+
+            await _realtime.NotifyAsync(
+                order.OrderId,
+                "Vehicle replacement",
+                $"A vehicle on order #{order.OrderCode} was replaced.",
+                NotificationType.OrderUpdated,
+                cancellationToken: cancellationToken);
 
             return Result.Success(true);
         }

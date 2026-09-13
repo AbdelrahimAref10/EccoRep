@@ -35,6 +35,7 @@ namespace Application.Features.Order.Services
             string? note = null,
             FaultParty? faultParty = null,
             string? createdBy = null,
+            int? vehicleId = null,
             CancellationToken cancellationToken = default)
         {
             if (amount <= 0)
@@ -62,7 +63,8 @@ namespace Application.Features.Order.Services
                     key,
                     note,
                     faultParty,
-                    createdBy);
+                    createdBy,
+                    vehicleId);
 
                 await _context.OrderJournals.AddAsync(entry, cancellationToken);
                 return Result.Success();
@@ -83,11 +85,12 @@ namespace Application.Features.Order.Services
             string? note = null,
             FaultParty? faultParty = null,
             string? createdBy = null,
+            int? vehicleId = null,
             CancellationToken cancellationToken = default)
         {
             return PostAsync(
                 orderId, partyType, partyId, JournalDirection.Credit, amount, entryKind,
-                idempotencyKey, note, faultParty, createdBy, cancellationToken);
+                idempotencyKey, note, faultParty, createdBy, vehicleId, cancellationToken);
         }
 
         public Task<Result> PostDebitAsync(
@@ -100,11 +103,43 @@ namespace Application.Features.Order.Services
             string? note = null,
             FaultParty? faultParty = null,
             string? createdBy = null,
+            int? vehicleId = null,
             CancellationToken cancellationToken = default)
         {
             return PostAsync(
                 orderId, partyType, partyId, JournalDirection.Debit, amount, entryKind,
-                idempotencyKey, note, faultParty, createdBy, cancellationToken);
+                idempotencyKey, note, faultParty, createdBy, vehicleId, cancellationToken);
+        }
+
+        public async Task<Result> PostLinesAsync(
+            IReadOnlyList<OrderLedgerLine> lines,
+            string? createdBy = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (lines == null || lines.Count == 0)
+                return Result.Success();
+
+            foreach (var line in lines)
+            {
+                var result = await PostAsync(
+                    line.OrderId,
+                    line.PartyType,
+                    line.PartyId,
+                    line.Direction,
+                    line.Amount,
+                    line.EntryKind,
+                    line.IdempotencyKey,
+                    line.Note,
+                    line.FaultParty,
+                    createdBy,
+                    line.VehicleId,
+                    cancellationToken);
+
+                if (result.IsFailure)
+                    return result;
+            }
+
+            return Result.Success();
         }
 
         public async Task<decimal> GetPartyBalanceAsync(

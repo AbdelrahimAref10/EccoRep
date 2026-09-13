@@ -26,7 +26,8 @@ namespace Presentation.Services
             string title,
             string message,
             NotificationType notificationType,
-            int? orderId = null)
+            int? orderId = null,
+            string? orderCode = null)
         {
             try
             {
@@ -56,6 +57,7 @@ namespace Presentation.Services
                     Title = notification.Title,
                     Message = notification.Message,
                     OrderId = notification.OrderId,
+                    OrderCode = orderCode,
                     NotificationType = notification.NotificationType,
                     IsRead = notification.IsRead,
                     CreatedDate = notification.CreatedDate

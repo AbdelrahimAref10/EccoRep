@@ -29,7 +29,7 @@ namespace Volt.Server.Controllers.Admin
         }
 
         /// <summary>
-        /// All journal movements for admin. Optional filters: orderId, deliveryId, merchantId.
+        /// All journal movements for admin. Optional filters: orderCode, deliveryId, merchantId.
         /// Totals (credit/debit/balance) are over the filtered visible set. Balance = credit − debit.
         /// </summary>
         [HttpGet("journals")]

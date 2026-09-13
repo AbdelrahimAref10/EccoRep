@@ -1,0 +1,30 @@
+<div class="vspec" [class.vspec--compact]="compact" [class.vspec--facts-only]="!showPrice || price == null">
+  <div class="vspec__price" *ngIf="showPrice && price != null">
+    <span class="vspec__price-value">{{ price | number:'1.2-2' }}</span>
+    <span class="vspec__price-unit">{{ 'common.currency' | t }} / {{ 'vehicles.perDay' | t }}</span>
+  </div>
+
+  <div class="vspec__grid" *ngIf="hasFacts">
+    <div class="vspec__chip" *ngIf="color">
+      <span class="vspec__swatch" *ngIf="colorSwatch" [style.background]="colorSwatch" aria-hidden="true"></span>
+      <span class="vspec__label">{{ 'vehicles.color' | t }}</span>
+      <strong>{{ color }}</strong>
+    </div>
+    <div class="vspec__chip" *ngIf="type">
+      <span class="vspec__label">{{ 'vehicles.type' | t }}</span>
+      <strong>{{ type }}</strong>
+    </div>
+    <div class="vspec__chip" *ngIf="model">
+      <span class="vspec__label">{{ 'vehicles.model' | t }}</span>
+      <strong>{{ model }}</strong>
+    </div>
+    <div class="vspec__chip" *ngIf="speedKmh != null">
+      <span class="vspec__label">{{ 'vehicles.speed' | t }}</span>
+      <strong>{{ speedKmh }} {{ 'vehicles.kmh' | t }}</strong>
+    </div>
+    <div class="vspec__chip" *ngIf="engineCapacityCc != null">
+      <span class="vspec__label">{{ 'vehicles.engine' | t }}</span>
+      <strong>{{ engineCapacityCc }} {{ 'vehicles.cc' | t }}</strong>
+    </div>
+  </div>
+</div>

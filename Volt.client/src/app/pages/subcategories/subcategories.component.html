@@ -151,7 +151,6 @@
               <th scope="col">{{ 'common.description' | t }}</th>
               <th scope="col">{{ 'subcategories.category' | t }}</th>
               <th scope="col">{{ 'common.city' | t }}</th>
-              <th scope="col">{{ 'subcategories.price' | t }}</th>
               <th scope="col">{{ 'common.vehicles' | t }}</th>
               <th scope="col">{{ 'common.status' | t }}</th>
               <th scope="col" class="subcategories__th-actions">{{ 'common.actions' | t }}</th>
@@ -207,9 +206,6 @@
                   </svg>
                   {{ subCategory.cityName }}
                 </span>
-              </td>
-              <td>
-                <span class="subcategories__price">{{ formatPrice(subCategory.price) }}</span>
               </td>
               <td>
                 <span class="subcategories__count">{{ subCategory.vehicleCount || 0 }}</span>
@@ -285,7 +281,6 @@
             </div>
 
             <div class="subcategories__tile-stats">
-              <span class="subcategories__price">{{ formatPrice(subCategory.price) }}</span>
               <span class="subcategories__tile-subs">
                 {{ 'subcategories.vehiclesCount' | t:{ count: subCategory.vehicleCount || 0 } }}
               </span>

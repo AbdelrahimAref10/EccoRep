@@ -294,10 +294,9 @@
                     </div>
                     <div class="subcategories__tile-body">
                       <h3 class="subcategories__tile-title">{{ sub.name }}</h3>
-                      <div class="order-form__price-row">
-                        <strong>{{ sub.price | number:'1.2-2' }} {{ 'common.currency' | t }}</strong>
-                        <span>{{ 'orders.eachVehicle' | t }}</span>
-                      </div>
+                      <p class="order-form__price-row" *ngIf="sub.vehicleCount != null">
+                        <strong>{{ 'subcategories.vehiclesCount' | t:{ count: sub.vehicleCount || 0 } }}</strong>
+                      </p>
                     </div>
                     <div class="order-form__pick-footer">
                       <span>{{ 'orders.viewVehicles' | t }}</span>
@@ -472,6 +471,15 @@
                           <h3 class="vehicles__tile-title">{{ vehicle.name }}</h3>
                           <span class="order-form__vehicle-code">{{ vehicle.vehicleCode }}</span>
                           <span class="order-form__merchant" *ngIf="vehicle.merchantName">{{ vehicle.merchantName }}</span>
+                          <app-vehicle-specs
+                            [compact]="true"
+                            [color]="vehicle.color"
+                            [type]="vehicle.type"
+                            [model]="vehicle.model"
+                            [price]="vehicle.price"
+                            [speedKmh]="vehicle.speedKmh"
+                            [engineCapacityCc]="vehicle.engineCapacityCc"
+                          ></app-vehicle-specs>
                         </div>
                       </article>
                     </div>
@@ -513,6 +521,15 @@
                           <h3 class="vehicles__tile-title">{{ vehicle.name }}</h3>
                           <span class="order-form__vehicle-code">{{ vehicle.vehicleCode }}</span>
                           <span class="order-form__merchant" *ngIf="vehicle.merchantName">{{ vehicle.merchantName }}</span>
+                          <app-vehicle-specs
+                            [compact]="true"
+                            [color]="vehicle.color"
+                            [type]="vehicle.type"
+                            [model]="vehicle.model"
+                            [price]="vehicle.price"
+                            [speedKmh]="vehicle.speedKmh"
+                            [engineCapacityCc]="vehicle.engineCapacityCc"
+                          ></app-vehicle-specs>
                           <button
                             *ngIf="hasBookedDays(vehicle)"
                             type="button"
@@ -978,19 +995,34 @@
           <p class="order-review__section-label">
             {{ 'orders.selectedVehiclesLabel' | t:{ count: previewData.vehiclesCount } }}
           </p>
-          <div class="order-review__vehicle-strip">
-            <div class="order-review__vehicle-chip" *ngFor="let v of previewData.vehicles">
-              <img *ngIf="v.imageUrl" [src]="v.imageUrl" [alt]="v.name" />
-              <div *ngIf="!v.imageUrl" class="order-review__vehicle-chip-fallback" aria-hidden="true">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                </svg>
+          <div class="order-review__vehicle-list">
+            <article class="order-review__vehicle-row" *ngFor="let v of previewData.vehicles">
+              <div class="order-review__vehicle-thumb">
+                <img *ngIf="v.imageUrl" [src]="v.imageUrl" [alt]="v.name" />
+                <div *ngIf="!v.imageUrl" class="order-review__vehicle-chip-fallback" aria-hidden="true">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                </div>
               </div>
               <div class="order-review__vehicle-chip-info">
                 <strong>{{ v.name }}</strong>
-                <span>{{ v.vehicleCode }}</span>
+                <span>#{{ v.vehicleCode }}</span>
+                <app-vehicle-specs
+                  [compact]="true"
+                  [showPrice]="false"
+                  [color]="v.color"
+                  [type]="v.type"
+                  [model]="v.model"
+                  [speedKmh]="v.speedKmh"
+                  [engineCapacityCc]="v.engineCapacityCc"
+                ></app-vehicle-specs>
               </div>
-            </div>
+              <div class="order-review__vehicle-rate">
+                <strong>{{ v.price | number:'1.2-2' }}</strong>
+                <span>{{ 'common.currency' | t }} / {{ 'vehicles.perDay' | t }}</span>
+              </div>
+            </article>
           </div>
         </div>
 

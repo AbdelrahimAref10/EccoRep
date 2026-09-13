@@ -18,6 +18,35 @@ namespace Domain.Models
         // Private constructor for EF Core
         private OrderTotals() { }
 
+        public static OrderTotals FromPricing(int orderId, OrderPricingBreakdown pricing)
+        {
+            if (pricing == null)
+                throw new ArgumentNullException(nameof(pricing));
+
+            return Create(
+                orderId,
+                pricing.SubTotal,
+                pricing.ServiceFees,
+                pricing.DeliveryFees,
+                pricing.UrgentFees,
+                pricing.TieredDiscountAmount,
+                pricing.Total);
+        }
+
+        public void Apply(OrderPricingBreakdown pricing)
+        {
+            if (pricing == null)
+                throw new ArgumentNullException(nameof(pricing));
+
+            Update(
+                pricing.SubTotal,
+                pricing.ServiceFees,
+                pricing.DeliveryFees,
+                pricing.UrgentFees,
+                pricing.TieredDiscountAmount,
+                pricing.Total);
+        }
+
         // Factory method for creating order totals
         public static OrderTotals Create(
             int orderId,

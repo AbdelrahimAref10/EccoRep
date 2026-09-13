@@ -22,15 +22,18 @@ namespace Application.Features.Order.Command.SettleDeliveryPayoutCommand
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
         private readonly IOrderJournalService _journal;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public SettleDeliveryPayoutCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IOrderJournalService journal)
+            IOrderJournalService journal,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
             _journal = journal;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(SettleDeliveryPayoutCommand request, CancellationToken cancellationToken)
@@ -88,6 +91,14 @@ namespace Application.Features.Order.Command.SettleDeliveryPayoutCommand
                 return Result.Failure<bool>(postResult.Error);
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _realtime.NotifyAsync(
+                request.OrderId,
+                "Delivery payout settled",
+                $"Delivery payout was settled on order {request.OrderId}.",
+                NotificationType.OrderUpdated,
+                cancellationToken: cancellationToken);
+
             return Result.Success(true);
         }
     }

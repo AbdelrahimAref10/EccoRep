@@ -21,10 +21,13 @@
       [placeholder]="'merchants.searchPlaceholder' | t"
     />
 
-    <select class="merchants__select" [(ngModel)]="isDeletedFilter">
-      <option [ngValue]="null">{{ 'merchants.filterNotDeleted' | t }}</option>
-      <option [ngValue]="true">{{ 'merchants.filterDeleted' | t }}</option>
-    </select>
+    <app-multi-select
+      [multiple]="false"
+      [searchable]="false"
+      [clearable]="false"
+      [options]="deletedFilterOptions"
+      [(ngModel)]="deletedFilterValue"
+    ></app-multi-select>
 
     <button type="button" class="merchants__btn merchants__btn--primary" (click)="applyFilters()">
       {{ 'common.search' | t }}
@@ -90,3 +93,15 @@
     </div>
   </section>
 </div>
+
+<app-confirm-dialog
+  [isVisible]="showConfirmDialog"
+  [title]="'common.delete' | t"
+  [message]="'merchants.deleteConfirm' | t"
+  [type]="'danger'"
+  [isLoading]="isDeleting"
+  [confirmText]="'common.delete' | t"
+  [cancelText]="'common.cancel' | t"
+  (confirm)="onConfirmDelete()"
+  (cancel)="onCancelDelete()"
+></app-confirm-dialog>

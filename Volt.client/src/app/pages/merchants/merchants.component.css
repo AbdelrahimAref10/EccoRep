@@ -55,6 +55,12 @@
   align-items: center;
 }
 
+.merchants__filters app-multi-select {
+  width: 16rem;
+  max-width: 100%;
+  flex: 0 1 16rem;
+}
+
 .merchants__search,
 .merchants__select {
   min-height: 2.75rem;

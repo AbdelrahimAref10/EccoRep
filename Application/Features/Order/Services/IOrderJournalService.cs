@@ -25,6 +25,7 @@ namespace Application.Features.Order.Services
             string? note = null,
             FaultParty? faultParty = null,
             string? createdBy = null,
+            int? vehicleId = null,
             CancellationToken cancellationToken = default);
 
         Task<Result> PostCreditAsync(
@@ -37,6 +38,7 @@ namespace Application.Features.Order.Services
             string? note = null,
             FaultParty? faultParty = null,
             string? createdBy = null,
+            int? vehicleId = null,
             CancellationToken cancellationToken = default);
 
         Task<Result> PostDebitAsync(
@@ -48,6 +50,13 @@ namespace Application.Features.Order.Services
             string idempotencyKey,
             string? note = null,
             FaultParty? faultParty = null,
+            string? createdBy = null,
+            int? vehicleId = null,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>Posts all ledger lines from the Order aggregate (idempotent per key).</summary>
+        Task<Result> PostLinesAsync(
+            IReadOnlyList<OrderLedgerLine> lines,
             string? createdBy = null,
             CancellationToken cancellationToken = default);
 

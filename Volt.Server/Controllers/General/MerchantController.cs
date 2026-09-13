@@ -313,9 +313,11 @@ namespace Volt.Server.Controllers.General
         [HttpPost("orders/{orderId}/Accept")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AcceptOrder(int orderId)
+        public async Task<IActionResult> AcceptOrder(int orderId, [FromBody] AcceptMerchantOrderCommand? command)
         {
-            var result = await _mediator.Send(new AcceptMerchantOrderCommand { OrderId = orderId });
+            command ??= new AcceptMerchantOrderCommand();
+            command.OrderId = orderId;
+            var result = await _mediator.Send(command);
             if (result.IsFailure)
                 return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
             return Ok(result.Value);

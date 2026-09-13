@@ -1,3 +1,4 @@
+using Application.Features.Order.Command.OrderVehicleLifecycleCommands;
 using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
 using Domain.Common;
@@ -16,6 +17,8 @@ namespace Application.Features.Order.Command.MarkMerchantHandoverToDeliveryComma
     {
         public int OrderId { get; set; }
         public List<int> VehicleIds { get; set; } = new();
+        /// <summary>Optional shared image for all vehicles in this handover batch.</summary>
+        public string? ImageUrl { get; set; }
     }
 
     public class MarkMerchantHandoverToDeliveryCommandHandler
@@ -23,16 +26,19 @@ namespace Application.Features.Order.Command.MarkMerchantHandoverToDeliveryComma
     {
         private readonly DatabaseContext _context;
         private readonly IUserSession _userSession;
-        private readonly IOrderJournalService _journal;
+        private readonly Infrastructure.Services.IImageService _imageService;
+        private readonly IOrderRealtimeNotifier _realtime;
 
         public MarkMerchantHandoverToDeliveryCommandHandler(
             DatabaseContext context,
             IUserSession userSession,
-            IOrderJournalService journal)
+            Infrastructure.Services.IImageService imageService,
+            IOrderRealtimeNotifier realtime)
         {
             _context = context;
             _userSession = userSession;
-            _journal = journal;
+            _imageService = imageService;
+            _realtime = realtime;
         }
 
         public async Task<Result<bool>> Handle(
@@ -58,21 +64,11 @@ namespace Application.Features.Order.Command.MarkMerchantHandoverToDeliveryComma
 
             var order = await _context.Orders
                 .AsTracking()
+                .Include(o => o.OrderVehicles)
                 .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
 
             if (order == null)
                 return Result.Failure<bool>($"Order with ID {request.OrderId} not found");
-
-            if (order.OrderState != OrderState.DeliveryAssigned && order.OrderState != OrderState.OnWay)
-                return Result.Failure<bool>($"Cannot mark handover in {order.OrderState} state. Delivery must be assigned first.");
-
-            var deliveryAssignments = await _context.DeliveryMenOrders
-                .AsTracking()
-                .Where(d => d.OrderId == request.OrderId && vehicleIds.Contains(d.VehicleId))
-                .ToListAsync(cancellationToken);
-
-            if (deliveryAssignments.Count != vehicleIds.Count)
-                return Result.Failure<bool>("One or more vehicles do not have a delivery assignment");
 
             var paymentDetails = await _context.MerchantOrderPaymentDetails
                 .AsNoTracking()
@@ -85,94 +81,45 @@ namespace Application.Features.Order.Command.MarkMerchantHandoverToDeliveryComma
             if (!isAdmin && paymentDetails.Any(p => p.MerchantId != sessionMerchant!.MerchantId))
                 return Result.Failure<bool>("You can only hand over vehicles belonging to your merchant account");
 
-            var merchantIds = paymentDetails.Select(p => p.MerchantId).Distinct().ToList();
-            var merchants = await _context.Merchants
-                .AsNoTracking()
-                .Where(m => merchantIds.Contains(m.MerchantId))
-                .ToDictionaryAsync(m => m.MerchantId, cancellationToken);
+            var imagePath = string.IsNullOrWhiteSpace(request.ImageUrl)
+                ? null
+                : (_imageService.IsBase64String(request.ImageUrl)
+                    ? _imageService.SaveBase64Image(request.ImageUrl, "order-vehicles")
+                    : request.ImageUrl);
 
-            var createdBy = _userSession.UserName ?? "System";
+            var actor = _userSession.UserName ?? "System";
 
-            foreach (var assignment in deliveryAssignments)
-                assignment.MarkReceivedFromMerchant(createdBy);
-
-            foreach (var merchantGroup in paymentDetails.GroupBy(p => p.MerchantId))
+            foreach (var vehicleId in vehicleIds)
             {
-                var merchantId = merchantGroup.Key;
-                var merchantVehicleIds = merchantGroup.Select(p => p.VehicleId).OrderBy(id => id).ToList();
-                var netAmount = merchantGroup.Sum(p => p.NetAmount);
-                if (netAmount <= 0)
-                    continue;
+                var snapshotResult = await VehicleSettlementSnapshotLoader.LoadAsync(
+                    _context, request.OrderId, vehicleId, cancellationToken);
+                if (snapshotResult.IsFailure)
+                    return Result.Failure<bool>(snapshotResult.Error);
 
-                if (!merchants.TryGetValue(merchantId, out var merchant))
-                    return Result.Failure<bool>($"Merchant {merchantId} not found");
-
-                var sortedIds = string.Join(",", merchantVehicleIds);
-
-                var rentalResult = await _journal.PostCreditAsync(
-                    request.OrderId,
-                    LedgerPartyType.Merchant,
-                    merchantId,
-                    netAmount,
-                    OrderJournalEntryKind.MerchantRentalAccrued,
-                    OrderJournalKeys.Build(request.OrderId, $"merchant-rental:{merchantId}:vehicles:{sortedIds}"),
-                    note: $"Handover vehicles {sortedIds}",
-                    createdBy: createdBy,
-                    cancellationToken: cancellationToken);
-
-                if (rentalResult.IsFailure)
-                    return Result.Failure<bool>(rentalResult.Error);
-
-                if (!merchant.CashOnReceive)
-                    continue;
-
-                var cashPaidResult = await _journal.PostDebitAsync(
-                    request.OrderId,
-                    LedgerPartyType.Merchant,
-                    merchantId,
-                    netAmount,
-                    OrderJournalEntryKind.MerchantPaidByDeliveryCashOnReceive,
-                    OrderJournalKeys.Build(request.OrderId, $"merchant-cash-on-receive:{merchantId}:vehicles:{sortedIds}"),
-                    note: $"Cash on receive vehicles {sortedIds}",
-                    createdBy: createdBy,
-                    cancellationToken: cancellationToken);
-
-                if (cashPaidResult.IsFailure)
-                    return Result.Failure<bool>(cashPaidResult.Error);
-
-                var vehiclesForMerchant = merchantVehicleIds.ToHashSet();
-                foreach (var deliveryGroup in deliveryAssignments
-                    .Where(d => vehiclesForMerchant.Contains(d.VehicleId))
-                    .GroupBy(d => d.DeliveryId))
+                try
                 {
-                    var deliveryId = deliveryGroup.Key;
-                    var deliveryVehicleIds = deliveryGroup.Select(d => d.VehicleId).OrderBy(id => id).ToList();
-                    var deliveryNet = merchantGroup
-                        .Where(p => deliveryVehicleIds.Contains(p.VehicleId))
-                        .Sum(p => p.NetAmount);
-
-                    if (deliveryNet <= 0)
-                        continue;
-
-                    var advanceResult = await _journal.PostCreditAsync(
-                        request.OrderId,
-                        LedgerPartyType.Delivery,
-                        deliveryId,
-                        deliveryNet,
-                        OrderJournalEntryKind.DeliveryCashAdvanceToMerchant,
-                        OrderJournalKeys.Build(
-                            request.OrderId,
-                            $"delivery-cash-advance:{deliveryId}:merchant:{merchantId}:vehicles:{string.Join(",", deliveryVehicleIds)}"),
-                        note: $"Cash advance to merchant {merchantId}",
-                        createdBy: createdBy,
-                        cancellationToken: cancellationToken);
-
-                    if (advanceResult.IsFailure)
-                        return Result.Failure<bool>(advanceResult.Error);
+                    order.MarkVehicleReceivedFromOwner(snapshotResult.Value, imagePath, actor);
                 }
+                catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
+                {
+                    return Result.Failure<bool>(ex.Message);
+                }
+
+                var assignment = await _context.DeliveryMenOrders
+                    .AsTracking()
+                    .FirstOrDefaultAsync(d => d.OrderId == request.OrderId && d.VehicleId == vehicleId, cancellationToken);
+                assignment?.MarkReceivedFromMerchant(actor);
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            await _realtime.NotifyAsync(
+                order.OrderId,
+                "Merchant handover",
+                $"Vehicles were handed over to delivery on order #{order.OrderCode}.",
+                NotificationType.OrderUpdated,
+                cancellationToken: cancellationToken);
+
             return Result.Success(true);
         }
     }
