@@ -14,6 +14,8 @@ namespace Application.Features.Order.DTOs
         public string SubCategoryName { get; set; } = string.Empty;
         public int CityId { get; set; }
         public string CityName { get; set; } = string.Empty;
+        public int DestinationZoneId { get; set; }
+        public string DestinationZoneName { get; set; } = string.Empty;
         public DateTime ReservationDateFrom { get; set; }
         public DateTime ReservationDateTo { get; set; }
         public int VehiclesCount { get; set; }

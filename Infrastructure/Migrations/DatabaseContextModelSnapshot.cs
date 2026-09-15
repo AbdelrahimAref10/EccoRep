@@ -368,10 +368,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("datetime2")
                         .HasColumnName("CreatedDate");
 
-                    b.Property<decimal?>("DeliveryFees")
-                        .HasColumnType("decimal(18,2)")
-                        .HasColumnName("DeliveryFees");
-
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)")
@@ -406,6 +402,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("decimal(18,2)")
                         .HasColumnName("UrgentDelivery");
 
+                    b.Property<int?>("ZoneGroupId")
+                        .HasColumnType("int")
+                        .HasColumnName("ZoneGroupId");
+
                     b.HasKey("CityId");
 
                     b.HasIndex("IsActive")
@@ -414,6 +414,8 @@ namespace Infrastructure.Migrations
                     b.HasIndex("Name")
                         .IsUnique()
                         .HasDatabaseName("IX_Cities_Name");
+
+                    b.HasIndex("ZoneGroupId");
 
                     b.ToTable("VO_City", (string)null);
                 });
@@ -576,6 +578,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("VerificationBy");
 
+                    b.Property<int>("ZoneId")
+                        .HasColumnType("int")
+                        .HasColumnName("ZoneId");
+
                     b.HasKey("CustomerId");
 
                     b.HasIndex("CityId");
@@ -586,6 +592,8 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique()
                         .HasDatabaseName("IX_Customer_UserId");
+
+                    b.HasIndex("ZoneId");
 
                     b.ToTable("VO_Customer", (string)null);
                 });
@@ -767,6 +775,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("UserId");
 
+                    b.Property<int>("ZoneId")
+                        .HasColumnType("int")
+                        .HasColumnName("ZoneId");
+
                     b.HasKey("DeliveryId");
 
                     b.HasIndex("CityId")
@@ -778,6 +790,8 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique()
                         .HasDatabaseName("IX_Delivery_UserId");
+
+                    b.HasIndex("ZoneId");
 
                     b.ToTable("VO_Delivery", (string)null);
                 });
@@ -1033,6 +1047,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("UserId");
 
+                    b.Property<int>("ZoneId")
+                        .HasColumnType("int")
+                        .HasColumnName("ZoneId");
+
                     b.HasKey("MerchantId");
 
                     b.HasIndex("CityId")
@@ -1044,6 +1062,8 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId")
                         .IsUnique()
                         .HasDatabaseName("IX_Merchant_UserId");
+
+                    b.HasIndex("ZoneId");
 
                     b.ToTable("VO_Merchant", (string)null);
                 });
@@ -1259,6 +1279,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("int")
                         .HasColumnName("CustomerId");
 
+                    b.Property<int>("DestinationZoneId")
+                        .HasColumnType("int")
+                        .HasColumnName("DestinationZoneId");
+
                     b.Property<string>("HotelAddress")
                         .IsRequired()
                         .HasMaxLength(500)
@@ -1386,6 +1410,8 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("CustomerId")
                         .HasDatabaseName("IX_VO_Order_CustomerId");
+
+                    b.HasIndex("DestinationZoneId");
 
                     b.HasIndex("OrderCode")
                         .IsUnique()
@@ -1639,6 +1665,10 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)")
                         .HasColumnName("DeliveryFailureReason");
+
+                    b.Property<decimal>("DeliveryFee")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("DeliveryFee");
 
                     b.Property<string>("LastModifiedBy")
                         .HasMaxLength(256)
@@ -2359,6 +2389,140 @@ namespace Infrastructure.Migrations
                     b.ToTable("VO_Vehicle", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Models.Zone", b =>
+                {
+                    b.Property<int>("ZoneId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ZoneId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<int>("ZoneGroupId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ZoneId");
+
+                    b.HasIndex("ZoneGroupId", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_VO_Zone_Group_Name");
+
+                    b.ToTable("VO_Zone", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Models.ZoneDeliveryRate", b =>
+                {
+                    b.Property<int>("ZoneDeliveryRateId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ZoneDeliveryRateId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Fee")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("FromZoneId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("ToZoneId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ZoneGroupId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ZoneDeliveryRateId");
+
+                    b.HasIndex("ToZoneId");
+
+                    b.HasIndex("ZoneGroupId");
+
+                    b.HasIndex("FromZoneId", "ToZoneId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_VO_ZoneDeliveryRate_From_To");
+
+                    b.ToTable("VO_ZoneDeliveryRate", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Models.ZoneGroup", b =>
+                {
+                    b.Property<int>("ZoneGroupId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ZoneGroupId"));
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("ZoneGroupId");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("IX_VO_ZoneGroup_Name");
+
+                    b.ToTable("VO_ZoneGroup", (string)null);
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -2517,6 +2681,16 @@ namespace Infrastructure.Migrations
                     b.Navigation("City");
                 });
 
+            modelBuilder.Entity("Domain.Models.City", b =>
+                {
+                    b.HasOne("Domain.Models.ZoneGroup", "ZoneGroup")
+                        .WithMany("Cities")
+                        .HasForeignKey("ZoneGroupId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("ZoneGroup");
+                });
+
             modelBuilder.Entity("Domain.Models.Customer", b =>
                 {
                     b.HasOne("Domain.Models.City", "City")
@@ -2531,9 +2705,17 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Models.Zone", "Zone")
+                        .WithMany()
+                        .HasForeignKey("ZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("City");
 
                     b.Navigation("User");
+
+                    b.Navigation("Zone");
                 });
 
             modelBuilder.Entity("Domain.Models.CustomerLocation", b =>
@@ -2572,9 +2754,17 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Models.Zone", "Zone")
+                        .WithMany()
+                        .HasForeignKey("ZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("City");
 
                     b.Navigation("User");
+
+                    b.Navigation("Zone");
                 });
 
             modelBuilder.Entity("Domain.Models.DeliveryMenOrder", b =>
@@ -2656,9 +2846,17 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Models.Zone", "Zone")
+                        .WithMany()
+                        .HasForeignKey("ZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.Navigation("City");
 
                     b.Navigation("User");
+
+                    b.Navigation("Zone");
                 });
 
             modelBuilder.Entity("Domain.Models.MerchantNotification", b =>
@@ -2739,6 +2937,12 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Models.Zone", "DestinationZone")
+                        .WithMany()
+                        .HasForeignKey("DestinationZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Models.SubCategory", "SubCategory")
                         .WithMany()
                         .HasForeignKey("SubCategoryId")
@@ -2748,6 +2952,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("City");
 
                     b.Navigation("Customer");
+
+                    b.Navigation("DestinationZone");
 
                     b.Navigation("SubCategory");
                 });
@@ -2927,6 +3133,44 @@ namespace Infrastructure.Migrations
                     b.Navigation("SubCategory");
                 });
 
+            modelBuilder.Entity("Domain.Models.Zone", b =>
+                {
+                    b.HasOne("Domain.Models.ZoneGroup", "ZoneGroup")
+                        .WithMany("Zones")
+                        .HasForeignKey("ZoneGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ZoneGroup");
+                });
+
+            modelBuilder.Entity("Domain.Models.ZoneDeliveryRate", b =>
+                {
+                    b.HasOne("Domain.Models.Zone", "FromZone")
+                        .WithMany()
+                        .HasForeignKey("FromZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.Zone", "ToZone")
+                        .WithMany()
+                        .HasForeignKey("ToZoneId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Models.ZoneGroup", "ZoneGroup")
+                        .WithMany("DeliveryRates")
+                        .HasForeignKey("ZoneGroupId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FromZone");
+
+                    b.Navigation("ToZone");
+
+                    b.Navigation("ZoneGroup");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("Domain.Models.ApplicationRole", null)
@@ -3038,6 +3282,15 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Models.SubCategory", b =>
                 {
                     b.Navigation("Vehicles");
+                });
+
+            modelBuilder.Entity("Domain.Models.ZoneGroup", b =>
+                {
+                    b.Navigation("Cities");
+
+                    b.Navigation("DeliveryRates");
+
+                    b.Navigation("Zones");
                 });
 #pragma warning restore 612, 618
         }

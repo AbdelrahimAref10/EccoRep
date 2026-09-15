@@ -84,6 +84,7 @@ namespace Application.Features.Customer.Query.GetAllCustomersQuery
                 RegisterAs = c.RegisterAs,
                 VerificationBy = c.VerificationBy,
                 CityId = c.CityId,
+                ZoneId = c.ZoneId,
                 CityName = c.City != null ? c.City.Name : string.Empty,
                 State = c.State,
                 CashBlock = c.CashBlock,

@@ -204,6 +204,27 @@
   max-width: 18rem;
 }
 
+.cities__group {
+  display: inline-flex;
+  align-items: center;
+  max-width: 14rem;
+  padding: 0.28rem 0.7rem;
+  border-radius: 999px;
+  background: var(--volt-accent-muted);
+  color: var(--volt-accent);
+  font-size: 0.75rem;
+  font-weight: 750;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cities__group--empty {
+  background: var(--volt-surface-muted);
+  color: var(--volt-text-secondary);
+  font-weight: 600;
+}
+
 .cities__fees-chip {
   display: inline-flex;
   align-items: center;

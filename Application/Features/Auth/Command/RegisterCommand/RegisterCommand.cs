@@ -23,6 +23,7 @@ namespace Application.Features.Auth.Command.RegisterCommand
         // Customer-only
         public string? Gender { get; set; }
         public int? CityId { get; set; }
+        public int? ZoneId { get; set; }
         public string? CommercialRegisterImage { get; set; }
         public int? RegisterAs { get; set; }
         public int? VerificationBy { get; set; }
@@ -157,6 +158,7 @@ namespace Application.Features.Auth.Command.RegisterCommand
                         request.Gender!,
                         invitationCode,
                         request.CityId!.Value,
+                        request.ZoneId!.Value,
                         request.RegisterAs!.Value,
                         request.VerificationBy!.Value,
                         request.Email,
@@ -189,6 +191,7 @@ namespace Application.Features.Auth.Command.RegisterCommand
                     var merchant = Domain.Models.Merchant.Create(
                         user.Id,
                         request.CityId!.Value,
+                        request.ZoneId!.Value,
                         request.FullName,
                         request.MobileNumber,
                         invitationCode,
@@ -219,6 +222,7 @@ namespace Application.Features.Auth.Command.RegisterCommand
                     var delivery = Domain.Models.Delivery.Create(
                         user.Id,
                         request.CityId!.Value,
+                        request.ZoneId!.Value,
                         request.FullName,
                         request.MobileNumber,
                         invitationCode,

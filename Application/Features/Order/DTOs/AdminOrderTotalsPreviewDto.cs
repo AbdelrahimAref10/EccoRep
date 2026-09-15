@@ -41,5 +41,6 @@ namespace Application.Features.Order.DTOs
         public int? SpeedKmh { get; set; }
         /// <summary>Motor engine capacity in CC. Optional.</summary>
         public int? EngineCapacityCc { get; set; }
+        public decimal DeliveryFees { get; set; }
     }
 }

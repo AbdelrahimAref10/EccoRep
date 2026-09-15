@@ -470,7 +470,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       this.order.cityId,
       this.order.reservationDateFrom,
       this.order.reservationDateTo,
-      this.orderId
+      this.orderId,
+      this.order.destinationZoneId
     ).subscribe({
       next: (result) => {
         this.replaceCandidates = (result?.vehicles || []).filter(

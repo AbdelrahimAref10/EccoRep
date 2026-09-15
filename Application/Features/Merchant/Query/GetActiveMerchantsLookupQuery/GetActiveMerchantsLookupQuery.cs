@@ -34,6 +34,7 @@ namespace Application.Features.Merchant.Query.GetActiveMerchantsLookupQuery
                 {
                     MerchantId = m.MerchantId,
                     CityId = m.CityId,
+                    ZoneId = m.ZoneId,
                     FullName = m.FullName,
                     MobileNumber = m.MobileNumber,
                     CashOnReceive = m.CashOnReceive

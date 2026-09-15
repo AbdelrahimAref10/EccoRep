@@ -25,7 +25,8 @@ namespace Application.Features.Order.Common
             if (city == null)
                 throw new InvalidOperationException("City not found for order pricing");
 
-            var pricing = order.RecalculateTotals(city, actor);
+            var rates = await OrderZoneFeeHelper.LoadRatesForCityAsync(context, order.CityId, cancellationToken);
+            var pricing = order.RecalculateTotals(city, rates, actor);
 
             var orderTotals = await context.OrderTotals
                 .AsTracking()

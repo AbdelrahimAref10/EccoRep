@@ -48,6 +48,9 @@ namespace Application.Features.Auth.Command.RegisterCommand
                 if (!request.CityId.HasValue || request.CityId <= 0)
                     return Result.Failure("Valid city is required");
 
+                if (!request.ZoneId.HasValue || request.ZoneId <= 0)
+                    return Result.Failure("Valid zone is required");
+
                 if (!request.RegisterAs.HasValue || !Enum.IsDefined(typeof(RegisterAs), request.RegisterAs.Value))
                     return Result.Failure("Invalid RegisterAs value");
 
@@ -60,6 +63,11 @@ namespace Application.Features.Auth.Command.RegisterCommand
                 var cityExists = await _context.Cities.AnyAsync(c => c.CityId == request.CityId && c.IsActive, cancellationToken);
                 if (!cityExists)
                     return Result.Failure("Invalid or inactive city");
+
+                var zoneOk = await Application.Features.Order.Common.OrderZoneFeeHelper.ZoneBelongsToCityAsync(
+                    _context, request.CityId.Value, request.ZoneId.Value, cancellationToken);
+                if (!zoneOk)
+                    return Result.Failure("Zone must belong to the selected city group");
 
                 if (request.RegisterAs == (int)RegisterAs.Institution && string.IsNullOrWhiteSpace(request.CommercialRegisterImage))
                     return Result.Failure("Commercial Register Image is required when registering as an Institution");
@@ -78,9 +86,17 @@ namespace Application.Features.Auth.Command.RegisterCommand
                 if (!request.CityId.HasValue || request.CityId <= 0)
                     return Result.Failure("Valid city is required");
 
+                if (!request.ZoneId.HasValue || request.ZoneId <= 0)
+                    return Result.Failure("Valid zone is required");
+
                 var cityExists = await _context.Cities.AnyAsync(c => c.CityId == request.CityId && c.IsActive, cancellationToken);
                 if (!cityExists)
                     return Result.Failure("Invalid or inactive city");
+
+                var zoneOk = await Application.Features.Order.Common.OrderZoneFeeHelper.ZoneBelongsToCityAsync(
+                    _context, request.CityId.Value, request.ZoneId.Value, cancellationToken);
+                if (!zoneOk)
+                    return Result.Failure("Zone must belong to the selected city group");
             }
 
             if (appRole == AppRole.Merchant)

@@ -36,6 +36,7 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
         public string? HotelPhone { get; set; }
         public bool IsUrgent { get; set; }
         public int PaymentMethodId { get; set; }
+        public int DestinationZoneId { get; set; }
     }
 
     public class AdminUpdateOrderCommandHandler : IRequestHandler<AdminUpdateOrderCommand, Result<OrderDto>>
@@ -78,6 +79,7 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                 .Include(o => o.OrderPayments)
                 .Include(o => o.OrderVehicles)
                     .ThenInclude(ov => ov.Vehicle)
+                        .ThenInclude(v => v.Merchant)
                 .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
 
             if (order == null)
@@ -176,13 +178,22 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                 return Result.Failure<OrderDto>("Passport image is required");
             }
 
+            if (!await OrderZoneFeeHelper.ZoneBelongsToCityAsync(_context, request.CityId, request.DestinationZoneId, cancellationToken))
+            {
+                return Result.Failure<OrderDto>("Destination zone is required and must belong to the order city group");
+            }
+
             var reservationDays = Domain.Models.Order.InclusiveReservationDays(from, to);
+
+            var rates = await OrderZoneFeeHelper.LoadRatesForCityAsync(_context, request.CityId, cancellationToken);
+            var deliveryFees = OrderZoneFeeHelper.SumForVehicles(assignedVehicles, request.DestinationZoneId, rates);
 
             var pricing = Domain.Models.Order.CalculatePricing(
                 assignedVehicles.Select(v => v.Price).ToList(),
                 city,
                 request.IsUrgent,
                 reservationDays,
+                deliveryFees,
                 order.PreviousDebt);
 
             try
@@ -195,6 +206,7 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                     request.CityId,
                     request.ReservationDateFrom,
                     request.ReservationDateTo,
+                    request.DestinationZoneId,
                     pricing,
                     passportImage,
                     request.HotelName,
@@ -205,6 +217,15 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                     request.Notes,
                     actor
                 );
+
+                foreach (var ov in order.OrderVehicles)
+                {
+                    var fee = Domain.Models.Order.CalculateVehicleDeliveryFee(
+                        ov.Vehicle.Merchant.ZoneId,
+                        request.DestinationZoneId,
+                        rates);
+                    ov.SetDeliveryFee(fee, actor);
+                }
 
                 var orderTotals = await _context.OrderTotals
                     .AsTracking()
@@ -254,6 +275,7 @@ namespace Application.Features.Order.Command.AdminUpdateOrderCommand
                     SubCategoryName = subCategory.Name,
                     CityId = order.CityId,
                     CityName = city.Name,
+                    DestinationZoneId = order.DestinationZoneId,
                     ReservationDateFrom = order.ReservationDateFrom,
                     ReservationDateTo = order.ReservationDateTo,
                     VehiclesCount = order.VehiclesCount,

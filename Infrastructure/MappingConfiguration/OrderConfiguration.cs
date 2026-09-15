@@ -37,6 +37,10 @@ namespace Infrastructure.MappingConfiguration
                 .HasColumnName("CityId")
                 .IsRequired();
 
+            builder.Property(o => o.DestinationZoneId)
+                .HasColumnName("DestinationZoneId")
+                .IsRequired();
+
             builder.Property(o => o.ReservationDateFrom)
                 .HasColumnName("ReservationDateFrom")
                 .IsRequired();
@@ -167,6 +171,12 @@ namespace Infrastructure.MappingConfiguration
             builder.HasOne(o => o.City)
                 .WithMany()
                 .HasForeignKey(o => o.CityId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            builder.HasOne(o => o.DestinationZone)
+                .WithMany()
+                .HasForeignKey(o => o.DestinationZoneId)
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired();
 

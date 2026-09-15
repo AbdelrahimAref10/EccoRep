@@ -27,6 +27,7 @@ namespace Application.Features.City.Query.GetCityByIdQuery
         {
             var city = await _context.Cities
                 .Include(c => c.TieredDiscounts)
+                .Include(c => c.ZoneGroup)
                 .FirstOrDefaultAsync(c => c.CityId == request.CityId, cancellationToken);
 
             if (city == null)
@@ -45,7 +46,8 @@ namespace Application.Features.City.Query.GetCityByIdQuery
                 IsActive = city.IsActive,
                 CustomerCount = customerCount,
                 CreatedDate = city.CreatedDate,
-                DeliveryFees = city.DeliveryFees,
+                ZoneGroupId = city.ZoneGroupId,
+                ZoneGroupName = city.ZoneGroup?.Name,
                 UrgentDelivery = city.UrgentDelivery,
                 ServiceFees = city.ServiceFees,
                 CancellationFees = city.CancellationFees,

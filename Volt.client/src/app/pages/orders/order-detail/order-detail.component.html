@@ -34,6 +34,8 @@
           {{ order.customerName }}
           <span aria-hidden="true">·</span>
           {{ order.cityName }}
+          <span *ngIf="order.destinationZoneName" aria-hidden="true">·</span>
+          <span *ngIf="order.destinationZoneName">{{ order.destinationZoneName }}</span>
           <span aria-hidden="true">·</span>
           {{ 'orders.createdOn' | t }} {{ order.createdDate | date:'MMM d, y · h:mm a' }}
         </p>
@@ -155,6 +157,10 @@
             <div class="od__row">
               <span>{{ 'common.city' | t }}</span>
               <strong>{{ order.cityName }}</strong>
+            </div>
+            <div class="od__row" *ngIf="order.destinationZoneName">
+              <span>{{ 'orders.destinationZone' | t }}</span>
+              <strong>{{ order.destinationZoneName }}</strong>
             </div>
           </div>
         </section>

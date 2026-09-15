@@ -14,6 +14,7 @@ namespace Application.Features.Customer.DTOs
         public int RegisterAs { get; set; }
         public int VerificationBy { get; set; }
         public int CityId { get; set; }
+        public int ZoneId { get; set; }
         public string CityName { get; set; } = string.Empty;
         public CustomerState State { get; set; }
         public bool CashBlock { get; set; }

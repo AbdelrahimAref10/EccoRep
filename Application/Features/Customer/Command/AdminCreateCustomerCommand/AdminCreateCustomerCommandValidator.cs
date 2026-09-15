@@ -54,6 +54,13 @@ namespace Application.Features.Customer.Command.AdminCreateCustomerCommand
             if (!cityExists)
                 return Result.Failure("Invalid or inactive city");
 
+            if (request.ZoneId <= 0)
+                return Result.Failure("Zone is required");
+
+            if (!await Application.Features.Order.Common.OrderZoneFeeHelper.ZoneBelongsToCityAsync(
+                    _context, request.CityId, request.ZoneId, cancellationToken))
+                return Result.Failure("Zone must belong to the selected city group");
+
             var existingCustomer = await _context.Customers
                 .AnyAsync(c => c.MobileNumber == request.MobileNumber.Trim(), cancellationToken);
             if (existingCustomer)

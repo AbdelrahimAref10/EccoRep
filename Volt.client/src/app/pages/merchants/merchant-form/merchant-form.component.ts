@@ -8,7 +8,8 @@ import {
   AdminUpdateMerchantCommand,
   CityClient,
   CityDto,
-  PagedResultOfCityDto
+  PagedResultOfCityDto,
+  ZoneLookupDto
 } from '../../../core/services/clientAPI';
 import { LocaleService } from '../../../core/services/locale.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -43,11 +44,19 @@ export class MerchantFormComponent implements OnInit {
   personalImagePreview: string | null = null;
   existingPersonalImage: string | null = null;
   cities: CityDto[] = [];
+  zones: ZoneLookupDto[] = [];
 
   get cityOptions(): MultiSelectOption[] {
     return this.cities.map(city => ({
       value: city.cityId,
       label: city.name
+    }));
+  }
+
+  get zoneOptions(): MultiSelectOption[] {
+    return this.zones.map(zone => ({
+      value: zone.zoneId,
+      label: zone.name
     }));
   }
 
@@ -59,12 +68,16 @@ export class MerchantFormComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.minLength(6)]],
       cityId: [null, [Validators.required]],
+      zoneId: [null, [Validators.required]],
       personalImage: [''],
       isActive: [true],
       cashOnReceive: [false]
     });
 
     this.loadCities();
+    this.merchantForm.get('cityId')?.valueChanges.subscribe((cityId: number | null) => {
+      this.loadZones(cityId);
+    });
 
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
@@ -91,6 +104,27 @@ export class MerchantFormComponent implements OnInit {
     });
   }
 
+  loadZones(cityId: number | null, preferredZoneId: number | null = null): void {
+    if (!cityId) {
+      this.zones = [];
+      this.merchantForm.patchValue({ zoneId: null });
+      return;
+    }
+
+    this.cityClient.getZonesByCity(cityId).subscribe({
+      next: (zones) => {
+        this.zones = zones || [];
+        const keep = preferredZoneId ?? this.merchantForm.get('zoneId')?.value;
+        const next = this.zones.some(z => z.zoneId === keep) ? keep : null;
+        this.merchantForm.patchValue({ zoneId: next });
+      },
+      error: () => {
+        this.zones = [];
+        this.merchantForm.patchValue({ zoneId: null });
+      }
+    });
+  }
+
   loadMerchant(id: number): void {
     this.isLoading = true;
     this.merchantClient.getById(id).subscribe({
@@ -103,10 +137,12 @@ export class MerchantFormComponent implements OnInit {
           mobileNumber: merchant.mobileNumber,
           email: merchant.email || '',
           cityId: merchant.cityId || null,
+          zoneId: merchant.zoneId || null,
           isActive: merchant.isActive,
           cashOnReceive: merchant.cashOnReceive,
           personalImage: ''
-        });
+        }, { emitEvent: false });
+        this.loadZones(merchant.cityId || null, merchant.zoneId || null);
         this.isLoading = false;
       },
       error: (error: any) => {
@@ -164,6 +200,7 @@ export class MerchantFormComponent implements OnInit {
       command.fullName = value.fullName;
       command.email = value.email;
       command.cityId = cityId;
+      command.zoneId = Number(value.zoneId);
       command.personalImage = value.personalImage || this.existingPersonalImage || null;
       command.isActive = !!value.isActive;
       command.cashOnReceive = !!value.cashOnReceive;
@@ -189,6 +226,7 @@ export class MerchantFormComponent implements OnInit {
     create.email = value.email;
     create.password = value.password;
     create.cityId = cityId;
+    create.zoneId = Number(value.zoneId);
     create.personalImage = value.personalImage || null;
     create.isActive = !!value.isActive;
     create.cashOnReceive = !!value.cashOnReceive;

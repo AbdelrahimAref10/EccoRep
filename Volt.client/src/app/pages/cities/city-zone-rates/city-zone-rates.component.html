@@ -1,0 +1,118 @@
+<div class="zone-rates">
+  <div class="entity-form__top">
+    <div class="entity-form__intro">
+      <button
+        type="button"
+        class="entity-form__back"
+        (click)="onBack()"
+        [attr.title]="'cities.backToList' | t"
+        [attr.aria-label]="'cities.backToList' | t"
+      >
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </button>
+      <div>
+        <p class="entity-form__kicker">{{ city?.name }}</p>
+        <h1 class="entity-form__title">{{ 'cities.zoneRatesTitle' | t }}</h1>
+        <p class="entity-form__subtitle">{{ 'cities.zoneRatesSubtitle' | t }}</p>
+      </div>
+    </div>
+
+    <div class="entity-form__top-actions" *ngIf="!isLoading && fromZoneId">
+      <span *ngIf="isDirty" class="zone-rates__dirty">{{ 'cities.unsavedRates' | t }}</span>
+      <button
+        type="button"
+        class="entity-form__btn entity-form__btn--primary"
+        (click)="save()"
+        [disabled]="isSaving || isLoadingMatrix || rows.length === 0 || !isDirty"
+      >
+        {{ 'cities.saveRates' | t }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="successMessage" class="zone-rates__alert zone-rates__alert--ok" role="status">{{ successMessage }}</div>
+  <div *ngIf="errorMessage" class="entity-form__alert" role="alert">{{ errorMessage }}</div>
+
+  <div *ngIf="isLoading" class="entity-form__loading">
+    <div class="entity-form__spinner" aria-hidden="true"></div>
+    <p>{{ 'cities.loadingDetails' | t }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && !city?.zoneGroupId" class="zone-rates__empty">
+    <div class="zone-rates__empty-icon" aria-hidden="true">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+      </svg>
+    </div>
+    <h2>{{ 'cities.noGroupAssigned' | t }}</h2>
+    <p>{{ 'cities.noGroupAssignedHint' | t }}</p>
+    <button type="button" class="entity-form__btn entity-form__btn--primary" (click)="onBack()">
+      {{ 'cities.editCity' | t }}
+    </button>
+  </div>
+
+  <div *ngIf="!isLoading && city?.zoneGroupId && zones.length === 0" class="zone-rates__empty">
+    <h2>{{ 'cities.noZones' | t }}</h2>
+    <p>{{ 'cities.noZonesHint' | t }}</p>
+  </div>
+
+  <div *ngIf="!isLoading && zones.length > 0" class="zone-rates__board">
+    <aside class="zone-rates__origins">
+      <p class="zone-rates__panel-kicker">{{ 'cities.fromZone' | t }}</p>
+      <p class="zone-rates__panel-copy">{{ 'cities.fromZoneHint' | t }}</p>
+      <p class="zone-rates__count">{{ 'cities.zoneCount' | t:{ n: zones.length } }}</p>
+      <div class="zone-rates__origin-list">
+        <button
+          type="button"
+          class="zone-rates__origin"
+          *ngFor="let zone of zones"
+          [class.zone-rates__origin--active]="zone.zoneId === fromZoneId"
+          (click)="selectFromZone(zone.zoneId)"
+        >
+          <span class="zone-rates__origin-dot" aria-hidden="true"></span>
+          <span>{{ zone.name }}</span>
+        </button>
+      </div>
+    </aside>
+
+    <section class="zone-rates__matrix">
+      <header class="zone-rates__matrix-head">
+        <div>
+          <p class="zone-rates__panel-kicker">{{ city?.zoneGroupName }}</p>
+          <h2>{{ 'cities.matrixHeading' | t:{ from: fromZoneName } }}</h2>
+          <p>{{ 'cities.matrixHint' | t }}</p>
+        </div>
+      </header>
+
+      <div *ngIf="isLoadingMatrix" class="entity-form__loading zone-rates__matrix-loading">
+        <div class="entity-form__spinner" aria-hidden="true"></div>
+      </div>
+
+      <div *ngIf="!isLoadingMatrix" class="zone-rates__rows">
+        <div class="zone-rates__row zone-rates__row--head">
+          <span>{{ 'cities.toZone' | t }}</span>
+          <span>{{ 'cities.feePerTrip' | t }}</span>
+        </div>
+        <label class="zone-rates__row" *ngFor="let row of rows" [class.zone-rates__row--same]="row.isSameZone">
+          <span class="zone-rates__to">
+            <span class="zone-rates__to-name">{{ row.toZoneName }}</span>
+            <span *ngIf="row.isSameZone" class="zone-rates__badge">{{ 'cities.sameZone' | t }}</span>
+          </span>
+          <span class="zone-rates__fee">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="row.fee"
+              (ngModelChange)="onFeeChange()"
+              [attr.aria-label]="row.toZoneName"
+            />
+            <span class="zone-rates__currency">{{ 'common.currency' | t }}</span>
+          </span>
+        </label>
+      </div>
+    </section>
+  </div>
+</div>

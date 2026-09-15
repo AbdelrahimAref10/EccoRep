@@ -44,6 +44,7 @@ namespace Application.Features.Order.Command.AdminRemoveOrderVehicleCommand
                 .Include(o => o.OrderPayments)
                 .Include(o => o.OrderVehicles)
                     .ThenInclude(ov => ov.Vehicle)
+                        .ThenInclude(v => v.Merchant)
                 .Include(o => o.ReservedVehiclesPerDays)
                 .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
 

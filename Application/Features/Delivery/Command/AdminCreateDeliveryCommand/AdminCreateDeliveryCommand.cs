@@ -1,3 +1,4 @@
+using Application.Features.Order.Common;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Enums;
@@ -18,6 +19,7 @@ namespace Application.Features.Delivery.Command.AdminCreateDeliveryCommand
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
         public int CityId { get; set; }
+        public int ZoneId { get; set; }
         public string? PersonalImage { get; set; }
         public bool IsActive { get; set; } = true;
     }
@@ -68,6 +70,12 @@ namespace Application.Features.Delivery.Command.AdminCreateDeliveryCommand
                 .AnyAsync(c => c.CityId == request.CityId && c.IsActive, cancellationToken);
             if (!cityExists)
                 return Result.Failure<int>("Invalid or inactive city");
+
+            if (request.ZoneId <= 0)
+                return Result.Failure<int>("Zone is required");
+
+            if (!await OrderZoneFeeHelper.ZoneBelongsToCityAsync(_context, request.CityId, request.ZoneId, cancellationToken))
+                return Result.Failure<int>("Zone must belong to the selected city group");
 
             if (!await _roleManager.RoleExistsAsync(AppRoleNames.Delivery))
                 return Result.Failure<int>("Delivery role is not configured");
@@ -140,6 +148,7 @@ namespace Application.Features.Delivery.Command.AdminCreateDeliveryCommand
             var delivery = Domain.Models.Delivery.CreateByAdmin(
                 user.Id,
                 request.CityId,
+                request.ZoneId,
                 request.FullName,
                 mobile,
                 email,

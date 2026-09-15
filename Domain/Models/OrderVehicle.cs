@@ -8,6 +8,8 @@ namespace Domain.Models
         public int OrderId { get; private set; }
         public int VehicleId { get; private set; }
 
+        public decimal DeliveryFee { get; private set; }
+
         public bool ReceivedFromOwner { get; private set; }
         public string? ReceivedFromOwnerImageUrl { get; private set; }
         public DateTime? ReceivedFromOwnerAt { get; private set; }
@@ -45,6 +47,7 @@ namespace Domain.Models
         public static OrderVehicle Create(
             int orderId,
             int vehicleId,
+            decimal deliveryFee = 0,
             string? createdBy = null)
         {
             if (orderId <= 0)
@@ -53,10 +56,14 @@ namespace Domain.Models
             if (vehicleId <= 0)
                 throw new ArgumentException("Vehicle ID must be greater than zero", nameof(vehicleId));
 
+            if (deliveryFee < 0)
+                throw new ArgumentException("Delivery fee cannot be negative", nameof(deliveryFee));
+
             return new OrderVehicle
             {
                 OrderId = orderId,
                 VehicleId = vehicleId,
+                DeliveryFee = deliveryFee,
                 MerchantResponseStatus = MerchantVehicleResponseStatus.Pending,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow,
@@ -85,6 +92,15 @@ namespace Domain.Models
         public void AttachVehicle(Vehicle vehicle)
         {
             Vehicle = vehicle;
+        }
+
+        public void SetDeliveryFee(decimal deliveryFee, string? modifiedBy = null)
+        {
+            if (deliveryFee < 0)
+                throw new ArgumentException("Delivery fee cannot be negative", nameof(deliveryFee));
+
+            DeliveryFee = deliveryFee;
+            Touch(modifiedBy);
         }
 
         internal void MarkReceivedFromOwner(string? imageUrl, string? modifiedBy = null)

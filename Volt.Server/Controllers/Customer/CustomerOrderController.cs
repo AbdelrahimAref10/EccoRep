@@ -6,6 +6,7 @@ using Application.Features.Order.Command.PayPalPaymentCommands.CompletePayPalPay
 using Application.Features.Order.DTOs;
 using Application.Features.Order.Query.GetCityFeesQuery;
 using Application.Features.Order.Query.GetCustomerAvailableVehiclesQuery;
+using Application.Features.Order.Query.GetCustomerOrderDeliveryFeesQuery;
 using Application.Features.Order.Query.GetCustomerOrdersQuery;
 using Application.Features.Order.Query.GetReservedVehiclePerSubCategoryQuery;
 using MediatR;
@@ -49,6 +50,19 @@ namespace Volt.Server.Controllers.Customer
         [ProducesResponseType(typeof(List<CustomerAvailableVehicleItemDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> GetAvailableVehicles([FromQuery] GetCustomerAvailableVehiclesQuery query)
+        {
+            var result = await _mediator.Send(query);
+            if (result.IsFailure)
+            {
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            }
+            return Ok(result.Value);
+        }
+
+        [HttpPost("DeliveryFees")]
+        [ProducesResponseType(typeof(CustomerOrderDeliveryFeesDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetDeliveryFees([FromBody] GetCustomerOrderDeliveryFeesQuery query)
         {
             var result = await _mediator.Send(query);
             if (result.IsFailure)

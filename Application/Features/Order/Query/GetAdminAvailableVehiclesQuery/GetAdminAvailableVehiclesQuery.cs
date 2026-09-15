@@ -1,3 +1,4 @@
+using Application.Features.Order.Common;
 using Application.Features.Order.DTOs;
 using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
@@ -22,6 +23,7 @@ namespace Application.Features.Order.Query.GetAdminAvailableVehiclesQuery
         public DateTime ReservationDateTo { get; set; }
         /// <summary>When set, reservations for this order are ignored (for replace-vehicle on existing order).</summary>
         public int? ExcludeOrderId { get; set; }
+        public int DestinationZoneId { get; set; }
     }
 
     public class GetAdminAvailableVehiclesQueryHandler
@@ -53,10 +55,36 @@ namespace Application.Features.Order.Query.GetAdminAvailableVehiclesQuery
                 cancellationToken,
                 request.ExcludeOrderId);
 
+            if (request.DestinationZoneId <= 0)
+                return Result.Failure<AdminAvailableVehiclesDto>("Destination zone is required");
+
+            if (!await OrderZoneFeeHelper.ZoneBelongsToCityAsync(
+                    _context, request.CityId, request.DestinationZoneId, cancellationToken))
+            {
+                return Result.Failure<AdminAvailableVehiclesDto>(
+                    "Destination zone must belong to the selected city group");
+            }
+
             if (availability.IsFailure)
             {
                 return Result.Failure<AdminAvailableVehiclesDto>(availability.Error);
             }
+
+            var origin = await _context.Zones.AsNoTracking()
+                .FirstOrDefaultAsync(z => z.ZoneId == request.DestinationZoneId, cancellationToken);
+            if (origin == null)
+                return Result.Failure<AdminAvailableVehiclesDto>("Destination zone not found");
+
+            var zoneIds = availability.Value.Select(v => v.MerchantZoneId).Append(origin.ZoneId).Distinct().ToList();
+            var zones = await _context.Zones.AsNoTracking()
+                .Where(z => zoneIds.Contains(z.ZoneId))
+                .ToDictionaryAsync(z => z.ZoneId, cancellationToken);
+
+            var sorted = ZoneProximitySorter.SortByMerchantZoneDistance(
+                availability.Value,
+                origin,
+                v => v.MerchantZoneId,
+                zones);
 
             var subCategory = await _context.SubCategories
                 .AsNoTracking()
@@ -69,7 +97,7 @@ namespace Application.Features.Order.Query.GetAdminAvailableVehiclesQuery
             var to = request.ReservationDateTo.Date;
             var days = Domain.Models.Order.InclusiveReservationDays(from, to);
 
-            var items = availability.Value.Select(v =>
+            var items = sorted.Select(v =>
             {
                 var isAvailable = v.AvailabilityStatus == VehicleAvailabilityStatus.Available;
                 return new AdminAvailableVehicleItemDto
@@ -81,6 +109,7 @@ namespace Application.Features.Order.Query.GetAdminAvailableVehiclesQuery
                         ? _imageService.GetImageUrl(v.ImagePath)
                         : null,
                     MerchantId = v.MerchantId,
+                    MerchantZoneId = v.MerchantZoneId,
                     MerchantName = v.MerchantName,
                     Status = (int)v.VehicleStatus,
                     IsAvailable = isAvailable,

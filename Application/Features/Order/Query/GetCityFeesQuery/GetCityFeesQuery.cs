@@ -60,7 +60,6 @@ namespace Application.Features.Order.Query.GetCityFeesQuery
             {
                 CityId = customer.City.CityId,
                 ServiceFees = customer.City.ServiceFees,
-                DeliveryFees = customer.City.DeliveryFees,
                 UrgentFees = customer.City.UrgentDelivery,
                 CancellationFees = customer.City.CancellationFees,
                 PreviousDebt = previousDebt,

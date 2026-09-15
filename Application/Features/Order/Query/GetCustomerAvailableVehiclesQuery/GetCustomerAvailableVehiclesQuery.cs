@@ -1,3 +1,4 @@
+using Application.Features.Order.Common;
 using Application.Features.Order.DTOs;
 using Application.Features.Order.Services;
 using CSharpFunctionalExtensions;
@@ -22,6 +23,7 @@ namespace Application.Features.Order.Query.GetCustomerAvailableVehiclesQuery
         public int SubCategoryId { get; set; }
         public DateTime ReservationDateFrom { get; set; }
         public DateTime ReservationDateTo { get; set; }
+        public int DestinationZoneId { get; set; }
     }
 
     public class GetCustomerAvailableVehiclesQueryHandler
@@ -63,6 +65,16 @@ namespace Application.Features.Order.Query.GetCustomerAvailableVehiclesQuery
                 return Result.Failure<List<CustomerAvailableVehicleItemDto>>("Customer not found");
             }
 
+            if (request.DestinationZoneId <= 0)
+                return Result.Failure<List<CustomerAvailableVehicleItemDto>>("Destination zone is required");
+
+            if (!await OrderZoneFeeHelper.ZoneBelongsToCityAsync(
+                    _context, customer.CityId, request.DestinationZoneId, cancellationToken))
+            {
+                return Result.Failure<List<CustomerAvailableVehicleItemDto>>(
+                    "Destination zone must belong to the customer city group");
+            }
+
             var availability = await _reservationQueryService.GetAvailableVehiclesAsync(
                 request.SubCategoryId,
                 customer.CityId,
@@ -75,7 +87,23 @@ namespace Application.Features.Order.Query.GetCustomerAvailableVehiclesQuery
                 return Result.Failure<List<CustomerAvailableVehicleItemDto>>(availability.Error);
             }
 
-            var items = availability.Value.Select(v => new CustomerAvailableVehicleItemDto
+            var origin = await _context.Zones.AsNoTracking()
+                .FirstOrDefaultAsync(z => z.ZoneId == request.DestinationZoneId, cancellationToken);
+            if (origin == null)
+                return Result.Failure<List<CustomerAvailableVehicleItemDto>>("Destination zone not found");
+
+            var zoneIds = availability.Value.Select(v => v.MerchantZoneId).Append(origin.ZoneId).Distinct().ToList();
+            var zones = await _context.Zones.AsNoTracking()
+                .Where(z => zoneIds.Contains(z.ZoneId))
+                .ToDictionaryAsync(z => z.ZoneId, cancellationToken);
+
+            var sorted = ZoneProximitySorter.SortByMerchantZoneDistance(
+                availability.Value,
+                origin,
+                v => v.MerchantZoneId,
+                zones);
+
+            var items = sorted.Select(v => new CustomerAvailableVehicleItemDto
             {
                 VehicleId = v.VehicleId,
                 Name = v.Name,
@@ -89,6 +117,7 @@ namespace Application.Features.Order.Query.GetCustomerAvailableVehiclesQuery
                 Type = v.Type,
                 Model = v.Model,
                 Price = v.Price,
+                MerchantZoneId = v.MerchantZoneId,
                 SpeedKmh = v.SpeedKmh,
                 EngineCapacityCc = v.EngineCapacityCc
             }).ToList();

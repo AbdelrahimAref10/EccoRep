@@ -55,6 +55,7 @@ namespace Application.Features.Delivery.Query.GetAllDeliveriesQuery
                     UserId = d.UserId,
                     UserName = d.User.UserName,
                     CityId = d.CityId,
+                    ZoneId = d.ZoneId,
                     CityName = d.City.Name,
                     FullName = d.FullName,
                     MobileNumber = d.MobileNumber,

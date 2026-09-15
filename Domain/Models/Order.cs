@@ -14,6 +14,7 @@ namespace Domain.Models
         public int CustomerId { get; private set; }
         public int SubCategoryId { get; private set; }
         public int CityId { get; private set; }
+        public int DestinationZoneId { get; private set; }
         public DateTime ReservationDateFrom { get; private set; }
         public DateTime ReservationDateTo { get; private set; }
         public int VehiclesCount { get; private set; }
@@ -49,6 +50,7 @@ namespace Domain.Models
         public Customer Customer { get; private set; } = null!;
         public SubCategory SubCategory { get; private set; } = null!;
         public City City { get; private set; } = null!;
+        public Zone DestinationZone { get; private set; } = null!;
         public ICollection<OrderVehicle> OrderVehicles { get; private set; } = new List<OrderVehicle>();
         public ICollection<OrderPayment> OrderPayments { get; private set; } = new List<OrderPayment>();
         public ICollection<ReservedVehiclesPerDays> ReservedVehiclesPerDays { get; private set; } = new List<ReservedVehiclesPerDays>();
@@ -71,6 +73,7 @@ namespace Domain.Models
             City city,
             bool isUrgent,
             int reservationDays,
+            decimal deliveryFees,
             decimal previousDebt = 0)
         {
             if (vehicleDailyPrices == null || vehicleDailyPrices.Count == 0)
@@ -88,13 +91,14 @@ namespace Domain.Models
             if (previousDebt < 0)
                 throw new ArgumentException("Previous debt cannot be negative", nameof(previousDebt));
 
+            if (deliveryFees < 0)
+                throw new ArgumentException("Delivery fees cannot be negative", nameof(deliveryFees));
+
             var vehiclesCount = vehicleDailyPrices.Count;
             // Daily rental of the selected fleet, then multiplied by inclusive reservation days
             var dailyRentalTotal = vehicleDailyPrices.Sum();
             var subTotal = dailyRentalTotal * reservationDays;
             var tieredDiscountPercentage = city.CalculateTieredDiscount(reservationDays);
-            // Delivery is charged once per vehicle for the reservation (not per day)
-            var deliveryFees = (city.DeliveryFees ?? 0) * vehiclesCount;
             var serviceFees = city.ServiceFees ?? 0;
             var urgentFees = (isUrgent && city.UrgentDelivery.HasValue) ? city.UrgentDelivery.Value : 0;
             var tieredDiscountAmount = tieredDiscountPercentage > 0
@@ -249,6 +253,34 @@ namespace Domain.Models
             return leftFrom.Date <= rightTo.Date && leftTo.Date >= rightFrom.Date;
         }
 
+        public static decimal CalculateVehicleDeliveryFee(
+            int fromZoneId,
+            int toZoneId,
+            IReadOnlyCollection<ZoneDeliveryRate> rates)
+        {
+            if (fromZoneId <= 0)
+                throw new ArgumentException("From zone ID must be greater than zero", nameof(fromZoneId));
+            if (toZoneId <= 0)
+                throw new ArgumentException("To zone ID must be greater than zero", nameof(toZoneId));
+
+            if (rates == null || rates.Count == 0)
+                return 0;
+
+            var match = rates.FirstOrDefault(r => r.FromZoneId == fromZoneId && r.ToZoneId == toZoneId);
+            return match?.Fee ?? 0;
+        }
+
+        public static decimal SumVehicleDeliveryFees(
+            IReadOnlyCollection<int> merchantZoneIds,
+            int destinationZoneId,
+            IReadOnlyCollection<ZoneDeliveryRate> rates)
+        {
+            if (merchantZoneIds == null || merchantZoneIds.Count == 0)
+                throw new ArgumentException("At least one merchant zone is required", nameof(merchantZoneIds));
+
+            return merchantZoneIds.Sum(fromZoneId => CalculateVehicleDeliveryFee(fromZoneId, destinationZoneId, rates));
+        }
+
         public static int InclusiveReservationDays(DateTime from, DateTime to)
             => Math.Max(1, (int)(to.Date - from.Date).TotalDays + 1);
 
@@ -284,21 +316,32 @@ namespace Domain.Models
         /// Recalculates payable totals from the vehicles currently on the order and city fees.
         /// Call after replacement / remove / any fleet change before Confirmed.
         /// </summary>
-        public OrderPricingBreakdown RecalculateTotals(City city, string? modifiedBy = null)
+        public OrderPricingBreakdown RecalculateTotals(
+            City city,
+            IReadOnlyCollection<ZoneDeliveryRate> rates,
+            string? modifiedBy = null)
         {
             if (OrderState is not (OrderState.Pending or OrderState.MerchantPending or OrderState.MerchantConfirmed))
                 throw new InvalidOperationException($"Cannot recalculate pricing in {OrderState} state.");
 
-            var vehicles = OrderVehicles?.Select(ov => ov.Vehicle).ToList() ?? new List<Vehicle>();
-            if (vehicles.Count == 0 || vehicles.Any(v => v == null))
-                throw new InvalidOperationException("Assigned vehicles with prices are required to recalculate totals.");
+            var links = OrderVehicles?.ToList() ?? new List<OrderVehicle>();
+            if (links.Count == 0 || links.Any(ov => ov.Vehicle == null || ov.Vehicle.Merchant == null))
+                throw new InvalidOperationException("Assigned vehicles with merchant zones are required to recalculate totals.");
+
+            foreach (var ov in links)
+            {
+                var fee = CalculateVehicleDeliveryFee(ov.Vehicle.Merchant.ZoneId, DestinationZoneId, rates);
+                ov.SetDeliveryFee(fee, modifiedBy);
+            }
 
             var days = InclusiveReservationDays(ReservationDateFrom, ReservationDateTo);
+            var deliveryFees = links.Sum(ov => ov.DeliveryFee);
             var pricing = CalculatePricing(
-                vehicles.Select(v => v.Price).ToList(),
+                links.Select(ov => ov.Vehicle.Price).ToList(),
                 city,
                 IsUrgent,
                 days,
+                deliveryFees,
                 PreviousDebt);
 
             ApplyPricing(pricing, modifiedBy);
@@ -312,6 +355,7 @@ namespace Domain.Models
             int cityId,
             DateTime reservationDateFrom,
             DateTime reservationDateTo,
+            int destinationZoneId,
             OrderPricingBreakdown pricing,
             string passportImage,
             string hotelName,
@@ -334,6 +378,9 @@ namespace Domain.Models
 
             if (cityId <= 0)
                 throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
+
+            if (destinationZoneId <= 0)
+                throw new ArgumentException("Destination zone ID must be greater than zero", nameof(destinationZoneId));
 
             if (reservationDateFrom.Date > reservationDateTo.Date)
                 throw new ArgumentException("Reservation date from must be on or before reservation date to", nameof(reservationDateFrom));
@@ -359,6 +406,7 @@ namespace Domain.Models
                 CustomerId = customerId,
                 SubCategoryId = subCategoryId,
                 CityId = cityId,
+                DestinationZoneId = destinationZoneId,
                 ReservationDateFrom = reservationDateFrom,
                 ReservationDateTo = reservationDateTo,
                 MoneyRefunded = false,
@@ -589,6 +637,7 @@ namespace Domain.Models
             int cityId,
             DateTime reservationDateFrom,
             DateTime reservationDateTo,
+            int destinationZoneId,
             OrderPricingBreakdown pricing,
             string passportImage,
             string hotelName,
@@ -611,6 +660,9 @@ namespace Domain.Models
             if (cityId <= 0)
                 throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
 
+            if (destinationZoneId <= 0)
+                throw new ArgumentException("Destination zone ID must be greater than zero", nameof(destinationZoneId));
+
             if (reservationDateFrom.Date > reservationDateTo.Date)
                 throw new ArgumentException("Reservation date from must be on or before reservation date to", nameof(reservationDateFrom));
 
@@ -629,6 +681,7 @@ namespace Domain.Models
             CustomerId = customerId;
             SubCategoryId = subCategoryId;
             CityId = cityId;
+            DestinationZoneId = destinationZoneId;
             ReservationDateFrom = reservationDateFrom;
             ReservationDateTo = reservationDateTo;
             PassportImage = NormalizePassportImage(passportImage);

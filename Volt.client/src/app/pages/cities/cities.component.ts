@@ -120,6 +120,10 @@ export class CitiesComponent implements OnInit {
     this.router.navigate(['/main/cities', city.cityId, 'edit']);
   }
 
+  onZoneRates(city: CityDto): void {
+    this.router.navigate(['/main/cities', city.cityId, 'rates']);
+  }
+
   onDelete(cityId: number): void {
     this.pendingCityId = cityId;
     this.pendingAction = 'deactivate';

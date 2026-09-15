@@ -23,6 +23,11 @@ namespace Infrastructure.MappingConfiguration
                 .HasColumnName("VehicleId")
                 .IsRequired();
 
+            builder.Property(ov => ov.DeliveryFee)
+                .HasColumnName("DeliveryFee")
+                .HasColumnType("decimal(18,2)")
+                .IsRequired();
+
             builder.Property(ov => ov.ReceivedFromOwner).HasColumnName("ReceivedFromOwner").IsRequired();
             builder.Property(ov => ov.ReceivedFromOwnerImageUrl).HasColumnName("ReceivedFromOwnerImageUrl").HasMaxLength(1000);
             builder.Property(ov => ov.ReceivedFromOwnerAt).HasColumnName("ReceivedFromOwnerAt");

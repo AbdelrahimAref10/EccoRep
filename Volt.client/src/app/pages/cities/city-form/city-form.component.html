@@ -30,7 +30,7 @@
         type="button"
         class="entity-form__btn entity-form__btn--primary"
         (click)="onSubmit()"
-        [disabled]="cityForm.get('name')?.invalid || isSaving"
+        [disabled]="cityForm.get('name')?.invalid || cityForm.get('zoneGroupId')?.invalid || isSaving"
       >
         {{ (isEditMode ? 'cities.update' : 'cities.create') | t }}
       </button>
@@ -90,18 +90,6 @@
       <div class="entity-form__card-body">
         <div class="entity-form__row">
           <div class="entity-form__field">
-            <label class="entity-form__label">{{ 'cities.deliveryFees' | t }}</label>
-            <input
-              type="number"
-              formControlName="deliveryFees"
-              class="entity-form__input"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-            />
-          </div>
-
-          <div class="entity-form__field">
             <label class="entity-form__label">{{ 'cities.urgentDelivery' | t }}</label>
             <input
               type="number"
@@ -143,6 +131,49 @@
             </p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="entity-form__card city-form__zones-card">
+      <div class="entity-form__card-head">
+        <p class="entity-form__card-kicker">{{ 'cities.zoneGroupKicker' | t }}</p>
+        <h2 class="entity-form__card-title">
+          {{ 'cities.zoneGroup' | t }}<span class="entity-form__req">*</span>
+        </h2>
+        <p class="entity-form__card-text">{{ 'cities.zoneGroupHint' | t }}</p>
+      </div>
+
+      <div class="entity-form__card-body">
+        <p class="city-form__exclusive">{{ 'cities.oneGroupOnly' | t }}</p>
+
+        <div class="city-form__groups" role="radiogroup" [attr.aria-label]="'cities.zoneGroup' | t">
+          <button
+            type="button"
+            class="city-form__group"
+            *ngFor="let group of zoneGroups"
+            role="radio"
+            [attr.aria-checked]="isZoneGroupSelected(group.zoneGroupId)"
+            [class.city-form__group--selected]="isZoneGroupSelected(group.zoneGroupId)"
+            (click)="selectZoneGroup(group.zoneGroupId)"
+          >
+            <span class="city-form__group-radio" aria-hidden="true"></span>
+            <span class="city-form__group-copy">
+              <strong>{{ group.name }}</strong>
+              <span>{{ 'cities.zoneGroupCardHint' | t }}</span>
+            </span>
+            <span *ngIf="isZoneGroupSelected(group.zoneGroupId)" class="city-form__group-badge">
+              {{ 'cities.selectedGroup' | t }}
+            </span>
+          </button>
+        </div>
+
+        <div *ngIf="zoneGroups.length === 0" class="city-form__tier-empty">
+          <p>{{ 'cities.noZoneGroups' | t }}</p>
+        </div>
+
+        <p *ngIf="cityForm.get('zoneGroupId')?.invalid && cityForm.get('zoneGroupId')?.touched" class="entity-form__error">
+          {{ 'cities.zoneGroupRequired' | t }}
+        </p>
       </div>
     </section>
 

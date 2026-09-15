@@ -33,6 +33,7 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                 .Include(o => o.Customer)
                 .Include(o => o.SubCategory)
                 .Include(o => o.City)
+                .Include(o => o.DestinationZone)
                 .Include(o => o.OrderVehicles)
                     .ThenInclude(ov => ov.Vehicle)
                         .ThenInclude(v => v.Merchant)
@@ -103,6 +104,8 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                 SubCategoryName = order.SubCategory.Name,
                 CityId = order.CityId,
                 CityName = order.City.Name,
+                DestinationZoneId = order.DestinationZoneId,
+                DestinationZoneName = order.DestinationZone?.Name ?? string.Empty,
                 ReservationDateFrom = order.ReservationDateFrom,
                 ReservationDateTo = order.ReservationDateTo,
                 VehiclesCount = order.VehiclesCount,
@@ -140,6 +143,7 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                     Type = ov.Vehicle.Type,
                     Model = ov.Vehicle.Model,
                     Price = ov.Vehicle.Price,
+                    DeliveryFee = ov.DeliveryFee,
                     SpeedKmh = ov.Vehicle.SpeedKmh,
                     EngineCapacityCc = ov.Vehicle.EngineCapacityCc,
                     ReceivedFromOwner = ov.ReceivedFromOwner,

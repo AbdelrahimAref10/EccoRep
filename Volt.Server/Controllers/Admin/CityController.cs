@@ -7,6 +7,10 @@ using Application.Features.City.Command.UpdateCityCommand;
 using Application.Features.City.DTOs;
 using Application.Features.City.Query.GetAllCitiesQuery;
 using Application.Features.City.Query.GetCityByIdQuery;
+using Application.Features.Zone.Command.UpdateZoneDeliveryRatesCommand;
+using Application.Features.Zone.Query.GetZoneDeliveryMatrixQuery;
+using Application.Features.Zone.Query.GetZoneGroupsLookupQuery;
+using Application.Features.Zone.Query.GetZonesByCityQuery;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +43,7 @@ namespace Volt.Server.Controllers.Admin
             return Ok(result.Value);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         [ProducesResponseType(typeof(CityDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -51,6 +55,50 @@ namespace Volt.Server.Controllers.Admin
             {
                 return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
             }
+            return Ok(result.Value);
+        }
+
+        [HttpGet("ZoneGroups")]
+        [ProducesResponseType(typeof(List<ZoneGroupLookupDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetZoneGroups()
+        {
+            var result = await _mediator.Send(new GetZoneGroupsLookupQuery());
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpGet("{cityId}/Zones")]
+        [ProducesResponseType(typeof(List<ZoneLookupDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetZonesByCity(int cityId)
+        {
+            var result = await _mediator.Send(new GetZonesByCityQuery { CityId = cityId });
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpGet("DeliveryMatrix")]
+        [ProducesResponseType(typeof(ZoneDeliveryMatrixDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetDeliveryMatrix([FromQuery] int fromZoneId)
+        {
+            var result = await _mediator.Send(new GetZoneDeliveryMatrixQuery { FromZoneId = fromZoneId });
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpPut("DeliveryRates")]
+        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> UpdateDeliveryRates([FromBody] UpdateZoneDeliveryRatesCommand command)
+        {
+            var result = await _mediator.Send(command);
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
             return Ok(result.Value);
         }
 

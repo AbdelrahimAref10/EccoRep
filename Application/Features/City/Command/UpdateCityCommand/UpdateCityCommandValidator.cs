@@ -43,8 +43,6 @@ namespace Application.Features.City.Command.UpdateCityCommand
             }
 
             // Validate fees are non-negative when provided
-            if (request.DeliveryFees.HasValue && request.DeliveryFees.Value < 0)
-                return Result.Failure("Delivery fees cannot be negative");
             if (request.UrgentDelivery.HasValue && request.UrgentDelivery.Value < 0)
                 return Result.Failure("Urgent delivery fees cannot be negative");
             if (request.ServiceFees.HasValue && request.ServiceFees.Value < 0)
@@ -75,6 +73,14 @@ namespace Application.Features.City.Command.UpdateCityCommand
                     if (tieredDiscount.Discount < 0 || tieredDiscount.Discount > 100)
                         return Result.Failure("Tiered discount must be between 0 and 100");
                 }
+            }
+
+            if (request.ZoneGroupId.HasValue && request.ZoneGroupId.Value > 0)
+            {
+                var groupExists = await _context.ZoneGroups.AnyAsync(
+                    g => g.ZoneGroupId == request.ZoneGroupId.Value && g.IsActive, cancellationToken);
+                if (!groupExists)
+                    return Result.Failure("Zone group not found or inactive");
             }
 
             return Result.Success();

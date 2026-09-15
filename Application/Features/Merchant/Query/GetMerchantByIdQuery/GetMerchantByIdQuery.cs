@@ -36,6 +36,7 @@ namespace Application.Features.Merchant.Query.GetMerchantByIdQuery
                     UserId = m.UserId,
                     UserName = m.User.UserName,
                     CityId = m.CityId,
+                    ZoneId = m.ZoneId,
                     CityName = m.City.Name,
                     FullName = m.FullName,
                     MobileNumber = m.MobileNumber,

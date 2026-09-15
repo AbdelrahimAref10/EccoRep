@@ -101,7 +101,9 @@
               {{ 'customers.genderRequired' | t }}
             </p>
           </div>
+        </div>
 
+        <div class="entity-form__row">
           <div class="entity-form__field">
             <label class="entity-form__label">
               {{ 'common.city' | t }}<span class="entity-form__req">*</span>
@@ -115,6 +117,22 @@
             ></app-multi-select>
             <p *ngIf="customerForm.get('cityId')?.invalid && customerForm.get('cityId')?.touched" class="entity-form__error">
               {{ 'customers.cityRequired' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.zone' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="zoneId"
+              [multiple]="false"
+              [options]="zoneOptions"
+              [disabled]="!customerForm.get('cityId')?.value"
+              [placeholder]="'common.selectZone' | t"
+            ></app-multi-select>
+            <p *ngIf="customerForm.get('zoneId')?.invalid && customerForm.get('zoneId')?.touched" class="entity-form__error">
+              {{ 'common.zoneRequired' | t }}
             </p>
           </div>
         </div>

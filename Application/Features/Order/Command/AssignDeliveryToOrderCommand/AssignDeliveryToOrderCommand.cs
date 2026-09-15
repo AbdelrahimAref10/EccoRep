@@ -79,17 +79,6 @@ namespace Application.Features.Order.Command.AssignDeliveryToOrderCommand
             if (deliveries.Any(d => d.CityId != order.CityId))
                 return Result.Failure<bool>("All deliveries must belong to the same city as the order");
 
-            var orderTotals = await _context.OrderTotals
-                .AsNoTracking()
-                .FirstOrDefaultAsync(t => t.OrderId == request.OrderId, cancellationToken);
-
-            if (orderTotals == null)
-                return Result.Failure<bool>("Order totals not found for this order");
-
-            if (order.VehiclesCount <= 0)
-                return Result.Failure<bool>("Order vehicles count is invalid");
-
-            var feeShare = orderTotals.DeliveryFees / order.VehiclesCount;
             var createdBy = _userSession.UserName ?? "System";
 
             var existingAssignments = await _context.DeliveryMenOrders
@@ -127,6 +116,8 @@ namespace Application.Features.Order.Command.AssignDeliveryToOrderCommand
                         DeliveryMenOrder.Create(request.OrderId, assignment.VehicleId, assignment.DeliveryId, createdBy),
                         cancellationToken);
                 }
+
+                var feeShare = order.OrderVehicles.First(ov => ov.VehicleId == assignment.VehicleId).DeliveryFee;
 
                 var paymentDetail = existingPaymentDetails.FirstOrDefault(d => d.VehicleId == assignment.VehicleId);
                 if (paymentDetail != null)

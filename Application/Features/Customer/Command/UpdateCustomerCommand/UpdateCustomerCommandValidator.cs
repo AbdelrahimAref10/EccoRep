@@ -53,6 +53,13 @@ namespace Application.Features.Customer.Command.UpdateCustomerCommand
                 return Result.Failure("Invalid or inactive city");
             }
 
+            if (request.ZoneId <= 0)
+                return Result.Failure("Zone is required");
+
+            if (!await Application.Features.Order.Common.OrderZoneFeeHelper.ZoneBelongsToCityAsync(
+                    _context, request.CityId, request.ZoneId, cancellationToken))
+                return Result.Failure("Zone must belong to the selected city group");
+
             // Validate gender value
             if (request.Gender != "Male" && request.Gender != "Female")
             {

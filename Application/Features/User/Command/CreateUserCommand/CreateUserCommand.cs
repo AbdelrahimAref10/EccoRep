@@ -20,6 +20,7 @@ namespace Application.Features.User.Command.CreateUserCommand
         public int Role { get; set; }
         /// <summary>Required when Role is Merchant or Delivery.</summary>
         public int? CityId { get; set; }
+        public int? ZoneId { get; set; }
         /// <summary>Optional; applied when Role is Merchant.</summary>
         public bool? CashOnReceive { get; set; }
     }
@@ -75,6 +76,13 @@ namespace Application.Features.User.Command.CreateUserCommand
                     .AnyAsync(c => c.CityId == request.CityId && c.IsActive, cancellationToken);
                 if (!cityExists)
                     return Result.Failure<int>("Invalid or inactive city");
+
+                if (!request.ZoneId.HasValue || request.ZoneId <= 0)
+                    return Result.Failure<int>("Zone is required for merchant/delivery");
+
+                if (!await Application.Features.Order.Common.OrderZoneFeeHelper.ZoneBelongsToCityAsync(
+                        _context, request.CityId.Value, request.ZoneId.Value, cancellationToken))
+                    return Result.Failure<int>("Zone must belong to the selected city group");
             }
 
             var roleName = AppRoleNames.ToRoleName(appRole);
@@ -132,13 +140,13 @@ namespace Application.Features.User.Command.CreateUserCommand
                     break;
                 case AppRole.Merchant:
                     _context.Merchants.Add(Domain.Models.Merchant.Create(
-                        user.Id, request.CityId!.Value, request.FullName, request.PhoneNumber, invitationCode,
+                        user.Id, request.CityId!.Value, request.ZoneId!.Value, request.FullName, request.PhoneNumber, invitationCode,
                         request.Email, createdBy: createdBy, isActive: true,
                         cashOnReceive: request.CashOnReceive ?? false));
                     break;
                 case AppRole.Delivery:
                     _context.Deliveries.Add(Domain.Models.Delivery.Create(
-                        user.Id, request.CityId!.Value, request.FullName, request.PhoneNumber, invitationCode,
+                        user.Id, request.CityId!.Value, request.ZoneId!.Value, request.FullName, request.PhoneNumber, invitationCode,
                         request.Email, createdBy: createdBy, isActive: true));
                     break;
                 case AppRole.Customer:

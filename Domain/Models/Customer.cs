@@ -24,7 +24,9 @@ namespace Domain.Models
         public string? IosDevice { get; private set; }
 
         public int CityId { get; private set; }
+        public int ZoneId { get; private set; }
         public City City { get; private set; } = null!;
+        public Zone Zone { get; private set; } = null!;
         public ApplicationUser User { get; private set; } = null!;
         public CustomerLocation? CustomerLocation { get; private set; }
 
@@ -42,6 +44,7 @@ namespace Domain.Models
             string gender,
             string invitationCode,
             int cityId,
+            int zoneId,
             int registerAs,
             int verificationBy,
             string? email = null,
@@ -63,6 +66,12 @@ namespace Domain.Models
 
             if (string.IsNullOrWhiteSpace(invitationCode))
                 throw new ArgumentException("Invitation code cannot be empty", nameof(invitationCode));
+
+            if (cityId <= 0)
+                throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
+
+            if (zoneId <= 0)
+                throw new ArgumentException("Zone ID must be greater than zero", nameof(zoneId));
 
             if (!Enum.IsDefined(typeof(RegisterAs), registerAs))
                 throw new ArgumentException("Invalid RegisterAs value", nameof(registerAs));
@@ -86,6 +95,7 @@ namespace Domain.Models
                 InvitationCodeExpiry = DateTime.UtcNow.AddHours(24),
                 IsInvitationCodeUsed = false,
                 CityId = cityId,
+                ZoneId = zoneId,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
@@ -102,6 +112,7 @@ namespace Domain.Models
             string fullName,
             string gender,
             int cityId,
+            int zoneId,
             int registerAs,
             int verificationBy,
             string? email = null,
@@ -123,6 +134,9 @@ namespace Domain.Models
 
             if (cityId <= 0)
                 throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
+
+            if (zoneId <= 0)
+                throw new ArgumentException("Zone ID must be greater than zero", nameof(zoneId));
 
             if (!Enum.IsDefined(typeof(RegisterAs), registerAs))
                 throw new ArgumentException("Invalid RegisterAs value", nameof(registerAs));
@@ -146,6 +160,7 @@ namespace Domain.Models
                 InvitationCodeExpiry = null,
                 IsInvitationCodeUsed = true,
                 CityId = cityId,
+                ZoneId = zoneId,
                 CreatedBy = createdBy,
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
@@ -238,7 +253,7 @@ namespace Domain.Models
             LastModifiedDate = DateTime.UtcNow;
         }
 
-        public void UpdateProfile(string fullName, string gender, int cityId, string? email = null, string? personalImage = null, string? commercialRegisterImage = null, string? modifiedBy = null)
+        public void UpdateProfile(string fullName, string gender, int cityId, int zoneId, string? email = null, string? personalImage = null, string? commercialRegisterImage = null, string? modifiedBy = null)
         {
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new ArgumentException("Full name cannot be empty", nameof(fullName));
@@ -249,6 +264,7 @@ namespace Domain.Models
             FullName = fullName;
             Gender = gender;
             CityId = cityId;
+            ZoneId = zoneId;
             Email = email;
             PersonalImage = personalImage;
             CommercialRegisterImage = commercialRegisterImage;

@@ -8,7 +8,8 @@ import {
   AdminCreateCustomerCommand,
   CityClient,
   CityDto,
-  PagedResultOfCityDto
+  PagedResultOfCityDto,
+  ZoneLookupDto
 } from '../../../core/services/clientAPI';
 import { LocaleService } from '../../../core/services/locale.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -37,6 +38,7 @@ export class CustomerFormComponent implements OnInit {
   isSaving = false;
   errorMessage = '';
   cities: CityDto[] = [];
+  zones: ZoneLookupDto[] = [];
   isLoadingCities = false;
 
   personalImagePreview: string | null = null;
@@ -57,6 +59,7 @@ export class CustomerFormComponent implements OnInit {
       fullName: ['', [Validators.required, Validators.minLength(2)]],
       gender: ['', [Validators.required]],
       cityId: [null, [Validators.required]],
+      zoneId: [null, [Validators.required]],
       email: [''],
       personalImage: [''],
       commercialRegisterImage: [''],
@@ -91,6 +94,13 @@ export class CustomerFormComponent implements OnInit {
     return this.cities.map(city => ({
       value: city.cityId,
       label: city.name
+    }));
+  }
+
+  get zoneOptions(): MultiSelectOption[] {
+    return this.zones.map(zone => ({
+      value: zone.zoneId,
+      label: zone.name
     }));
   }
 
@@ -131,6 +141,10 @@ export class CustomerFormComponent implements OnInit {
         this.showCommercialImageError = false;
       }
     });
+
+    this.customerForm.get('cityId')?.valueChanges.subscribe((cityId: number | null) => {
+      this.loadZones(cityId);
+    });
   }
 
   loadCities(): void {
@@ -147,6 +161,27 @@ export class CustomerFormComponent implements OnInit {
     });
   }
 
+  loadZones(cityId: number | null, preferredZoneId: number | null = null): void {
+    if (!cityId) {
+      this.zones = [];
+      this.customerForm.patchValue({ zoneId: null });
+      return;
+    }
+
+    this.cityClient.getZonesByCity(cityId).subscribe({
+      next: (zones) => {
+        this.zones = zones || [];
+        const keep = preferredZoneId ?? this.customerForm.get('zoneId')?.value;
+        const next = this.zones.some(z => z.zoneId === keep) ? keep : null;
+        this.customerForm.patchValue({ zoneId: next });
+      },
+      error: () => {
+        this.zones = [];
+        this.customerForm.patchValue({ zoneId: null });
+      }
+    });
+  }
+
   loadCustomer(): void {
     if (!this.customerId) return;
 
@@ -158,10 +193,12 @@ export class CustomerFormComponent implements OnInit {
           fullName: customer.fullName,
           gender: customer.gender,
           cityId: customer.cityId,
+          zoneId: customer.zoneId,
           email: customer.email || '',
           registerAs: customer.registerAs || 0,
           verificationBy: customer.verificationBy || 0
-        });
+        }, { emitEvent: false });
+        this.loadZones(customer.cityId, customer.zoneId);
 
         if (customer.personalImage) {
           this.personalImagePreview = customer.personalImage;
@@ -293,6 +330,7 @@ export class CustomerFormComponent implements OnInit {
     command.fullName = String(formValue.fullName).trim();
     command.gender = String(formValue.gender);
     command.cityId = cityId;
+    command.zoneId = Number(formValue.zoneId);
     command.email = formValue.email ? String(formValue.email).trim() : null;
     command.personalImage = personalImageBase64;
     command.commercialRegisterImage = commercialRegisterImageBase64;

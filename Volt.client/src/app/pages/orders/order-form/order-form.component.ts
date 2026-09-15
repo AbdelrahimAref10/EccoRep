@@ -43,7 +43,8 @@ import {
   PaymentMethod,
   PaymentState,
   SubCategoryClient,
-  SubCategoryDto
+  SubCategoryDto,
+  ZoneLookupDto
 } from '../../../core/services/clientAPI';
 import { LocaleService } from '../../../core/services/locale.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -114,6 +115,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
   errorMessage = '';
 
   cities: CityDto[] = [];
+  zones: ZoneLookupDto[] = [];
   selectedCustomer: CustomerLookupDto | null = null;
   customerPhoneQuery = '';
   customerSearchResults: CustomerLookupDto[] = [];
@@ -169,6 +171,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     this.orderForm = this.fb.group({
       customerId: [null as number | null, Validators.required],
       cityId: [null as number | null, Validators.required],
+      destinationZoneId: [null as number | null, Validators.required],
       reservationDateFrom: ['', Validators.required],
       reservationDateTo: ['', Validators.required],
       hotelName: ['', [Validators.required, Validators.maxLength(200)]],
@@ -181,6 +184,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     this.editForm = this.fb.group({
       customerId: [null as number | null, Validators.required],
       cityId: [null as number | null, Validators.required],
+      destinationZoneId: [null as number | null, Validators.required],
       subCategoryId: [null as number | null, Validators.required],
       reservationDateFrom: ['', Validators.required],
       reservationDateTo: ['', Validators.required],
@@ -214,6 +218,13 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     return this.cities.map(c => ({
       value: c.cityId,
       label: c.name
+    }));
+  }
+
+  get zoneOptions(): MultiSelectOption[] {
+    return this.zones.map(z => ({
+      value: z.zoneId,
+      label: z.name
     }));
   }
 
@@ -368,6 +379,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
       this.cityAutoFilled = true;
       target.patchValue({ cityId: customer.cityId });
       target.get('cityId')?.markAsTouched();
+      this.loadZones(customer.cityId, customer.zoneId);
     }
   }
 
@@ -718,6 +730,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     query.customerId = this.orderForm.value.customerId;
     query.subCategoryId = this.selectedSubCategory.subCategoryId;
     query.cityId = this.orderForm.value.cityId;
+    query.destinationZoneId = this.orderForm.value.destinationZoneId;
     query.reservationDateFrom = from;
     query.reservationDateTo = to;
     query.isUrgent = !!this.orderForm.value.isUrgent;
@@ -758,6 +771,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     command.customerId = this.orderForm.value.customerId;
     command.subCategoryId = this.selectedSubCategory.subCategoryId;
     command.cityId = this.orderForm.value.cityId;
+    command.destinationZoneId = this.orderForm.value.destinationZoneId;
     command.reservationDateFrom = from;
     command.reservationDateTo = to;
     command.vehicleIds = this.selectedVehicleIds;
@@ -806,6 +820,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     command.orderId = this.orderId;
     command.customerId = this.editForm.value.customerId;
     command.cityId = this.editForm.value.cityId;
+    command.destinationZoneId = this.editForm.value.destinationZoneId;
     command.subCategoryId = this.editForm.value.subCategoryId;
     command.reservationDateFrom = from;
     command.reservationDateTo = to;
@@ -893,12 +908,13 @@ export class OrderFormComponent implements OnInit, OnDestroy {
 
   private loadAvailableVehicles(): void {
     const cityId = this.orderForm.get('cityId')?.value as number | null;
+    const destinationZoneId = this.orderForm.get('destinationZoneId')?.value as number | null;
     const subId = this.selectedSubCategory?.subCategoryId;
     // Use component range state (not form) so same-day from===to is never lost.
     const from = this.rangeFrom;
     const to = this.rangeTo;
 
-    if (!cityId || !subId || !from || !to || from > to) {
+    if (!cityId || !destinationZoneId || !subId || !from || !to || from > to) {
       this.fleetVehicles = [];
       this.availableFleet = null;
       return;
@@ -909,7 +925,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     this.fleetVehicles = [];
     this.selectedVehicles = [];
 
-    this.orderClient.getAvailableVehicles(subId, cityId, from, to).pipe(
+    this.orderClient.getAvailableVehicles(subId, cityId, from, to, undefined, destinationZoneId).pipe(
       takeUntil(this.destroy$),
       finalize(() => { this.isLoadingVehicles = false; })
     ).subscribe({
@@ -1019,6 +1035,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
         this.editForm.patchValue({
           customerId: order.customerId,
           cityId: order.cityId,
+          destinationZoneId: order.destinationZoneId,
           subCategoryId: order.subCategoryId,
           reservationDateFrom: this.formatDateInput(order.reservationDateFrom),
           reservationDateTo: this.formatDateInput(order.reservationDateTo),
@@ -1030,6 +1047,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
           isUrgent: order.isUrgent
         }, { emitEvent: false });
 
+        this.loadZones(order.cityId, order.destinationZoneId);
         this.isBootstrapping = false;
       },
       error: () => {
@@ -1046,6 +1064,7 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     lookup.mobileNumber = order.customerMobileNumber || '';
     lookup.cityId = order.cityId;
     lookup.cityName = order.cityName;
+    lookup.zoneId = order.destinationZoneId;
     lookup.cashBlock = false;
     lookup.state = CustomerState.Active;
     this.selectedCustomer = lookup;
@@ -1070,6 +1089,31 @@ export class OrderFormComponent implements OnInit, OnDestroy {
     this.editSubCategories = [stub, ...this.editSubCategories];
   }
 
+  private loadZones(cityId: number | null, preferredZoneId: number | null = null): void {
+    const target = this.isEditMode ? this.editForm : this.orderForm;
+    if (!cityId) {
+      this.zones = [];
+      target.patchValue({ destinationZoneId: null }, { emitEvent: false });
+      return;
+    }
+
+    this.cityClient.getZonesByCity(cityId).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (zones) => {
+        this.zones = zones || [];
+        const keep = preferredZoneId ?? target.get('destinationZoneId')?.value;
+        const next = this.zones.some(z => z.zoneId === keep) ? keep : (this.zones[0]?.zoneId ?? null);
+        target.patchValue({ destinationZoneId: next }, { emitEvent: false });
+        if (!this.isEditMode && this.browseStep === 'vehicles') {
+          this.loadAvailableVehicles();
+        }
+      },
+      error: () => {
+        this.zones = [];
+        target.patchValue({ destinationZoneId: null }, { emitEvent: false });
+      }
+    });
+  }
+
   private bindFormListeners(): void {
     this.orderForm.get('cityId')?.valueChanges.pipe(
       distinctUntilChanged(),
@@ -1083,13 +1127,28 @@ export class OrderFormComponent implements OnInit, OnDestroy {
         this.cityAutoFilled = false;
       }
       this.resetBrowseState();
-      if (cityId) this.loadCategoriesForCity(cityId);
+      if (cityId) {
+        this.loadCategoriesForCity(cityId);
+        this.loadZones(cityId, this.selectedCustomer?.zoneId);
+      } else {
+        this.loadZones(null);
+      }
+    });
+
+    this.orderForm.get('destinationZoneId')?.valueChanges.pipe(
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      if (this.browseStep === 'vehicles') {
+        this.loadAvailableVehicles();
+      }
     });
 
     this.editForm.get('cityId')?.valueChanges.pipe(
       distinctUntilChanged(),
       takeUntil(this.destroy$)
     ).subscribe((cityId: number | null) => {
+      this.loadZones(cityId, this.editForm.get('destinationZoneId')?.value);
       if (!cityId) return;
       const subId = this.editForm.get('subCategoryId')?.value as number | null;
       if (subId) {

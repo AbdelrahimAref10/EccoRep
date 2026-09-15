@@ -109,6 +109,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/cities/city-form/city-form.component').then(m => m.CityFormComponent)
       },
       {
+        path: 'cities/:id/rates',
+        loadComponent: () => import('./pages/cities/city-zone-rates/city-zone-rates.component').then(m => m.CityZoneRatesComponent)
+      },
+      {
         path: 'orders',
         loadComponent: () => import('./pages/orders/orders.component').then(m => m.OrdersComponent)
       },

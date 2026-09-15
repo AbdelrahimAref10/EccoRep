@@ -16,7 +16,7 @@ namespace Application.Features.City.Command.AddCityCommand
     {
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public decimal? DeliveryFees { get; set; } // Amount value (per vehicle)
+        public int? ZoneGroupId { get; set; }
         public decimal? UrgentDelivery { get; set; } // Amount value
         public decimal? ServiceFees { get; set; } // Amount value
         public decimal? CancellationFees { get; set; } // Percentage value (e.g., 5.0 means 5%)
@@ -51,10 +51,10 @@ namespace Application.Features.City.Command.AddCityCommand
             var city = Domain.Models.City.Create(
                 request.Name,
                 request.Description,
-                request.DeliveryFees,
                 request.UrgentDelivery,
                 request.ServiceFees,
                 request.CancellationFees,
+                request.ZoneGroupId,
                 _userSession.UserName ?? "System"
             );
 

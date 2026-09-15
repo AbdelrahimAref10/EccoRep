@@ -1,5 +1,6 @@
 using Application.Features.City.DTOs;
 using Application.Features.City.Query.GetCitiesLookupQuery;
+using Application.Features.Zone.Query.GetZonesByCityQuery;
 using Application.Features.Customer.Command.DeleteCustomerAccountCommand;
 using Application.Features.Customer.Command.SaveCustomerLocationCommand;
 using Application.Features.Customer.Command.SaveFireBaseTokensForCustomerCommand;
@@ -39,6 +40,20 @@ namespace Volt.Server.Controllers.Customer
         {
             var query = new GetCitiesLookupQuery();
             var result = await _mediator.Send(query);
+            if (result.IsFailure)
+            {
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            }
+            return Ok(result.Value);
+        }
+
+        [HttpGet("GetZonesByCity")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(List<ZoneLookupDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetZonesByCity([FromQuery] int cityId)
+        {
+            var result = await _mediator.Send(new GetZonesByCityQuery { CityId = cityId });
             if (result.IsFailure)
             {
                 return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));

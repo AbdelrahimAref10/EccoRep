@@ -55,6 +55,7 @@ namespace Application.Features.Order.Command.AdminReplacementOrderVehicleCommand
                 .Include(o => o.OrderPayments)
                 .Include(o => o.OrderVehicles)
                     .ThenInclude(ov => ov.Vehicle)
+                        .ThenInclude(v => v.Merchant)
                 .Include(o => o.ReservedVehiclesPerDays)
                 .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
 
@@ -127,7 +128,7 @@ namespace Application.Features.Order.Command.AdminReplacementOrderVehicleCommand
 
             _context.OrderVehicles.Remove(oldLink);
             order.OrderVehicles.Remove(oldLink);
-            var newLink = OrderVehicle.Create(order.OrderId, request.NewVehicleId, modifiedBy);
+            var newLink = OrderVehicle.Create(order.OrderId, request.NewVehicleId, 0, modifiedBy);
             newLink.AttachVehicle(newVehicle);
             await _context.OrderVehicles.AddAsync(newLink, cancellationToken);
             order.OrderVehicles.Add(newLink);

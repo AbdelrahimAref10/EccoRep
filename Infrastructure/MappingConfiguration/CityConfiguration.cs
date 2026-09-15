@@ -33,9 +33,8 @@ namespace Infrastructure.MappingConfiguration
                 .HasDefaultValue(true)
                 .IsRequired();
 
-            builder.Property(c => c.DeliveryFees)
-                .HasColumnName("DeliveryFees")
-                .HasColumnType("decimal(18,2)");
+            builder.Property(c => c.ZoneGroupId)
+                .HasColumnName("ZoneGroupId");
 
             builder.Property(c => c.UrgentDelivery)
                 .HasColumnName("UrgentDelivery")
@@ -70,7 +69,12 @@ namespace Infrastructure.MappingConfiguration
             builder.HasMany(c => c.Customers)
                 .WithOne(c => c.City)
                 .HasForeignKey(c => c.CityId)
-                .OnDelete(DeleteBehavior.Restrict); // Prevent deletion if City has customers
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(c => c.ZoneGroup)
+                .WithMany(g => g.Cities)
+                .HasForeignKey(c => c.ZoneGroupId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Configure indexes
             builder.HasIndex(c => c.Name)

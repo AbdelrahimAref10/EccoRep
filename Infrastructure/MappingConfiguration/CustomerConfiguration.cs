@@ -92,6 +92,10 @@ namespace Infrastructure.MappingConfiguration
                 .HasColumnName("CityId")
                 .IsRequired();
 
+            builder.Property(c => c.ZoneId)
+                .HasColumnName("ZoneId")
+                .IsRequired();
+
             builder.Property(c => c.CreatedBy)
                 .HasColumnName("CreatedBy")
                 .HasMaxLength(256);
@@ -111,6 +115,11 @@ namespace Infrastructure.MappingConfiguration
             builder.HasOne(c => c.City)
                 .WithMany(c => c.Customers)
                 .HasForeignKey(c => c.CityId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(c => c.Zone)
+                .WithMany()
+                .HasForeignKey(c => c.ZoneId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasOne(c => c.User)

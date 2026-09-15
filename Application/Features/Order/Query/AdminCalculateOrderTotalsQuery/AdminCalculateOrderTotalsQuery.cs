@@ -24,6 +24,7 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
         public DateTime ReservationDateTo { get; set; }
         public bool IsUrgent { get; set; }
         public List<int> VehicleIds { get; set; } = new();
+        public int DestinationZoneId { get; set; }
     }
 
     public class AdminCalculateOrderTotalsQueryHandler : IRequestHandler<AdminCalculateOrderTotalsQuery, Result<AdminOrderTotalsPreviewDto>>
@@ -112,6 +113,9 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
 
             var days = Domain.Models.Order.InclusiveReservationDays(from, to);
 
+            if (request.DestinationZoneId <= 0)
+                return Result.Failure<AdminOrderTotalsPreviewDto>("Destination zone is required");
+
             decimal previousDebt = 0;
             if (request.CustomerId > 0)
             {
@@ -122,11 +126,16 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
                 previousDebt = CancellationDebtHelper.SumWithdraw(pendingFees);
             }
 
+            var rates = await OrderZoneFeeHelper.LoadRatesForCityAsync(_context, request.CityId, cancellationToken);
+            var feesByVehicle = OrderZoneFeeHelper.FeesByVehicle(vehicles, request.DestinationZoneId, rates);
+            var deliveryFees = feesByVehicle.Sum(f => f.Fee);
+
             var pricing = Domain.Models.Order.CalculatePricing(
                 vehicles.Select(v => v.Price).ToList(),
                 city,
                 request.IsUrgent,
                 days,
+                deliveryFees,
                 previousDebt);
 
             return Result.Success(new AdminOrderTotalsPreviewDto
@@ -153,7 +162,8 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
                     Model = v.Model,
                     Price = v.Price,
                     SpeedKmh = v.SpeedKmh,
-                    EngineCapacityCc = v.EngineCapacityCc
+                    EngineCapacityCc = v.EngineCapacityCc,
+                    DeliveryFees = feesByVehicle.First(f => f.VehicleId == v.VehicleId).Fee
                 }).ToList(),
                 UnitPrice = pricing.UnitPrice,
                 SubTotal = pricing.SubTotal,

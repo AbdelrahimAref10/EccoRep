@@ -17,7 +17,7 @@ namespace Application.Features.City.Command.UpdateCityCommand
         public int CityId { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
-        public decimal? DeliveryFees { get; set; } // Amount value (per vehicle)
+        public int? ZoneGroupId { get; set; }
         public decimal? UrgentDelivery { get; set; } // Amount value
         public decimal? ServiceFees { get; set; } // Amount value
         public decimal? CancellationFees { get; set; } // Percentage value (e.g., 5.0 means 5%)
@@ -66,12 +66,14 @@ namespace Application.Features.City.Command.UpdateCityCommand
             );
 
             city.UpdateFees(
-                request.DeliveryFees ?? 0,
                 request.UrgentDelivery ?? 0,
                 request.ServiceFees ?? 0,
                 request.CancellationFees ?? 0,
                 _userSession.UserName ?? "System"
             );
+
+            if (request.ZoneGroupId.HasValue)
+                city.AssignZoneGroup(request.ZoneGroupId.Value, _userSession.UserName ?? "System");
 
             // Handle tiered discounts: remove existing and add new ones
             // Use the tiered discounts already loaded from Include to avoid tracking conflicts

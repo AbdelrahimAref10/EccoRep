@@ -59,7 +59,8 @@ namespace Application.Features.City.Query.GetAllCitiesQuery
                     IsActive = c.IsActive,
                     CustomerCount = c.Customers.Count,
                     CreatedDate = c.CreatedDate,
-                    DeliveryFees = c.DeliveryFees,
+                    ZoneGroupId = c.ZoneGroupId,
+                    ZoneGroupName = c.ZoneGroup != null ? c.ZoneGroup.Name : null,
                     UrgentDelivery = c.UrgentDelivery,
                     ServiceFees = c.ServiceFees,
                     CancellationFees = c.CancellationFees

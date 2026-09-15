@@ -63,6 +63,7 @@ namespace Application.Features.Order.Query.GetAllOrdersQuery
                     SubCategoryName = o.SubCategory.Name,
                     CityId = o.CityId,
                     CityName = o.City.Name,
+                    DestinationZoneId = o.DestinationZoneId,
                     ReservationDateFrom = o.ReservationDateFrom,
                     ReservationDateTo = o.ReservationDateTo,
                     VehiclesCount = o.VehiclesCount,

@@ -1526,6 +1526,72 @@ export class CustomerClient {
         return _observableOf(null as any);
     }
 
+    getZonesByCity(cityId?: number | undefined): Observable<ZoneLookupDto[]> {
+        let url_ = this.baseUrl + "/api/Customer/GetZonesByCity?";
+        if (cityId === null)
+            throw new Error("The parameter 'cityId' cannot be null.");
+        else if (cityId !== undefined)
+            url_ += "cityId=" + encodeURIComponent("" + cityId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetZonesByCity(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetZonesByCity(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ZoneLookupDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ZoneLookupDto[]>;
+        }));
+    }
+
+    protected processGetZonesByCity(response: HttpResponseBase): Observable<ZoneLookupDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ZoneLookupDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     getSupport(): Observable<SupportDto> {
         let url_ = this.baseUrl + "/api/Customer/GetSupport";
         url_ = url_.replace(/[?&]$/, "");
@@ -2052,7 +2118,7 @@ export class CustomerOrderClient {
         return _observableOf(null as any);
     }
 
-    getAvailableVehicles(subCategoryId?: number | undefined, reservationDateFrom?: Date | undefined, reservationDateTo?: Date | undefined): Observable<CustomerAvailableVehicleItemDto[]> {
+    getAvailableVehicles(subCategoryId?: number | undefined, reservationDateFrom?: Date | undefined, reservationDateTo?: Date | undefined, destinationZoneId?: number | undefined): Observable<CustomerAvailableVehicleItemDto[]> {
         let url_ = this.baseUrl + "/api/CustomerOrder/AvailableVehicles?";
         if (subCategoryId === null)
             throw new Error("The parameter 'subCategoryId' cannot be null.");
@@ -2066,6 +2132,10 @@ export class CustomerOrderClient {
             throw new Error("The parameter 'reservationDateTo' cannot be null.");
         else if (reservationDateTo !== undefined)
             url_ += "ReservationDateTo=" + encodeURIComponent(reservationDateTo ? "" + reservationDateTo.toISOString() : "") + "&";
+        if (destinationZoneId === null)
+            throw new Error("The parameter 'destinationZoneId' cannot be null.");
+        else if (destinationZoneId !== undefined)
+            url_ += "DestinationZoneId=" + encodeURIComponent("" + destinationZoneId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -2109,6 +2179,65 @@ export class CustomerOrderClient {
             else {
                 result200 = <any>null;
             }
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDeliveryFees(query: GetCustomerOrderDeliveryFeesQuery): Observable<CustomerOrderDeliveryFeesDto> {
+        let url_ = this.baseUrl + "/api/CustomerOrder/DeliveryFees";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(query);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDeliveryFees(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDeliveryFees(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<CustomerOrderDeliveryFeesDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<CustomerOrderDeliveryFeesDto>;
+        }));
+    }
+
+    protected processGetDeliveryFees(response: HttpResponseBase): Observable<CustomerOrderDeliveryFeesDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CustomerOrderDeliveryFeesDto.fromJS(resultData200);
             return _observableOf(result200);
             }));
         } else if (status === 400) {
@@ -5543,7 +5672,73 @@ export class AdminOrderClient {
         return _observableOf(null as any);
     }
 
-    getAvailableVehicles(subCategoryId?: number | undefined, cityId?: number | undefined, reservationDateFrom?: Date | undefined, reservationDateTo?: Date | undefined, excludeOrderId?: number | null | undefined): Observable<AdminAvailableVehiclesDto> {
+    getZonesByCity(cityId?: number | undefined): Observable<ZoneLookupDto[]> {
+        let url_ = this.baseUrl + "/api/AdminOrder/ZonesByCity?";
+        if (cityId === null)
+            throw new Error("The parameter 'cityId' cannot be null.");
+        else if (cityId !== undefined)
+            url_ += "cityId=" + encodeURIComponent("" + cityId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetZonesByCity(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetZonesByCity(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ZoneLookupDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ZoneLookupDto[]>;
+        }));
+    }
+
+    protected processGetZonesByCity(response: HttpResponseBase): Observable<ZoneLookupDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ZoneLookupDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getAvailableVehicles(subCategoryId?: number | undefined, cityId?: number | undefined, reservationDateFrom?: Date | undefined, reservationDateTo?: Date | undefined, excludeOrderId?: number | null | undefined, destinationZoneId?: number | undefined): Observable<AdminAvailableVehiclesDto> {
         let url_ = this.baseUrl + "/api/AdminOrder/AvailableVehicles?";
         if (subCategoryId === null)
             throw new Error("The parameter 'subCategoryId' cannot be null.");
@@ -5563,6 +5758,10 @@ export class AdminOrderClient {
             url_ += "ReservationDateTo=" + encodeURIComponent(reservationDateTo ? "" + reservationDateTo.toISOString() : "") + "&";
         if (excludeOrderId !== undefined && excludeOrderId !== null)
             url_ += "ExcludeOrderId=" + encodeURIComponent("" + excludeOrderId) + "&";
+        if (destinationZoneId === null)
+            throw new Error("The parameter 'destinationZoneId' cannot be null.");
+        else if (destinationZoneId !== undefined)
+            url_ += "DestinationZoneId=" + encodeURIComponent("" + destinationZoneId) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_ : any = {
@@ -9565,6 +9764,252 @@ export class CityClient {
         return _observableOf(null as any);
     }
 
+    getZoneGroups(): Observable<ZoneGroupLookupDto[]> {
+        let url_ = this.baseUrl + "/api/City/ZoneGroups";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetZoneGroups(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetZoneGroups(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ZoneGroupLookupDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ZoneGroupLookupDto[]>;
+        }));
+    }
+
+    protected processGetZoneGroups(response: HttpResponseBase): Observable<ZoneGroupLookupDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ZoneGroupLookupDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getZonesByCity(cityId: number): Observable<ZoneLookupDto[]> {
+        let url_ = this.baseUrl + "/api/City/{cityId}/Zones";
+        if (cityId === undefined || cityId === null)
+            throw new Error("The parameter 'cityId' must be defined.");
+        url_ = url_.replace("{cityId}", encodeURIComponent("" + cityId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetZonesByCity(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetZonesByCity(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ZoneLookupDto[]>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ZoneLookupDto[]>;
+        }));
+    }
+
+    protected processGetZonesByCity(response: HttpResponseBase): Observable<ZoneLookupDto[]> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ZoneLookupDto.fromJS(item));
+            }
+            else {
+                result200 = <any>null;
+            }
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    getDeliveryMatrix(fromZoneId?: number | undefined): Observable<ZoneDeliveryMatrixDto> {
+        let url_ = this.baseUrl + "/api/City/DeliveryMatrix?";
+        if (fromZoneId === null)
+            throw new Error("The parameter 'fromZoneId' cannot be null.");
+        else if (fromZoneId !== undefined)
+            url_ += "fromZoneId=" + encodeURIComponent("" + fromZoneId) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetDeliveryMatrix(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processGetDeliveryMatrix(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<ZoneDeliveryMatrixDto>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<ZoneDeliveryMatrixDto>;
+        }));
+    }
+
+    protected processGetDeliveryMatrix(response: HttpResponseBase): Observable<ZoneDeliveryMatrixDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ZoneDeliveryMatrixDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
+    updateDeliveryRates(command: UpdateZoneDeliveryRatesCommand): Observable<boolean> {
+        let url_ = this.baseUrl + "/api/City/DeliveryRates";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(command);
+
+        let options_ : any = {
+            body: content_,
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            })
+        };
+
+        return this.http.request("put", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processUpdateDeliveryRates(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    return this.processUpdateDeliveryRates(response_ as any);
+                } catch (e) {
+                    return _observableThrow(e) as any as Observable<boolean>;
+                }
+            } else
+                return _observableThrow(response_) as any as Observable<boolean>;
+        }));
+    }
+
+    protected processUpdateDeliveryRates(response: HttpResponseBase): Observable<boolean> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (response as any).error instanceof Blob ? (response as any).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : <any>null;
+    
+            return _observableOf(result200);
+            }));
+        } else if (status === 400) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            let result400: any = null;
+            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result400 = ProblemDetail.fromJS(resultData400);
+            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf(null as any);
+    }
+
     deactivate(id: number): Observable<boolean> {
         let url_ = this.baseUrl + "/api/City/{id}/deactivate";
         if (id === undefined || id === null)
@@ -11337,6 +11782,7 @@ export class VehicleClient {
 export class DeliveryLookupDto {
     deliveryId!: number;
     cityId!: number;
+    zoneId!: number;
     fullName!: string;
     mobileNumber!: string;
 
@@ -11344,6 +11790,7 @@ export class DeliveryLookupDto {
         if (_data) {
             this.deliveryId = _data["deliveryId"] !== undefined ? _data["deliveryId"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.fullName = _data["fullName"] !== undefined ? _data["fullName"] : <any>null;
             this.mobileNumber = _data["mobileNumber"] !== undefined ? _data["mobileNumber"] : <any>null;
         }
@@ -11360,6 +11807,7 @@ export class DeliveryLookupDto {
         data = typeof data === 'object' ? data : {};
         data["deliveryId"] = this.deliveryId !== undefined ? this.deliveryId : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["fullName"] = this.fullName !== undefined ? this.fullName : <any>null;
         data["mobileNumber"] = this.mobileNumber !== undefined ? this.mobileNumber : <any>null;
         return data;
@@ -11398,6 +11846,7 @@ export class ProblemDetail {
 export class MerchantLookupDto {
     merchantId!: number;
     cityId!: number;
+    zoneId!: number;
     fullName!: string;
     mobileNumber!: string;
     cashOnReceive!: boolean;
@@ -11406,6 +11855,7 @@ export class MerchantLookupDto {
         if (_data) {
             this.merchantId = _data["merchantId"] !== undefined ? _data["merchantId"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.fullName = _data["fullName"] !== undefined ? _data["fullName"] : <any>null;
             this.mobileNumber = _data["mobileNumber"] !== undefined ? _data["mobileNumber"] : <any>null;
             this.cashOnReceive = _data["cashOnReceive"] !== undefined ? _data["cashOnReceive"] : <any>null;
@@ -11423,6 +11873,7 @@ export class MerchantLookupDto {
         data = typeof data === 'object' ? data : {};
         data["merchantId"] = this.merchantId !== undefined ? this.merchantId : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["fullName"] = this.fullName !== undefined ? this.fullName : <any>null;
         data["mobileNumber"] = this.mobileNumber !== undefined ? this.mobileNumber : <any>null;
         data["cashOnReceive"] = this.cashOnReceive !== undefined ? this.cashOnReceive : <any>null;
@@ -11435,6 +11886,7 @@ export class MerchantDto {
     userId!: number;
     userName!: string | null;
     cityId!: number;
+    zoneId!: number;
     cityName!: string | null;
     fullName!: string;
     mobileNumber!: string;
@@ -11451,6 +11903,7 @@ export class MerchantDto {
             this.userId = _data["userId"] !== undefined ? _data["userId"] : <any>null;
             this.userName = _data["userName"] !== undefined ? _data["userName"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.cityName = _data["cityName"] !== undefined ? _data["cityName"] : <any>null;
             this.fullName = _data["fullName"] !== undefined ? _data["fullName"] : <any>null;
             this.mobileNumber = _data["mobileNumber"] !== undefined ? _data["mobileNumber"] : <any>null;
@@ -11476,6 +11929,7 @@ export class MerchantDto {
         data["userId"] = this.userId !== undefined ? this.userId : <any>null;
         data["userName"] = this.userName !== undefined ? this.userName : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["cityName"] = this.cityName !== undefined ? this.cityName : <any>null;
         data["fullName"] = this.fullName !== undefined ? this.fullName : <any>null;
         data["mobileNumber"] = this.mobileNumber !== undefined ? this.mobileNumber : <any>null;
@@ -12811,6 +13265,32 @@ export class CityLookupDto {
     }
 }
 
+export class ZoneLookupDto {
+    zoneId!: number;
+    name!: string;
+
+    init(_data?: any) {
+        if (_data) {
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
+            this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): ZoneLookupDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ZoneLookupDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
+        data["name"] = this.name !== undefined ? this.name : <any>null;
+        return data;
+    }
+}
+
 export class SupportDto {
     supportId!: number;
     companyName!: string;
@@ -12893,6 +13373,7 @@ export class CustomerDto {
     registerAs!: number;
     verificationBy!: number;
     cityId!: number;
+    zoneId!: number;
     cityName!: string;
     state!: CustomerState;
     cashBlock!: boolean;
@@ -12910,6 +13391,7 @@ export class CustomerDto {
             this.registerAs = _data["registerAs"] !== undefined ? _data["registerAs"] : <any>null;
             this.verificationBy = _data["verificationBy"] !== undefined ? _data["verificationBy"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.cityName = _data["cityName"] !== undefined ? _data["cityName"] : <any>null;
             this.state = _data["state"] !== undefined ? _data["state"] : <any>null;
             this.cashBlock = _data["cashBlock"] !== undefined ? _data["cashBlock"] : <any>null;
@@ -12936,6 +13418,7 @@ export class CustomerDto {
         data["registerAs"] = this.registerAs !== undefined ? this.registerAs : <any>null;
         data["verificationBy"] = this.verificationBy !== undefined ? this.verificationBy : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["cityName"] = this.cityName !== undefined ? this.cityName : <any>null;
         data["state"] = this.state !== undefined ? this.state : <any>null;
         data["cashBlock"] = this.cashBlock !== undefined ? this.cashBlock : <any>null;
@@ -13079,6 +13562,7 @@ export class UpdateCustomerProfileCommand {
     fullName!: string;
     gender!: string;
     cityId!: number;
+    zoneId!: number;
     email!: string | null;
     personalImage!: string | null;
     commercialRegisterImage!: string | null;
@@ -13089,6 +13573,7 @@ export class UpdateCustomerProfileCommand {
             this.fullName = _data["fullName"] !== undefined ? _data["fullName"] : <any>null;
             this.gender = _data["gender"] !== undefined ? _data["gender"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.email = _data["email"] !== undefined ? _data["email"] : <any>null;
             this.personalImage = _data["personalImage"] !== undefined ? _data["personalImage"] : <any>null;
             this.commercialRegisterImage = _data["commercialRegisterImage"] !== undefined ? _data["commercialRegisterImage"] : <any>null;
@@ -13108,6 +13593,7 @@ export class UpdateCustomerProfileCommand {
         data["fullName"] = this.fullName !== undefined ? this.fullName : <any>null;
         data["gender"] = this.gender !== undefined ? this.gender : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["email"] = this.email !== undefined ? this.email : <any>null;
         data["personalImage"] = this.personalImage !== undefined ? this.personalImage : <any>null;
         data["commercialRegisterImage"] = this.commercialRegisterImage !== undefined ? this.commercialRegisterImage : <any>null;
@@ -13119,7 +13605,6 @@ export class UpdateCustomerProfileCommand {
 export class CityFeesDto {
     cityId!: number;
     serviceFees!: number | null;
-    deliveryFees!: number | null;
     urgentFees!: number | null;
     cancellationFees!: number | null;
     previousDebt!: number;
@@ -13129,7 +13614,6 @@ export class CityFeesDto {
         if (_data) {
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
             this.serviceFees = _data["serviceFees"] !== undefined ? _data["serviceFees"] : <any>null;
-            this.deliveryFees = _data["deliveryFees"] !== undefined ? _data["deliveryFees"] : <any>null;
             this.urgentFees = _data["urgentFees"] !== undefined ? _data["urgentFees"] : <any>null;
             this.cancellationFees = _data["cancellationFees"] !== undefined ? _data["cancellationFees"] : <any>null;
             this.previousDebt = _data["previousDebt"] !== undefined ? _data["previousDebt"] : <any>null;
@@ -13155,7 +13639,6 @@ export class CityFeesDto {
         data = typeof data === 'object' ? data : {};
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
         data["serviceFees"] = this.serviceFees !== undefined ? this.serviceFees : <any>null;
-        data["deliveryFees"] = this.deliveryFees !== undefined ? this.deliveryFees : <any>null;
         data["urgentFees"] = this.urgentFees !== undefined ? this.urgentFees : <any>null;
         data["cancellationFees"] = this.cancellationFees !== undefined ? this.cancellationFees : <any>null;
         data["previousDebt"] = this.previousDebt !== undefined ? this.previousDebt : <any>null;
@@ -13214,6 +13697,7 @@ export class CustomerAvailableVehicleItemDto {
     type!: string;
     model!: string;
     price!: number;
+    merchantZoneId!: number;
     speedKmh!: number | null;
     engineCapacityCc!: number | null;
 
@@ -13236,6 +13720,7 @@ export class CustomerAvailableVehicleItemDto {
             this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
             this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
             this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.merchantZoneId = _data["merchantZoneId"] !== undefined ? _data["merchantZoneId"] : <any>null;
             this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
             this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
         }
@@ -13264,8 +13749,69 @@ export class CustomerAvailableVehicleItemDto {
         data["type"] = this.type !== undefined ? this.type : <any>null;
         data["model"] = this.model !== undefined ? this.model : <any>null;
         data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["merchantZoneId"] = this.merchantZoneId !== undefined ? this.merchantZoneId : <any>null;
         data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
         data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
+        return data;
+    }
+}
+
+export class CustomerOrderDeliveryFeesDto {
+    deliveryFees!: number;
+
+    init(_data?: any) {
+        if (_data) {
+            this.deliveryFees = _data["deliveryFees"] !== undefined ? _data["deliveryFees"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): CustomerOrderDeliveryFeesDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new CustomerOrderDeliveryFeesDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["deliveryFees"] = this.deliveryFees !== undefined ? this.deliveryFees : <any>null;
+        return data;
+    }
+}
+
+export class GetCustomerOrderDeliveryFeesQuery {
+    destinationZoneId!: number;
+    vehicleIds!: number[];
+
+    init(_data?: any) {
+        if (_data) {
+            this.destinationZoneId = _data["destinationZoneId"] !== undefined ? _data["destinationZoneId"] : <any>null;
+            if (Array.isArray(_data["vehicleIds"])) {
+                this.vehicleIds = [] as any;
+                for (let item of _data["vehicleIds"])
+                    this.vehicleIds!.push(item);
+            }
+            else {
+                this.vehicleIds = <any>null;
+            }
+        }
+    }
+
+    static fromJS(data: any): GetCustomerOrderDeliveryFeesQuery {
+        data = typeof data === 'object' ? data : {};
+        let result = new GetCustomerOrderDeliveryFeesQuery();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["destinationZoneId"] = this.destinationZoneId !== undefined ? this.destinationZoneId : <any>null;
+        if (Array.isArray(this.vehicleIds)) {
+            data["vehicleIds"] = [];
+            for (let item of this.vehicleIds)
+                data["vehicleIds"].push(item);
+        }
         return data;
     }
 }
@@ -13302,6 +13848,7 @@ export class OrderDto {
     subCategoryName!: string;
     cityId!: number;
     cityName!: string;
+    destinationZoneId!: number;
     reservationDateFrom!: Date;
     reservationDateTo!: Date;
     vehiclesCount!: number;
@@ -13330,6 +13877,7 @@ export class OrderDto {
             this.subCategoryName = _data["subCategoryName"] !== undefined ? _data["subCategoryName"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
             this.cityName = _data["cityName"] !== undefined ? _data["cityName"] : <any>null;
+            this.destinationZoneId = _data["destinationZoneId"] !== undefined ? _data["destinationZoneId"] : <any>null;
             this.reservationDateFrom = _data["reservationDateFrom"] ? new Date(_data["reservationDateFrom"].toString()) : <any>null;
             this.reservationDateTo = _data["reservationDateTo"] ? new Date(_data["reservationDateTo"].toString()) : <any>null;
             this.vehiclesCount = _data["vehiclesCount"] !== undefined ? _data["vehiclesCount"] : <any>null;
@@ -13367,6 +13915,7 @@ export class OrderDto {
         data["subCategoryName"] = this.subCategoryName !== undefined ? this.subCategoryName : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
         data["cityName"] = this.cityName !== undefined ? this.cityName : <any>null;
+        data["destinationZoneId"] = this.destinationZoneId !== undefined ? this.destinationZoneId : <any>null;
         data["reservationDateFrom"] = this.reservationDateFrom ? this.reservationDateFrom.toISOString() : <any>null;
         data["reservationDateTo"] = this.reservationDateTo ? this.reservationDateTo.toISOString() : <any>null;
         data["vehiclesCount"] = this.vehiclesCount !== undefined ? this.vehiclesCount : <any>null;
@@ -13407,6 +13956,7 @@ export class CreateOrderCommand {
     isUrgent!: boolean;
     paymentMethodId!: number;
     mobileTotal!: number;
+    destinationZoneId!: number;
 
     init(_data?: any) {
         if (_data) {
@@ -13430,6 +13980,7 @@ export class CreateOrderCommand {
             this.isUrgent = _data["isUrgent"] !== undefined ? _data["isUrgent"] : <any>null;
             this.paymentMethodId = _data["paymentMethodId"] !== undefined ? _data["paymentMethodId"] : <any>null;
             this.mobileTotal = _data["mobileTotal"] !== undefined ? _data["mobileTotal"] : <any>null;
+            this.destinationZoneId = _data["destinationZoneId"] !== undefined ? _data["destinationZoneId"] : <any>null;
         }
     }
 
@@ -13459,6 +14010,7 @@ export class CreateOrderCommand {
         data["isUrgent"] = this.isUrgent !== undefined ? this.isUrgent : <any>null;
         data["paymentMethodId"] = this.paymentMethodId !== undefined ? this.paymentMethodId : <any>null;
         data["mobileTotal"] = this.mobileTotal !== undefined ? this.mobileTotal : <any>null;
+        data["destinationZoneId"] = this.destinationZoneId !== undefined ? this.destinationZoneId : <any>null;
         return data;
     }
 }
@@ -13716,6 +14268,7 @@ export class RegisterCommand {
     personalImage!: string | null;
     gender!: string | null;
     cityId!: number | null;
+    zoneId!: number | null;
     commercialRegisterImage!: string | null;
     registerAs!: number | null;
     verificationBy!: number | null;
@@ -13730,6 +14283,7 @@ export class RegisterCommand {
             this.personalImage = _data["personalImage"] !== undefined ? _data["personalImage"] : <any>null;
             this.gender = _data["gender"] !== undefined ? _data["gender"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.commercialRegisterImage = _data["commercialRegisterImage"] !== undefined ? _data["commercialRegisterImage"] : <any>null;
             this.registerAs = _data["registerAs"] !== undefined ? _data["registerAs"] : <any>null;
             this.verificationBy = _data["verificationBy"] !== undefined ? _data["verificationBy"] : <any>null;
@@ -13753,6 +14307,7 @@ export class RegisterCommand {
         data["personalImage"] = this.personalImage !== undefined ? this.personalImage : <any>null;
         data["gender"] = this.gender !== undefined ? this.gender : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["commercialRegisterImage"] = this.commercialRegisterImage !== undefined ? this.commercialRegisterImage : <any>null;
         data["registerAs"] = this.registerAs !== undefined ? this.registerAs : <any>null;
         data["verificationBy"] = this.verificationBy !== undefined ? this.verificationBy : <any>null;
@@ -14005,6 +14560,7 @@ export class CustomerLookupDto {
     fullName!: string;
     mobileNumber!: string;
     cityId!: number;
+    zoneId!: number;
     cityName!: string;
     state!: CustomerState;
     cashBlock!: boolean;
@@ -14015,6 +14571,7 @@ export class CustomerLookupDto {
             this.fullName = _data["fullName"] !== undefined ? _data["fullName"] : <any>null;
             this.mobileNumber = _data["mobileNumber"] !== undefined ? _data["mobileNumber"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.cityName = _data["cityName"] !== undefined ? _data["cityName"] : <any>null;
             this.state = _data["state"] !== undefined ? _data["state"] : <any>null;
             this.cashBlock = _data["cashBlock"] !== undefined ? _data["cashBlock"] : <any>null;
@@ -14034,6 +14591,7 @@ export class CustomerLookupDto {
         data["fullName"] = this.fullName !== undefined ? this.fullName : <any>null;
         data["mobileNumber"] = this.mobileNumber !== undefined ? this.mobileNumber : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["cityName"] = this.cityName !== undefined ? this.cityName : <any>null;
         data["state"] = this.state !== undefined ? this.state : <any>null;
         data["cashBlock"] = this.cashBlock !== undefined ? this.cashBlock : <any>null;
@@ -14091,6 +14649,7 @@ export class AdminCreateCustomerCommand {
     fullName!: string;
     gender!: string;
     cityId!: number;
+    zoneId!: number;
     personalImage!: string | null;
     email!: string | null;
     commercialRegisterImage!: string | null;
@@ -14104,6 +14663,7 @@ export class AdminCreateCustomerCommand {
             this.fullName = _data["fullName"] !== undefined ? _data["fullName"] : <any>null;
             this.gender = _data["gender"] !== undefined ? _data["gender"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.personalImage = _data["personalImage"] !== undefined ? _data["personalImage"] : <any>null;
             this.email = _data["email"] !== undefined ? _data["email"] : <any>null;
             this.commercialRegisterImage = _data["commercialRegisterImage"] !== undefined ? _data["commercialRegisterImage"] : <any>null;
@@ -14126,6 +14686,7 @@ export class AdminCreateCustomerCommand {
         data["fullName"] = this.fullName !== undefined ? this.fullName : <any>null;
         data["gender"] = this.gender !== undefined ? this.gender : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["personalImage"] = this.personalImage !== undefined ? this.personalImage : <any>null;
         data["email"] = this.email !== undefined ? this.email : <any>null;
         data["commercialRegisterImage"] = this.commercialRegisterImage !== undefined ? this.commercialRegisterImage : <any>null;
@@ -14141,6 +14702,7 @@ export class DeliveryDto {
     userId!: number;
     userName!: string | null;
     cityId!: number;
+    zoneId!: number;
     cityName!: string | null;
     fullName!: string;
     mobileNumber!: string;
@@ -14156,6 +14718,7 @@ export class DeliveryDto {
             this.userId = _data["userId"] !== undefined ? _data["userId"] : <any>null;
             this.userName = _data["userName"] !== undefined ? _data["userName"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.cityName = _data["cityName"] !== undefined ? _data["cityName"] : <any>null;
             this.fullName = _data["fullName"] !== undefined ? _data["fullName"] : <any>null;
             this.mobileNumber = _data["mobileNumber"] !== undefined ? _data["mobileNumber"] : <any>null;
@@ -14180,6 +14743,7 @@ export class DeliveryDto {
         data["userId"] = this.userId !== undefined ? this.userId : <any>null;
         data["userName"] = this.userName !== undefined ? this.userName : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["cityName"] = this.cityName !== undefined ? this.cityName : <any>null;
         data["fullName"] = this.fullName !== undefined ? this.fullName : <any>null;
         data["mobileNumber"] = this.mobileNumber !== undefined ? this.mobileNumber : <any>null;
@@ -14199,6 +14763,7 @@ export class AdminCreateDeliveryCommand {
     email!: string;
     password!: string;
     cityId!: number;
+    zoneId!: number;
     personalImage!: string | null;
     isActive!: boolean;
 
@@ -14210,6 +14775,7 @@ export class AdminCreateDeliveryCommand {
             this.email = _data["email"] !== undefined ? _data["email"] : <any>null;
             this.password = _data["password"] !== undefined ? _data["password"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.personalImage = _data["personalImage"] !== undefined ? _data["personalImage"] : <any>null;
             this.isActive = _data["isActive"] !== undefined ? _data["isActive"] : <any>null;
         }
@@ -14230,6 +14796,7 @@ export class AdminCreateDeliveryCommand {
         data["email"] = this.email !== undefined ? this.email : <any>null;
         data["password"] = this.password !== undefined ? this.password : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["personalImage"] = this.personalImage !== undefined ? this.personalImage : <any>null;
         data["isActive"] = this.isActive !== undefined ? this.isActive : <any>null;
         return data;
@@ -14242,6 +14809,7 @@ export class AdminUpdateDeliveryCommand {
     fullName!: string;
     email!: string;
     cityId!: number;
+    zoneId!: number;
     personalImage!: string | null;
     isActive!: boolean;
     password!: string | null;
@@ -14253,6 +14821,7 @@ export class AdminUpdateDeliveryCommand {
             this.fullName = _data["fullName"] !== undefined ? _data["fullName"] : <any>null;
             this.email = _data["email"] !== undefined ? _data["email"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.personalImage = _data["personalImage"] !== undefined ? _data["personalImage"] : <any>null;
             this.isActive = _data["isActive"] !== undefined ? _data["isActive"] : <any>null;
             this.password = _data["password"] !== undefined ? _data["password"] : <any>null;
@@ -14273,6 +14842,7 @@ export class AdminUpdateDeliveryCommand {
         data["fullName"] = this.fullName !== undefined ? this.fullName : <any>null;
         data["email"] = this.email !== undefined ? this.email : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["personalImage"] = this.personalImage !== undefined ? this.personalImage : <any>null;
         data["isActive"] = this.isActive !== undefined ? this.isActive : <any>null;
         data["password"] = this.password !== undefined ? this.password : <any>null;
@@ -15070,6 +15640,7 @@ export class AdminCreateMerchantCommand {
     email!: string;
     password!: string;
     cityId!: number;
+    zoneId!: number;
     personalImage!: string | null;
     isActive!: boolean;
     cashOnReceive!: boolean;
@@ -15082,6 +15653,7 @@ export class AdminCreateMerchantCommand {
             this.email = _data["email"] !== undefined ? _data["email"] : <any>null;
             this.password = _data["password"] !== undefined ? _data["password"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.personalImage = _data["personalImage"] !== undefined ? _data["personalImage"] : <any>null;
             this.isActive = _data["isActive"] !== undefined ? _data["isActive"] : <any>null;
             this.cashOnReceive = _data["cashOnReceive"] !== undefined ? _data["cashOnReceive"] : <any>null;
@@ -15103,6 +15675,7 @@ export class AdminCreateMerchantCommand {
         data["email"] = this.email !== undefined ? this.email : <any>null;
         data["password"] = this.password !== undefined ? this.password : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["personalImage"] = this.personalImage !== undefined ? this.personalImage : <any>null;
         data["isActive"] = this.isActive !== undefined ? this.isActive : <any>null;
         data["cashOnReceive"] = this.cashOnReceive !== undefined ? this.cashOnReceive : <any>null;
@@ -15116,6 +15689,7 @@ export class AdminUpdateMerchantCommand {
     fullName!: string;
     email!: string;
     cityId!: number;
+    zoneId!: number;
     personalImage!: string | null;
     isActive!: boolean;
     cashOnReceive!: boolean;
@@ -15128,6 +15702,7 @@ export class AdminUpdateMerchantCommand {
             this.fullName = _data["fullName"] !== undefined ? _data["fullName"] : <any>null;
             this.email = _data["email"] !== undefined ? _data["email"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.personalImage = _data["personalImage"] !== undefined ? _data["personalImage"] : <any>null;
             this.isActive = _data["isActive"] !== undefined ? _data["isActive"] : <any>null;
             this.cashOnReceive = _data["cashOnReceive"] !== undefined ? _data["cashOnReceive"] : <any>null;
@@ -15149,6 +15724,7 @@ export class AdminUpdateMerchantCommand {
         data["fullName"] = this.fullName !== undefined ? this.fullName : <any>null;
         data["email"] = this.email !== undefined ? this.email : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["personalImage"] = this.personalImage !== undefined ? this.personalImage : <any>null;
         data["isActive"] = this.isActive !== undefined ? this.isActive : <any>null;
         data["cashOnReceive"] = this.cashOnReceive !== undefined ? this.cashOnReceive : <any>null;
@@ -15243,6 +15819,8 @@ export class OrderDetailDto {
     subCategoryName!: string;
     cityId!: number;
     cityName!: string;
+    destinationZoneId!: number;
+    destinationZoneName!: string;
     reservationDateFrom!: Date;
     reservationDateTo!: Date;
     vehiclesCount!: number;
@@ -15287,6 +15865,8 @@ export class OrderDetailDto {
             this.subCategoryName = _data["subCategoryName"] !== undefined ? _data["subCategoryName"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
             this.cityName = _data["cityName"] !== undefined ? _data["cityName"] : <any>null;
+            this.destinationZoneId = _data["destinationZoneId"] !== undefined ? _data["destinationZoneId"] : <any>null;
+            this.destinationZoneName = _data["destinationZoneName"] !== undefined ? _data["destinationZoneName"] : <any>null;
             this.reservationDateFrom = _data["reservationDateFrom"] ? new Date(_data["reservationDateFrom"].toString()) : <any>null;
             this.reservationDateTo = _data["reservationDateTo"] ? new Date(_data["reservationDateTo"].toString()) : <any>null;
             this.vehiclesCount = _data["vehiclesCount"] !== undefined ? _data["vehiclesCount"] : <any>null;
@@ -15389,6 +15969,8 @@ export class OrderDetailDto {
         data["subCategoryName"] = this.subCategoryName !== undefined ? this.subCategoryName : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
         data["cityName"] = this.cityName !== undefined ? this.cityName : <any>null;
+        data["destinationZoneId"] = this.destinationZoneId !== undefined ? this.destinationZoneId : <any>null;
+        data["destinationZoneName"] = this.destinationZoneName !== undefined ? this.destinationZoneName : <any>null;
         data["reservationDateFrom"] = this.reservationDateFrom ? this.reservationDateFrom.toISOString() : <any>null;
         data["reservationDateTo"] = this.reservationDateTo ? this.reservationDateTo.toISOString() : <any>null;
         data["vehiclesCount"] = this.vehiclesCount !== undefined ? this.vehiclesCount : <any>null;
@@ -15465,6 +16047,7 @@ export class OrderVehicleDto {
     type!: string;
     model!: string;
     price!: number;
+    deliveryFee!: number;
     speedKmh!: number | null;
     engineCapacityCc!: number | null;
     receivedFromOwner!: boolean;
@@ -15493,6 +16076,7 @@ export class OrderVehicleDto {
             this.type = _data["type"] !== undefined ? _data["type"] : <any>null;
             this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
             this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
+            this.deliveryFee = _data["deliveryFee"] !== undefined ? _data["deliveryFee"] : <any>null;
             this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
             this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
             this.receivedFromOwner = _data["receivedFromOwner"] !== undefined ? _data["receivedFromOwner"] : <any>null;
@@ -15530,6 +16114,7 @@ export class OrderVehicleDto {
         data["type"] = this.type !== undefined ? this.type : <any>null;
         data["model"] = this.model !== undefined ? this.model : <any>null;
         data["price"] = this.price !== undefined ? this.price : <any>null;
+        data["deliveryFee"] = this.deliveryFee !== undefined ? this.deliveryFee : <any>null;
         data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
         data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         data["receivedFromOwner"] = this.receivedFromOwner !== undefined ? this.receivedFromOwner : <any>null;
@@ -15941,6 +16526,7 @@ export class AdminAvailableVehicleItemDto {
     vehicleCode!: string;
     imageUrl!: string | null;
     merchantId!: number;
+    merchantZoneId!: number;
     merchantName!: string;
     status!: number;
     isAvailable!: boolean;
@@ -15960,6 +16546,7 @@ export class AdminAvailableVehicleItemDto {
             this.vehicleCode = _data["vehicleCode"] !== undefined ? _data["vehicleCode"] : <any>null;
             this.imageUrl = _data["imageUrl"] !== undefined ? _data["imageUrl"] : <any>null;
             this.merchantId = _data["merchantId"] !== undefined ? _data["merchantId"] : <any>null;
+            this.merchantZoneId = _data["merchantZoneId"] !== undefined ? _data["merchantZoneId"] : <any>null;
             this.merchantName = _data["merchantName"] !== undefined ? _data["merchantName"] : <any>null;
             this.status = _data["status"] !== undefined ? _data["status"] : <any>null;
             this.isAvailable = _data["isAvailable"] !== undefined ? _data["isAvailable"] : <any>null;
@@ -15995,6 +16582,7 @@ export class AdminAvailableVehicleItemDto {
         data["vehicleCode"] = this.vehicleCode !== undefined ? this.vehicleCode : <any>null;
         data["imageUrl"] = this.imageUrl !== undefined ? this.imageUrl : <any>null;
         data["merchantId"] = this.merchantId !== undefined ? this.merchantId : <any>null;
+        data["merchantZoneId"] = this.merchantZoneId !== undefined ? this.merchantZoneId : <any>null;
         data["merchantName"] = this.merchantName !== undefined ? this.merchantName : <any>null;
         data["status"] = this.status !== undefined ? this.status : <any>null;
         data["isAvailable"] = this.isAvailable !== undefined ? this.isAvailable : <any>null;
@@ -16118,6 +16706,7 @@ export class AdminOrderPreviewVehicleDto {
     price!: number;
     speedKmh!: number | null;
     engineCapacityCc!: number | null;
+    deliveryFees!: number;
 
     init(_data?: any) {
         if (_data) {
@@ -16133,6 +16722,7 @@ export class AdminOrderPreviewVehicleDto {
             this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
             this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
             this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
+            this.deliveryFees = _data["deliveryFees"] !== undefined ? _data["deliveryFees"] : <any>null;
         }
     }
 
@@ -16157,6 +16747,7 @@ export class AdminOrderPreviewVehicleDto {
         data["price"] = this.price !== undefined ? this.price : <any>null;
         data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
         data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
+        data["deliveryFees"] = this.deliveryFees !== undefined ? this.deliveryFees : <any>null;
         return data;
     }
 }
@@ -16169,6 +16760,7 @@ export class AdminCalculateOrderTotalsQuery {
     reservationDateTo!: Date;
     isUrgent!: boolean;
     vehicleIds!: number[];
+    destinationZoneId!: number;
 
     init(_data?: any) {
         if (_data) {
@@ -16186,6 +16778,7 @@ export class AdminCalculateOrderTotalsQuery {
             else {
                 this.vehicleIds = <any>null;
             }
+            this.destinationZoneId = _data["destinationZoneId"] !== undefined ? _data["destinationZoneId"] : <any>null;
         }
     }
 
@@ -16209,6 +16802,7 @@ export class AdminCalculateOrderTotalsQuery {
             for (let item of this.vehicleIds)
                 data["vehicleIds"].push(item);
         }
+        data["destinationZoneId"] = this.destinationZoneId !== undefined ? this.destinationZoneId : <any>null;
         return data;
     }
 }
@@ -16226,6 +16820,7 @@ export class AdminCreateOrderCommand {
     hotelAddress!: string;
     hotelPhone!: string | null;
     isUrgent!: boolean;
+    destinationZoneId!: number;
 
     init(_data?: any) {
         if (_data) {
@@ -16248,6 +16843,7 @@ export class AdminCreateOrderCommand {
             this.hotelAddress = _data["hotelAddress"] !== undefined ? _data["hotelAddress"] : <any>null;
             this.hotelPhone = _data["hotelPhone"] !== undefined ? _data["hotelPhone"] : <any>null;
             this.isUrgent = _data["isUrgent"] !== undefined ? _data["isUrgent"] : <any>null;
+            this.destinationZoneId = _data["destinationZoneId"] !== undefined ? _data["destinationZoneId"] : <any>null;
         }
     }
 
@@ -16276,6 +16872,7 @@ export class AdminCreateOrderCommand {
         data["hotelAddress"] = this.hotelAddress !== undefined ? this.hotelAddress : <any>null;
         data["hotelPhone"] = this.hotelPhone !== undefined ? this.hotelPhone : <any>null;
         data["isUrgent"] = this.isUrgent !== undefined ? this.isUrgent : <any>null;
+        data["destinationZoneId"] = this.destinationZoneId !== undefined ? this.destinationZoneId : <any>null;
         return data;
     }
 }
@@ -16295,6 +16892,7 @@ export class AdminUpdateOrderCommand {
     hotelPhone!: string | null;
     isUrgent!: boolean;
     paymentMethodId!: number;
+    destinationZoneId!: number;
 
     init(_data?: any) {
         if (_data) {
@@ -16312,6 +16910,7 @@ export class AdminUpdateOrderCommand {
             this.hotelPhone = _data["hotelPhone"] !== undefined ? _data["hotelPhone"] : <any>null;
             this.isUrgent = _data["isUrgent"] !== undefined ? _data["isUrgent"] : <any>null;
             this.paymentMethodId = _data["paymentMethodId"] !== undefined ? _data["paymentMethodId"] : <any>null;
+            this.destinationZoneId = _data["destinationZoneId"] !== undefined ? _data["destinationZoneId"] : <any>null;
         }
     }
 
@@ -16338,6 +16937,7 @@ export class AdminUpdateOrderCommand {
         data["hotelPhone"] = this.hotelPhone !== undefined ? this.hotelPhone : <any>null;
         data["isUrgent"] = this.isUrgent !== undefined ? this.isUrgent : <any>null;
         data["paymentMethodId"] = this.paymentMethodId !== undefined ? this.paymentMethodId : <any>null;
+        data["destinationZoneId"] = this.destinationZoneId !== undefined ? this.destinationZoneId : <any>null;
         return data;
     }
 }
@@ -17992,6 +18592,7 @@ export class CreateUserCommand {
     password!: string;
     role!: number;
     cityId!: number | null;
+    zoneId!: number | null;
     cashOnReceive!: boolean | null;
 
     init(_data?: any) {
@@ -18003,6 +18604,7 @@ export class CreateUserCommand {
             this.password = _data["password"] !== undefined ? _data["password"] : <any>null;
             this.role = _data["role"] !== undefined ? _data["role"] : <any>null;
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
+            this.zoneId = _data["zoneId"] !== undefined ? _data["zoneId"] : <any>null;
             this.cashOnReceive = _data["cashOnReceive"] !== undefined ? _data["cashOnReceive"] : <any>null;
         }
     }
@@ -18023,6 +18625,7 @@ export class CreateUserCommand {
         data["password"] = this.password !== undefined ? this.password : <any>null;
         data["role"] = this.role !== undefined ? this.role : <any>null;
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
+        data["zoneId"] = this.zoneId !== undefined ? this.zoneId : <any>null;
         data["cashOnReceive"] = this.cashOnReceive !== undefined ? this.cashOnReceive : <any>null;
         return data;
     }
@@ -18244,7 +18847,8 @@ export class CityDto {
     isActive!: boolean;
     customerCount!: number;
     createdDate!: Date;
-    deliveryFees!: number | null;
+    zoneGroupId!: number | null;
+    zoneGroupName!: string | null;
     urgentDelivery!: number | null;
     serviceFees!: number | null;
     cancellationFees!: number | null;
@@ -18258,7 +18862,8 @@ export class CityDto {
             this.isActive = _data["isActive"] !== undefined ? _data["isActive"] : <any>null;
             this.customerCount = _data["customerCount"] !== undefined ? _data["customerCount"] : <any>null;
             this.createdDate = _data["createdDate"] ? new Date(_data["createdDate"].toString()) : <any>null;
-            this.deliveryFees = _data["deliveryFees"] !== undefined ? _data["deliveryFees"] : <any>null;
+            this.zoneGroupId = _data["zoneGroupId"] !== undefined ? _data["zoneGroupId"] : <any>null;
+            this.zoneGroupName = _data["zoneGroupName"] !== undefined ? _data["zoneGroupName"] : <any>null;
             this.urgentDelivery = _data["urgentDelivery"] !== undefined ? _data["urgentDelivery"] : <any>null;
             this.serviceFees = _data["serviceFees"] !== undefined ? _data["serviceFees"] : <any>null;
             this.cancellationFees = _data["cancellationFees"] !== undefined ? _data["cancellationFees"] : <any>null;
@@ -18288,7 +18893,8 @@ export class CityDto {
         data["isActive"] = this.isActive !== undefined ? this.isActive : <any>null;
         data["customerCount"] = this.customerCount !== undefined ? this.customerCount : <any>null;
         data["createdDate"] = this.createdDate ? this.createdDate.toISOString() : <any>null;
-        data["deliveryFees"] = this.deliveryFees !== undefined ? this.deliveryFees : <any>null;
+        data["zoneGroupId"] = this.zoneGroupId !== undefined ? this.zoneGroupId : <any>null;
+        data["zoneGroupName"] = this.zoneGroupName !== undefined ? this.zoneGroupName : <any>null;
         data["urgentDelivery"] = this.urgentDelivery !== undefined ? this.urgentDelivery : <any>null;
         data["serviceFees"] = this.serviceFees !== undefined ? this.serviceFees : <any>null;
         data["cancellationFees"] = this.cancellationFees !== undefined ? this.cancellationFees : <any>null;
@@ -18301,10 +18907,171 @@ export class CityDto {
     }
 }
 
+export class ZoneGroupLookupDto {
+    zoneGroupId!: number;
+    name!: string;
+
+    init(_data?: any) {
+        if (_data) {
+            this.zoneGroupId = _data["zoneGroupId"] !== undefined ? _data["zoneGroupId"] : <any>null;
+            this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): ZoneGroupLookupDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ZoneGroupLookupDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["zoneGroupId"] = this.zoneGroupId !== undefined ? this.zoneGroupId : <any>null;
+        data["name"] = this.name !== undefined ? this.name : <any>null;
+        return data;
+    }
+}
+
+export class ZoneDeliveryMatrixDto {
+    fromZoneId!: number;
+    fromZoneName!: string;
+    zoneGroupId!: number;
+    rates!: ZoneDeliveryMatrixRowDto[];
+
+    init(_data?: any) {
+        if (_data) {
+            this.fromZoneId = _data["fromZoneId"] !== undefined ? _data["fromZoneId"] : <any>null;
+            this.fromZoneName = _data["fromZoneName"] !== undefined ? _data["fromZoneName"] : <any>null;
+            this.zoneGroupId = _data["zoneGroupId"] !== undefined ? _data["zoneGroupId"] : <any>null;
+            if (Array.isArray(_data["rates"])) {
+                this.rates = [] as any;
+                for (let item of _data["rates"])
+                    this.rates!.push(ZoneDeliveryMatrixRowDto.fromJS(item));
+            }
+            else {
+                this.rates = <any>null;
+            }
+        }
+    }
+
+    static fromJS(data: any): ZoneDeliveryMatrixDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ZoneDeliveryMatrixDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fromZoneId"] = this.fromZoneId !== undefined ? this.fromZoneId : <any>null;
+        data["fromZoneName"] = this.fromZoneName !== undefined ? this.fromZoneName : <any>null;
+        data["zoneGroupId"] = this.zoneGroupId !== undefined ? this.zoneGroupId : <any>null;
+        if (Array.isArray(this.rates)) {
+            data["rates"] = [];
+            for (let item of this.rates)
+                data["rates"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export class ZoneDeliveryMatrixRowDto {
+    toZoneId!: number;
+    toZoneName!: string;
+    fee!: number;
+
+    init(_data?: any) {
+        if (_data) {
+            this.toZoneId = _data["toZoneId"] !== undefined ? _data["toZoneId"] : <any>null;
+            this.toZoneName = _data["toZoneName"] !== undefined ? _data["toZoneName"] : <any>null;
+            this.fee = _data["fee"] !== undefined ? _data["fee"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): ZoneDeliveryMatrixRowDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ZoneDeliveryMatrixRowDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["toZoneId"] = this.toZoneId !== undefined ? this.toZoneId : <any>null;
+        data["toZoneName"] = this.toZoneName !== undefined ? this.toZoneName : <any>null;
+        data["fee"] = this.fee !== undefined ? this.fee : <any>null;
+        return data;
+    }
+}
+
+export class UpdateZoneDeliveryRatesCommand {
+    fromZoneId!: number;
+    rates!: ZoneDeliveryRateItem[];
+
+    init(_data?: any) {
+        if (_data) {
+            this.fromZoneId = _data["fromZoneId"] !== undefined ? _data["fromZoneId"] : <any>null;
+            if (Array.isArray(_data["rates"])) {
+                this.rates = [] as any;
+                for (let item of _data["rates"])
+                    this.rates!.push(ZoneDeliveryRateItem.fromJS(item));
+            }
+            else {
+                this.rates = <any>null;
+            }
+        }
+    }
+
+    static fromJS(data: any): UpdateZoneDeliveryRatesCommand {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateZoneDeliveryRatesCommand();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fromZoneId"] = this.fromZoneId !== undefined ? this.fromZoneId : <any>null;
+        if (Array.isArray(this.rates)) {
+            data["rates"] = [];
+            for (let item of this.rates)
+                data["rates"].push(item.toJSON());
+        }
+        return data;
+    }
+}
+
+export class ZoneDeliveryRateItem {
+    toZoneId!: number;
+    fee!: number;
+
+    init(_data?: any) {
+        if (_data) {
+            this.toZoneId = _data["toZoneId"] !== undefined ? _data["toZoneId"] : <any>null;
+            this.fee = _data["fee"] !== undefined ? _data["fee"] : <any>null;
+        }
+    }
+
+    static fromJS(data: any): ZoneDeliveryRateItem {
+        data = typeof data === 'object' ? data : {};
+        let result = new ZoneDeliveryRateItem();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["toZoneId"] = this.toZoneId !== undefined ? this.toZoneId : <any>null;
+        data["fee"] = this.fee !== undefined ? this.fee : <any>null;
+        return data;
+    }
+}
+
 export class AddCityCommand {
     name!: string;
     description!: string | null;
-    deliveryFees!: number | null;
+    zoneGroupId!: number | null;
     urgentDelivery!: number | null;
     serviceFees!: number | null;
     cancellationFees!: number | null;
@@ -18314,7 +19081,7 @@ export class AddCityCommand {
         if (_data) {
             this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
             this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
-            this.deliveryFees = _data["deliveryFees"] !== undefined ? _data["deliveryFees"] : <any>null;
+            this.zoneGroupId = _data["zoneGroupId"] !== undefined ? _data["zoneGroupId"] : <any>null;
             this.urgentDelivery = _data["urgentDelivery"] !== undefined ? _data["urgentDelivery"] : <any>null;
             this.serviceFees = _data["serviceFees"] !== undefined ? _data["serviceFees"] : <any>null;
             this.cancellationFees = _data["cancellationFees"] !== undefined ? _data["cancellationFees"] : <any>null;
@@ -18340,7 +19107,7 @@ export class AddCityCommand {
         data = typeof data === 'object' ? data : {};
         data["name"] = this.name !== undefined ? this.name : <any>null;
         data["description"] = this.description !== undefined ? this.description : <any>null;
-        data["deliveryFees"] = this.deliveryFees !== undefined ? this.deliveryFees : <any>null;
+        data["zoneGroupId"] = this.zoneGroupId !== undefined ? this.zoneGroupId : <any>null;
         data["urgentDelivery"] = this.urgentDelivery !== undefined ? this.urgentDelivery : <any>null;
         data["serviceFees"] = this.serviceFees !== undefined ? this.serviceFees : <any>null;
         data["cancellationFees"] = this.cancellationFees !== undefined ? this.cancellationFees : <any>null;
@@ -18357,7 +19124,7 @@ export class UpdateCityCommand {
     cityId!: number;
     name!: string;
     description!: string | null;
-    deliveryFees!: number | null;
+    zoneGroupId!: number | null;
     urgentDelivery!: number | null;
     serviceFees!: number | null;
     cancellationFees!: number | null;
@@ -18368,7 +19135,7 @@ export class UpdateCityCommand {
             this.cityId = _data["cityId"] !== undefined ? _data["cityId"] : <any>null;
             this.name = _data["name"] !== undefined ? _data["name"] : <any>null;
             this.description = _data["description"] !== undefined ? _data["description"] : <any>null;
-            this.deliveryFees = _data["deliveryFees"] !== undefined ? _data["deliveryFees"] : <any>null;
+            this.zoneGroupId = _data["zoneGroupId"] !== undefined ? _data["zoneGroupId"] : <any>null;
             this.urgentDelivery = _data["urgentDelivery"] !== undefined ? _data["urgentDelivery"] : <any>null;
             this.serviceFees = _data["serviceFees"] !== undefined ? _data["serviceFees"] : <any>null;
             this.cancellationFees = _data["cancellationFees"] !== undefined ? _data["cancellationFees"] : <any>null;
@@ -18395,7 +19162,7 @@ export class UpdateCityCommand {
         data["cityId"] = this.cityId !== undefined ? this.cityId : <any>null;
         data["name"] = this.name !== undefined ? this.name : <any>null;
         data["description"] = this.description !== undefined ? this.description : <any>null;
-        data["deliveryFees"] = this.deliveryFees !== undefined ? this.deliveryFees : <any>null;
+        data["zoneGroupId"] = this.zoneGroupId !== undefined ? this.zoneGroupId : <any>null;
         data["urgentDelivery"] = this.urgentDelivery !== undefined ? this.urgentDelivery : <any>null;
         data["serviceFees"] = this.serviceFees !== undefined ? this.serviceFees : <any>null;
         data["cancellationFees"] = this.cancellationFees !== undefined ? this.cancellationFees : <any>null;

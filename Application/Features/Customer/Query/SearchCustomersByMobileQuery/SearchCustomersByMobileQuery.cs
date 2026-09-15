@@ -50,6 +50,7 @@ namespace Application.Features.Customer.Query.SearchCustomersByMobileQuery
                     FullName = c.FullName,
                     MobileNumber = c.MobileNumber,
                     CityId = c.CityId,
+                    ZoneId = c.ZoneId,
                     CityName = c.City.Name,
                     State = c.State,
                     CashBlock = c.CashBlock
@@ -72,6 +73,7 @@ namespace Application.Features.Customer.Query.SearchCustomersByMobileQuery
                     FullName = c.FullName,
                     MobileNumber = c.MobileNumber,
                     CityId = c.CityId,
+                    ZoneId = c.ZoneId,
                     CityName = c.City.Name,
                     State = c.State,
                     CashBlock = c.CashBlock

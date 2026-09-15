@@ -43,6 +43,7 @@ namespace Application.Features.Delivery.Query.GetActiveDeliveriesLookupQuery
                 {
                     DeliveryId = d.DeliveryId,
                     CityId = d.CityId,
+                    ZoneId = d.ZoneId,
                     FullName = d.FullName,
                     MobileNumber = d.MobileNumber
                 })

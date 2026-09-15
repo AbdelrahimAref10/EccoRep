@@ -11,6 +11,7 @@ namespace Application.Features.Customer.DTOs
         public string FullName { get; set; } = string.Empty;
         public string MobileNumber { get; set; } = string.Empty;
         public int CityId { get; set; }
+        public int ZoneId { get; set; }
         public string CityName { get; set; } = string.Empty;
         public CustomerState State { get; set; }
         public bool CashBlock { get; set; }

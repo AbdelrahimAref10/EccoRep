@@ -159,6 +159,7 @@
               </p>
             </div>
 
+            <div class="entity-form__row">
             <div class="entity-form__field">
               <label class="entity-form__label">
                 {{ 'common.city' | t }}<span class="entity-form__req">*</span>
@@ -178,6 +179,24 @@
               <p *ngIf="selectedCustomer?.cityName" class="order-form__field-hint">
                 {{ 'orders.customerCityHint' | t:{ city: selectedCustomer!.cityName } }}
               </p>
+            </div>
+
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.destinationZone' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <app-multi-select
+                formControlName="destinationZoneId"
+                [multiple]="false"
+                [options]="zoneOptions"
+                [disabled]="!orderForm.get('cityId')?.value"
+                [placeholder]="'orders.selectZone' | t"
+              ></app-multi-select>
+              <p *ngIf="orderForm.get('destinationZoneId')?.invalid && orderForm.get('destinationZoneId')?.touched" class="entity-form__error">
+                {{ 'common.required' | t }}
+              </p>
+              <p class="order-form__field-hint">{{ 'orders.destinationZoneHint' | t }}</p>
+            </div>
             </div>
 
             <label class="order-form__urgent" [class.order-form__urgent--on]="orderForm.get('isUrgent')?.value">
@@ -209,7 +228,15 @@
               <p>{{ 'orders.selectCityFirstHint' | t }}</p>
             </div>
 
-            <ng-container *ngIf="orderForm.get('cityId')?.value">
+            <div *ngIf="orderForm.get('cityId')?.value && !orderForm.get('destinationZoneId')?.value" class="order-form__fleet-hint">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <p>{{ 'orders.selectZoneFirstHint' | t }}</p>
+            </div>
+
+            <ng-container *ngIf="orderForm.get('cityId')?.value && orderForm.get('destinationZoneId')?.value">
 
               <!-- Breadcrumb -->
               <nav class="order-form__breadcrumb" [attr.aria-label]="'orders.fleetTitle' | t">
@@ -819,6 +846,22 @@
                 [placeholder]="'orders.selectCity' | t"
               ></app-multi-select>
               <p *ngIf="editForm.get('cityId')?.invalid && editForm.get('cityId')?.touched" class="entity-form__error">
+                {{ 'common.required' | t }}
+              </p>
+            </div>
+
+            <div class="entity-form__field">
+              <label class="entity-form__label">
+                {{ 'orders.destinationZone' | t }}<span class="entity-form__req">*</span>
+              </label>
+              <app-multi-select
+                formControlName="destinationZoneId"
+                [multiple]="false"
+                [options]="zoneOptions"
+                [disabled]="!editForm.get('cityId')?.value"
+                [placeholder]="'orders.selectZone' | t"
+              ></app-multi-select>
+              <p *ngIf="editForm.get('destinationZoneId')?.invalid && editForm.get('destinationZoneId')?.touched" class="entity-form__error">
                 {{ 'common.required' | t }}
               </p>
             </div>

@@ -125,6 +125,7 @@ namespace Application.Features.Order.Command.UpdateOrderStateCommand
                 SubCategoryName = order.SubCategory.Name,
                 CityId = order.CityId,
                 CityName = order.City.Name,
+                DestinationZoneId = order.DestinationZoneId,
                 ReservationDateFrom = order.ReservationDateFrom,
                 ReservationDateTo = order.ReservationDateTo,
                 VehiclesCount = order.VehiclesCount,

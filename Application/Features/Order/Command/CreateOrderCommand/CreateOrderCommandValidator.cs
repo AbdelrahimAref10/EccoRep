@@ -38,6 +38,9 @@ namespace Application.Features.Order.Command.CreateOrderCommand
             if (!cityExists)
                 return Result.Failure("City not found");
 
+            if (request.DestinationZoneId <= 0)
+                return Result.Failure("Destination zone is required");
+
             if (request.ReservationDateFrom < _dateTimeProvider.Now.Date)
                 return Result.Failure("Reservation date from must be a future date");
 

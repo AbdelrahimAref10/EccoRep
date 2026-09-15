@@ -33,6 +33,7 @@ namespace Application.Features.Order.Command.CreateOrderCommand
         public bool IsUrgent { get; set; }
         public int PaymentMethodId { get; set; }
         public decimal MobileTotal { get; set; }
+        public int DestinationZoneId { get; set; }
     }
 
     public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Result<OrderDto>>
@@ -110,12 +111,18 @@ namespace Application.Features.Order.Command.CreateOrderCommand
 
             var vehicles = await _context.Vehicles
                 .AsTracking()
+                .Include(v => v.Merchant)
                 .Where(v => vehicleIds.Contains(v.VehicleId))
                 .ToListAsync(cancellationToken);
 
             if (vehicles.Count != vehicleIds.Count)
             {
                 return Result.Failure<OrderDto>("One or more vehicles not found");
+            }
+
+            if (!await OrderZoneFeeHelper.ZoneBelongsToCityAsync(_context, request.CityId, request.DestinationZoneId, cancellationToken))
+            {
+                return Result.Failure<OrderDto>("Destination zone is required and must belong to the order city group");
             }
 
             var from = request.ReservationDateFrom.Date;
@@ -152,11 +159,16 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                 cancellationToken);
             var previousDebt = CancellationDebtHelper.SumWithdraw(pendingCancellationFees);
 
+            var rates = await OrderZoneFeeHelper.LoadRatesForCityAsync(_context, request.CityId, cancellationToken);
+            var deliveryFees = OrderZoneFeeHelper.SumForVehicles(vehicles, request.DestinationZoneId, rates);
+            var feesByVehicle = OrderZoneFeeHelper.FeesByVehicle(vehicles, request.DestinationZoneId, rates);
+
             var pricing = Domain.Models.Order.CalculatePricing(
                 vehicles.Select(v => v.Price).ToList(),
                 city,
                 request.IsUrgent,
                 reservationDays,
+                deliveryFees,
                 previousDebt);
 
             var mobileMatchesExpected = OrderCalculationService.ValidateTotalMatch(pricing.Total, request.MobileTotal, 0.50m);
@@ -195,6 +207,7 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                     request.CityId,
                     request.ReservationDateFrom,
                     request.ReservationDateTo,
+                    request.DestinationZoneId,
                     pricing,
                     request.PassportImage,
                     request.HotelName,
@@ -227,7 +240,8 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                 // Vehicles assigned at create — order stays Pending (no auto-confirm)
                 foreach (var vehicleId in vehicleIds)
                 {
-                    _context.OrderVehicles.Add(Domain.Models.OrderVehicle.Create(order.OrderId, vehicleId, actor));
+                    var fee = feesByVehicle.First(f => f.VehicleId == vehicleId).Fee;
+                    _context.OrderVehicles.Add(Domain.Models.OrderVehicle.Create(order.OrderId, vehicleId, fee, actor));
                 }
 
                 foreach (var vehicle in vehicles)
@@ -294,6 +308,7 @@ namespace Application.Features.Order.Command.CreateOrderCommand
                     SubCategoryName = subCategory.Name,
                     CityId = order.CityId,
                     CityName = city.Name,
+                    DestinationZoneId = order.DestinationZoneId,
                     ReservationDateFrom = order.ReservationDateFrom,
                     ReservationDateTo = order.ReservationDateTo,
                     VehiclesCount = order.VehiclesCount,

@@ -53,6 +53,7 @@ namespace Application.Features.Customer.Query.GetCustomerInfoQuery
                 RegisterAs = customer.RegisterAs,
                 VerificationBy = customer.VerificationBy,
                 CityId = customer.CityId,
+                ZoneId = customer.ZoneId,
                 CityName = customer.City != null ? customer.City.Name : string.Empty,
                 State = customer.State,
                 CashBlock = customer.CashBlock,

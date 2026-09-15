@@ -10,6 +10,7 @@ namespace Application.Features.Order.Services
         public string? ImagePath { get; init; }
         public VehicleStatus VehicleStatus { get; init; }
         public int MerchantId { get; init; }
+        public int MerchantZoneId { get; init; }
         public string MerchantName { get; init; } = string.Empty;
         public string Color { get; init; } = string.Empty;
         public string Type { get; init; } = string.Empty;

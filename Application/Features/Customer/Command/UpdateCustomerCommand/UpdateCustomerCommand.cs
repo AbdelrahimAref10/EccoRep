@@ -16,6 +16,7 @@ namespace Application.Features.Customer.Command.UpdateCustomerCommand
         public string FullName { get; set; } = string.Empty;
         public string Gender { get; set; } = string.Empty;
         public int CityId { get; set; }
+        public int ZoneId { get; set; }
         public string? Email { get; set; }
         public string? PersonalImage { get; set; }
         public string? CommercialRegisterImage { get; set; }
@@ -89,6 +90,7 @@ namespace Application.Features.Customer.Command.UpdateCustomerCommand
                 request.FullName,
                 request.Gender,
                 request.CityId,
+                request.ZoneId,
                 request.Email,
                 personalImageUrl,
                 commercialRegisterImageUrl,

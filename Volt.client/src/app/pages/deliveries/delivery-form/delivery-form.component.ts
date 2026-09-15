@@ -8,7 +8,8 @@ import {
   AdminUpdateDeliveryCommand,
   CityClient,
   CityDto,
-  PagedResultOfCityDto
+  PagedResultOfCityDto,
+  ZoneLookupDto
 } from '../../../core/services/clientAPI';
 import { LocaleService } from '../../../core/services/locale.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
@@ -43,11 +44,19 @@ export class DeliveryFormComponent implements OnInit {
   personalImagePreview: string | null = null;
   existingPersonalImage: string | null = null;
   cities: CityDto[] = [];
+  zones: ZoneLookupDto[] = [];
 
   get cityOptions(): MultiSelectOption[] {
     return this.cities.map(city => ({
       value: city.cityId,
       label: city.name
+    }));
+  }
+
+  get zoneOptions(): MultiSelectOption[] {
+    return this.zones.map(zone => ({
+      value: zone.zoneId,
+      label: zone.name
     }));
   }
 
@@ -59,11 +68,15 @@ export class DeliveryFormComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.minLength(6)]],
       cityId: [null, [Validators.required]],
+      zoneId: [null, [Validators.required]],
       personalImage: [''],
       isActive: [true]
     });
 
     this.loadCities();
+    this.deliveryForm.get('cityId')?.valueChanges.subscribe((cityId: number | null) => {
+      this.loadZones(cityId);
+    });
 
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
@@ -90,6 +103,27 @@ export class DeliveryFormComponent implements OnInit {
     });
   }
 
+  loadZones(cityId: number | null, preferredZoneId: number | null = null): void {
+    if (!cityId) {
+      this.zones = [];
+      this.deliveryForm.patchValue({ zoneId: null });
+      return;
+    }
+
+    this.cityClient.getZonesByCity(cityId).subscribe({
+      next: (zones) => {
+        this.zones = zones || [];
+        const keep = preferredZoneId ?? this.deliveryForm.get('zoneId')?.value;
+        const next = this.zones.some(z => z.zoneId === keep) ? keep : null;
+        this.deliveryForm.patchValue({ zoneId: next });
+      },
+      error: () => {
+        this.zones = [];
+        this.deliveryForm.patchValue({ zoneId: null });
+      }
+    });
+  }
+
   loadDelivery(id: number): void {
     this.isLoading = true;
     this.deliveryClient.getById(id).subscribe({
@@ -102,9 +136,11 @@ export class DeliveryFormComponent implements OnInit {
           mobileNumber: delivery.mobileNumber,
           email: delivery.email || '',
           cityId: delivery.cityId || null,
+          zoneId: delivery.zoneId || null,
           isActive: delivery.isActive,
           personalImage: ''
-        });
+        }, { emitEvent: false });
+        this.loadZones(delivery.cityId || null, delivery.zoneId || null);
         this.isLoading = false;
       },
       error: (error: any) => {
@@ -162,6 +198,7 @@ export class DeliveryFormComponent implements OnInit {
       command.fullName = value.fullName;
       command.email = value.email;
       command.cityId = cityId;
+      command.zoneId = Number(value.zoneId);
       command.personalImage = value.personalImage || this.existingPersonalImage || null;
       command.isActive = !!value.isActive;
       command.password = value.password || null;
@@ -186,6 +223,7 @@ export class DeliveryFormComponent implements OnInit {
     create.email = value.email;
     create.password = value.password;
     create.cityId = cityId;
+    create.zoneId = Number(value.zoneId);
     create.personalImage = value.personalImage || null;
     create.isActive = !!value.isActive;
 

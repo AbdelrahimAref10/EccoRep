@@ -31,6 +31,7 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
         public string HotelAddress { get; set; } = string.Empty;
         public string? HotelPhone { get; set; }
         public bool IsUrgent { get; set; }
+        public int DestinationZoneId { get; set; }
     }
 
     public class AdminCreateOrderCommandHandler : IRequestHandler<AdminCreateOrderCommand, Result<OrderDto>>
@@ -98,12 +99,18 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
 
             var vehicles = await _context.Vehicles
                 .AsTracking()
+                .Include(v => v.Merchant)
                 .Where(v => vehicleIds.Contains(v.VehicleId))
                 .ToListAsync(cancellationToken);
 
             if (vehicles.Count != vehicleIds.Count)
             {
                 return Result.Failure<OrderDto>("One or more vehicles not found");
+            }
+
+            if (!await OrderZoneFeeHelper.ZoneBelongsToCityAsync(_context, request.CityId, request.DestinationZoneId, cancellationToken))
+            {
+                return Result.Failure<OrderDto>("Destination zone is required and must belong to the order city group");
             }
 
             var from = request.ReservationDateFrom.Date;
@@ -140,11 +147,16 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                 cancellationToken);
             var previousDebt = CancellationDebtHelper.SumWithdraw(pendingCancellationFees);
 
+            var rates = await OrderZoneFeeHelper.LoadRatesForCityAsync(_context, request.CityId, cancellationToken);
+            var deliveryFees = OrderZoneFeeHelper.SumForVehicles(vehicles, request.DestinationZoneId, rates);
+            var feesByVehicle = OrderZoneFeeHelper.FeesByVehicle(vehicles, request.DestinationZoneId, rates);
+
             var pricing = Domain.Models.Order.CalculatePricing(
                 vehicles.Select(v => v.Price).ToList(),
                 city,
                 request.IsUrgent,
                 reservationDays,
+                deliveryFees,
                 previousDebt);
 
             var orderCode = GenerateOrderCode();
@@ -172,6 +184,7 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                     request.CityId,
                     request.ReservationDateFrom,
                     request.ReservationDateTo,
+                    request.DestinationZoneId,
                     pricing,
                     request.PassportImage,
                     request.HotelName,
@@ -204,7 +217,8 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                 // Vehicles at create — stay Pending (no auto-confirm)
                 foreach (var vehicleId in vehicleIds)
                 {
-                    _context.OrderVehicles.Add(Domain.Models.OrderVehicle.Create(order.OrderId, vehicleId, actor));
+                    var fee = feesByVehicle.First(f => f.VehicleId == vehicleId).Fee;
+                    _context.OrderVehicles.Add(Domain.Models.OrderVehicle.Create(order.OrderId, vehicleId, fee, actor));
                 }
 
                 foreach (var vehicle in vehicles)
@@ -251,6 +265,7 @@ namespace Application.Features.Order.Command.AdminCreateOrderCommand
                     SubCategoryName = subCategory.Name,
                     CityId = order.CityId,
                     CityName = city.Name,
+                    DestinationZoneId = order.DestinationZoneId,
                     ReservationDateFrom = order.ReservationDateFrom,
                     ReservationDateTo = order.ReservationDateTo,
                     VehiclesCount = order.VehiclesCount,

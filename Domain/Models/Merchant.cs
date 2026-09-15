@@ -7,6 +7,7 @@ namespace Domain.Models
         public int MerchantId { get; private set; }
         public int UserId { get; private set; }
         public int CityId { get; private set; }
+        public int ZoneId { get; private set; }
         public string FullName { get; private set; } = string.Empty;
         public string MobileNumber { get; private set; } = string.Empty;
         public string? Email { get; private set; }
@@ -25,6 +26,7 @@ namespace Domain.Models
 
         public ApplicationUser User { get; private set; } = null!;
         public City City { get; private set; } = null!;
+        public Zone Zone { get; private set; } = null!;
         public ICollection<Vehicle> Vehicles { get; private set; } = new List<Vehicle>();
 
         private Merchant() { }
@@ -32,6 +34,7 @@ namespace Domain.Models
         public static Merchant Create(
             int userId,
             int cityId,
+            int zoneId,
             string fullName,
             string mobileNumber,
             string invitationCode,
@@ -47,6 +50,9 @@ namespace Domain.Models
             if (cityId <= 0)
                 throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
 
+            if (zoneId <= 0)
+                throw new ArgumentException("Zone ID must be greater than zero", nameof(zoneId));
+
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new ArgumentException("Full name cannot be empty", nameof(fullName));
 
@@ -60,6 +66,7 @@ namespace Domain.Models
             {
                 UserId = userId,
                 CityId = cityId,
+                ZoneId = zoneId,
                 FullName = fullName.Trim(),
                 MobileNumber = mobileNumber.Trim(),
                 Email = email,
@@ -82,6 +89,7 @@ namespace Domain.Models
         public static Merchant CreateByAdmin(
             int userId,
             int cityId,
+            int zoneId,
             string fullName,
             string mobileNumber,
             string? email = null,
@@ -96,6 +104,9 @@ namespace Domain.Models
             if (cityId <= 0)
                 throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
 
+            if (zoneId <= 0)
+                throw new ArgumentException("Zone ID must be greater than zero", nameof(zoneId));
+
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new ArgumentException("Full name cannot be empty", nameof(fullName));
 
@@ -106,6 +117,7 @@ namespace Domain.Models
             {
                 UserId = userId,
                 CityId = cityId,
+                ZoneId = zoneId,
                 FullName = fullName.Trim(),
                 MobileNumber = mobileNumber.Trim(),
                 Email = email,
@@ -158,13 +170,17 @@ namespace Domain.Models
             string? modifiedBy = null,
             bool? cashOnReceive = null,
             bool? isActive = null,
-            int? cityId = null)
+            int? cityId = null,
+            int? zoneId = null)
         {
             if (string.IsNullOrWhiteSpace(fullName))
                 throw new ArgumentException("Full name cannot be empty", nameof(fullName));
 
             if (cityId is <= 0)
                 throw new ArgumentException("City ID must be greater than zero", nameof(cityId));
+
+            if (zoneId is <= 0)
+                throw new ArgumentException("Zone ID must be greater than zero", nameof(zoneId));
 
             FullName = fullName.Trim();
             Email = email;
@@ -175,6 +191,8 @@ namespace Domain.Models
                 IsActive = isActive.Value;
             if (cityId.HasValue)
                 CityId = cityId.Value;
+            if (zoneId.HasValue)
+                ZoneId = zoneId.Value;
             LastModifiedBy = modifiedBy;
             LastModifiedDate = DateTime.UtcNow;
         }

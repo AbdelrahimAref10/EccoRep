@@ -16,6 +16,7 @@ namespace Application.Features.Order.DTOs
         public string Type { get; set; } = string.Empty;
         public string Model { get; set; } = string.Empty;
         public decimal Price { get; set; }
+        public decimal DeliveryFee { get; set; }
         /// <summary>Top speed in km/h. Optional.</summary>
         public int? SpeedKmh { get; set; }
         /// <summary>Motor engine capacity in CC. Optional.</summary>

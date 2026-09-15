@@ -21,6 +21,7 @@ using Application.Features.Order.Query.AdminCalculateOrderTotalsQuery;
 using Application.Features.Order.Query.GetAdminAvailableVehiclesQuery;
 using Application.Features.Order.Query.GetAllOrdersQuery;
 using Application.Features.Order.Query.GetOrderByIdQuery;
+using Application.Features.Zone.Query.GetZonesByCityQuery;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -58,6 +59,17 @@ namespace Volt.Server.Controllers.Admin
         public async Task<IActionResult> GetOrderById(int id)
         {
             var result = await _mediator.Send(new GetOrderByIdQuery { OrderId = id });
+            if (result.IsFailure)
+                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
+            return Ok(result.Value);
+        }
+
+        [HttpGet("ZonesByCity")]
+        [ProducesResponseType(typeof(List<ZoneLookupDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> GetZonesByCity([FromQuery] int cityId)
+        {
+            var result = await _mediator.Send(new GetZonesByCityQuery { CityId = cityId });
             if (result.IsFailure)
                 return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
             return Ok(result.Value);

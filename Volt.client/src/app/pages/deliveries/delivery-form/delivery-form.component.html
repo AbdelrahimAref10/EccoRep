@@ -85,7 +85,9 @@
               {{ 'customers.passwordRequired' | t }}
             </p>
           </div>
+        </div>
 
+        <div class="entity-form__row">
           <div class="entity-form__field">
             <label class="entity-form__label">
               {{ 'common.city' | t }}<span class="entity-form__req">*</span>
@@ -98,6 +100,22 @@
             ></app-multi-select>
             <p *ngIf="deliveryForm.get('cityId')?.invalid && deliveryForm.get('cityId')?.touched" class="entity-form__error">
               {{ 'deliveries.cityRequired' | t }}
+            </p>
+          </div>
+
+          <div class="entity-form__field">
+            <label class="entity-form__label">
+              {{ 'common.zone' | t }}<span class="entity-form__req">*</span>
+            </label>
+            <app-multi-select
+              formControlName="zoneId"
+              [multiple]="false"
+              [options]="zoneOptions"
+              [disabled]="!deliveryForm.get('cityId')?.value"
+              [placeholder]="'common.selectZone' | t"
+            ></app-multi-select>
+            <p *ngIf="deliveryForm.get('zoneId')?.invalid && deliveryForm.get('zoneId')?.touched" class="entity-form__error">
+              {{ 'common.zoneRequired' | t }}
             </p>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { CityClient, CityDto, AddCityCommand, UpdateCityCommand, TieredDiscountDto } from '../../../core/services/clientAPI';
+import { CityClient, CityDto, AddCityCommand, UpdateCityCommand, TieredDiscountDto, ZoneGroupLookupDto } from '../../../core/services/clientAPI';
 import { LocaleService } from '../../../core/services/locale.service';
 import { TranslatePipe } from '../../../shared/pipes/translate.pipe';
 
@@ -22,6 +22,7 @@ export class CityFormComponent implements OnInit {
   isLoading = false;
   isSaving = false;
   errorMessage = '';
+  zoneGroups: ZoneGroupLookupDto[] = [];
 
   constructor(
     private cityClient: CityClient,
@@ -32,7 +33,7 @@ export class CityFormComponent implements OnInit {
     this.cityForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       description: [null],
-      deliveryFees: [0, [Validators.min(0)]],
+      zoneGroupId: [null, [Validators.required]],
       urgentDelivery: [0, [Validators.min(0)]],
       serviceFees: [0, [Validators.min(0)]],
       cancellationFees: [0, [Validators.min(0), Validators.max(100)]],
@@ -41,6 +42,15 @@ export class CityFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.cityClient.getZoneGroups().subscribe({
+      next: (groups) => {
+        this.zoneGroups = groups || [];
+      },
+      error: () => {
+        this.zoneGroups = [];
+      }
+    });
+
     this.route.paramMap.subscribe(params => {
       const id = params.get('id');
       if (id && id !== 'new') {
@@ -56,6 +66,16 @@ export class CityFormComponent implements OnInit {
 
   get tieredDiscountsFormArray(): FormArray {
     return this.cityForm.get('tieredDiscounts') as FormArray;
+  }
+
+  isZoneGroupSelected(zoneGroupId: number): boolean {
+    return Number(this.cityForm.get('zoneGroupId')?.value) === Number(zoneGroupId);
+  }
+
+  selectZoneGroup(zoneGroupId: number): void {
+    this.cityForm.patchValue({ zoneGroupId });
+    this.cityForm.get('zoneGroupId')?.markAsTouched();
+    this.cityForm.get('zoneGroupId')?.markAsDirty();
   }
 
   getTieredDiscountFormGroup(index: number): FormGroup {
@@ -129,7 +149,7 @@ export class CityFormComponent implements OnInit {
         this.cityForm.patchValue({
           name: city.name,
           description: city.description ?? null,
-          deliveryFees: city.deliveryFees ?? 0,
+          zoneGroupId: city.zoneGroupId ?? null,
           urgentDelivery: city.urgentDelivery ?? 0,
           serviceFees: city.serviceFees ?? 0,
           cancellationFees: city.cancellationFees ?? 0
@@ -156,7 +176,7 @@ export class CityFormComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (this.cityForm.get('name')?.invalid) {
+    if (this.cityForm.get('name')?.invalid || this.cityForm.get('zoneGroupId')?.invalid) {
       this.cityForm.markAllAsTouched();
       return;
     }
@@ -213,7 +233,7 @@ export class CityFormComponent implements OnInit {
       command.cityId = this.cityId;
       command.name = formValue.name;
       command.description = formValue.description || null;
-      command.deliveryFees = formValue.deliveryFees ?? null;
+      command.zoneGroupId = formValue.zoneGroupId ? Number(formValue.zoneGroupId) : null;
       command.urgentDelivery = formValue.urgentDelivery ?? null;
       command.serviceFees = formValue.serviceFees ?? null;
       command.cancellationFees = formValue.cancellationFees ?? null;
@@ -233,7 +253,7 @@ export class CityFormComponent implements OnInit {
       const command = new AddCityCommand();
       command.name = formValue.name;
       command.description = formValue.description || null;
-      command.deliveryFees = formValue.deliveryFees ?? null;
+      command.zoneGroupId = formValue.zoneGroupId ? Number(formValue.zoneGroupId) : null;
       command.urgentDelivery = formValue.urgentDelivery ?? null;
       command.serviceFees = formValue.serviceFees ?? null;
       command.cancellationFees = formValue.cancellationFees ?? null;

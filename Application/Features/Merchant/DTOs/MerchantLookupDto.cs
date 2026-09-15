@@ -7,6 +7,7 @@ namespace Application.Features.Merchant.DTOs
     {
         public int MerchantId { get; set; }
         public int CityId { get; set; }
+        public int ZoneId { get; set; }
         public string FullName { get; set; } = string.Empty;
         public string MobileNumber { get; set; } = string.Empty;
         public bool CashOnReceive { get; set; }

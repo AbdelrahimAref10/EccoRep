@@ -1,3 +1,4 @@
+using Application.Features.Order.Common;
 using CSharpFunctionalExtensions;
 using Domain.Common;
 using Domain.Models;
@@ -16,6 +17,7 @@ namespace Application.Features.Merchant.Command.AdminUpdateMerchantCommand
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public int CityId { get; set; }
+        public int ZoneId { get; set; }
         public string? PersonalImage { get; set; }
         public bool IsActive { get; set; } = true;
         public bool CashOnReceive { get; set; }
@@ -63,6 +65,12 @@ namespace Application.Features.Merchant.Command.AdminUpdateMerchantCommand
                 .AnyAsync(c => c.CityId == request.CityId && c.IsActive, cancellationToken);
             if (!cityExists)
                 return Result.Failure<bool>("Invalid or inactive city");
+
+            if (request.ZoneId <= 0)
+                return Result.Failure<bool>("Zone is required");
+
+            if (!await OrderZoneFeeHelper.ZoneBelongsToCityAsync(_context, request.CityId, request.ZoneId, cancellationToken))
+                return Result.Failure<bool>("Zone must belong to the selected city group");
 
             var merchant = await _context.Merchants
                 .AsTracking()
@@ -112,7 +120,8 @@ namespace Application.Features.Merchant.Command.AdminUpdateMerchantCommand
                 modifiedBy,
                 cashOnReceive: request.CashOnReceive,
                 isActive: request.IsActive,
-                cityId: request.CityId);
+                cityId: request.CityId,
+                zoneId: request.ZoneId);
 
             if (!string.Equals(user.UserName, userName, StringComparison.Ordinal))
             {
