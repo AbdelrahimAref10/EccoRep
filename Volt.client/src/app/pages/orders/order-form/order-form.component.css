@@ -1041,10 +1041,23 @@
   font-size: 0.72rem;
   color: var(--volt-text-muted);
   font-variant-numeric: tabular-nums;
+  display: block;
 }
 
 .order-review__vehicle-chip-info app-vehicle-specs {
   display: block;
+}
+
+.order-review__merchant {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--volt-text-secondary);
+}
+
+.order-review__meta {
+  font-size: 0.7rem !important;
+  font-weight: 650;
+  color: var(--volt-text-muted);
 }
 
 .order-review__vehicle-rate {
@@ -1068,6 +1081,13 @@
   font-size: 0.65rem;
   font-weight: 650;
   color: var(--volt-text-muted);
+}
+
+.order-review__delivery-fee {
+  margin-top: 0.25rem;
+  font-size: 0.7rem !important;
+  font-weight: 750 !important;
+  color: var(--volt-text-secondary) !important;
 }
 
 .order-review__lines {

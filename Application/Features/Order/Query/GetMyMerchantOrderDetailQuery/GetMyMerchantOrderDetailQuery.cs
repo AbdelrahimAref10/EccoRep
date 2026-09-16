@@ -122,6 +122,7 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
 
             var journals = await _context.OrderJournals
                 .AsNoTracking()
+                .Include(j => j.Vehicle)
                 .Where(j =>
                     j.OrderId == request.OrderId &&
                     j.PartyType == LedgerPartyType.Merchant &&
@@ -203,6 +204,7 @@ namespace Application.Features.Order.Query.GetMyMerchantOrderDetailQuery
                     OrderJournalId = j.OrderJournalId,
                     OrderId = j.OrderId,
                     VehicleId = j.VehicleId,
+                    VehicleCode = j.Vehicle?.VehicleCode,
                     PartyType = j.PartyType,
                     PartyId = j.PartyId,
                     Direction = j.Direction,

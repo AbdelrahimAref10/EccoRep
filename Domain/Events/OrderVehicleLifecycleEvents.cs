@@ -22,7 +22,8 @@ namespace Domain.Events
 
     /// <summary>
     /// Delivery received the vehicle from the merchant.
-    /// If the merchant is CashOnReceive, <see cref="Lines"/> contains the merchant debit.
+    /// If the merchant is CashOnReceive, <see cref="Lines"/> contains the merchant debit
+    /// and a matching delivery credit (cash the courier paid the merchant).
     /// </summary>
     public sealed class OrderVehicleReceivedFromOwnerEvent : IDomainEvent
     {

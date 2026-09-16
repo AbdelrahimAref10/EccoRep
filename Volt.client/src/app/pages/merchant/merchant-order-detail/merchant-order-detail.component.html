@@ -149,7 +149,7 @@
               </li>
             </ol>
             <p class="mod__fail" *ngIf="v.deliveryFailed">
-              {{ 'orders.vehicleNotReceived' | t }}
+              {{ 'orders.vehicleCancelled' | t }}
               <span *ngIf="v.deliveryFailureFaultParty"> · {{ getFaultPartyLabel(v.deliveryFailureFaultParty) }}</span>
               <span *ngIf="v.deliveryFailureReason"> — {{ v.deliveryFailureReason }}</span>
             </p>

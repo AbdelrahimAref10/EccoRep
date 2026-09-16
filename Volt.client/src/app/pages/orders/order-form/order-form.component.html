@@ -1051,6 +1051,13 @@
               <div class="order-review__vehicle-chip-info">
                 <strong>{{ v.name }}</strong>
                 <span>#{{ v.vehicleCode }}</span>
+                <span class="order-review__merchant">{{ v.merchantName }}</span>
+                <span class="order-review__meta" *ngIf="v.merchantZoneName">
+                  {{ 'orders.merchantZone' | t }}: {{ v.merchantZoneName }}
+                </span>
+                <span class="order-review__meta">
+                  {{ v.merchantCashOnReceive ? ('orders.cashOnReceiveYes' | t) : ('orders.cashOnReceiveNo' | t) }}
+                </span>
                 <app-vehicle-specs
                   [compact]="true"
                   [showPrice]="false"
@@ -1064,6 +1071,9 @@
               <div class="order-review__vehicle-rate">
                 <strong>{{ v.price | number:'1.2-2' }}</strong>
                 <span>{{ 'common.currency' | t }} / {{ 'vehicles.perDay' | t }}</span>
+                <span class="order-review__delivery-fee">
+                  {{ 'orders.deliveryFees' | t }}: {{ v.deliveryFees | number:'1.2-2' }} {{ 'common.currency' | t }}
+                </span>
               </div>
             </article>
           </div>

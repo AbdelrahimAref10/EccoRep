@@ -67,7 +67,12 @@ namespace Application.Features.Order.Command.RejectOrderCommand
             if (!order.CanCancel())
             {
                 return Result.Failure<bool>(
-                    $"Cannot reject order in {order.OrderState} state. Cancel/reject stops once any vehicle is received from the merchant.");
+                    "Cannot reject the order after a vehicle has been received from the merchant.");
+            }
+
+            if (!_userSession.Roles.Contains(AppRoleNames.SuperAdmin))
+            {
+                return Result.Failure<bool>("Only admin can reject an order without a cancellation fee");
             }
 
             // Prior debt attached but not yet paid → release back to Pending

@@ -5064,60 +5064,6 @@
         }
       }
     },
-    "/api/AdminOrder/{orderId}/NotDelivered": {
-      "post": {
-        "tags": [
-          "AdminOrder"
-        ],
-        "operationId": "AdminOrder_MarkOrderNotDelivered",
-        "parameters": [
-          {
-            "name": "orderId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            },
-            "x-position": 1
-          }
-        ],
-        "requestBody": {
-          "x-name": "command",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/MarkOrderNotDeliveredCommand"
-              }
-            }
-          },
-          "required": true,
-          "x-position": 2
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "boolean"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetail"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/AdminOrder/{orderId}/RejectReceipt": {
       "post": {
         "tags": [
@@ -10623,6 +10569,10 @@
             "format": "int32",
             "nullable": true
           },
+          "vehicleCode": {
+            "type": "string",
+            "nullable": true
+          },
           "partyType": {
             "$ref": "#/components/schemas/LedgerPartyType"
           },
@@ -13090,6 +13040,16 @@
             "type": "number",
             "format": "decimal"
           },
+          "merchantCashOnReceive": {
+            "type": "boolean"
+          },
+          "merchantZoneId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "merchantZoneName": {
+            "type": "string"
+          },
           "speedKmh": {
             "type": "integer",
             "format": "int32",
@@ -13688,6 +13648,16 @@
           "deliveryFees": {
             "type": "number",
             "format": "decimal"
+          },
+          "merchantCashOnReceive": {
+            "type": "boolean"
+          },
+          "merchantZoneId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "merchantZoneName": {
+            "type": "string"
           }
         }
       },
@@ -14050,22 +14020,6 @@
             "format": "int32"
           },
           "vehicleId": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "reason": {
-            "type": "string"
-          },
-          "faultParty": {
-            "$ref": "#/components/schemas/FaultParty"
-          }
-        }
-      },
-      "MarkOrderNotDeliveredCommand": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "orderId": {
             "type": "integer",
             "format": "int32"
           },

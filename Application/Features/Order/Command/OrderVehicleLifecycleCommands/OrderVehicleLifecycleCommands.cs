@@ -414,112 +414,59 @@ namespace Application.Features.Order.Command.OrderVehicleLifecycleCommands
             var order = await _context.Orders
                 .AsTracking()
                 .Include(o => o.OrderVehicles)
-                .Include(o => o.OrderPayments)
+                    .ThenInclude(ov => ov.Vehicle)
+                .Include(o => o.ReservedVehiclesPerDays)
                 .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
 
             if (order == null)
                 return Result.Failure<bool>($"Order {request.OrderId} not found");
 
-            var snapshotResult = await VehicleSettlementSnapshotLoader.LoadAsync(
-                _context, request.OrderId, request.VehicleId, cancellationToken);
-            if (snapshotResult.IsFailure)
-                return Result.Failure<bool>(snapshotResult.Error);
-
             var actor = _userSession.UserName ?? "System";
             try
             {
-                order.MarkVehicleNotReceivedByCustomer(snapshotResult.Value, request.Reason, request.FaultParty, actor);
+                order.CancelVehicleNotReceived(request.VehicleId, actor);
             }
             catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
             {
                 return Result.Failure<bool>(ex.Message);
             }
 
-            if (order.PaymentMethodId == (int)PaymentMethod.Cash
-                && order.OrderState == OrderState.CustomerReceived)
+            var reservations = order.ReservedVehiclesPerDays
+                .Where(r => r.VehicleId == request.VehicleId)
+                .ToList();
+            foreach (var reservation in reservations)
+                reservation.Cancel(actor);
+
+            var link = order.OrderVehicles.FirstOrDefault(ov => ov.VehicleId == request.VehicleId);
+            if (link?.Vehicle != null)
             {
-                var orderPayment = order.OrderPayments.FirstOrDefault();
-                if (orderPayment != null && orderPayment.State == PaymentState.Pending)
-                    orderPayment.MarkAsPaid(actor);
+                var stillBookedElsewhere = await _context.ReservedVehiclesPerDays
+                    .AsNoTracking()
+                    .AnyAsync(rv =>
+                        rv.VehicleId == request.VehicleId
+                        && rv.OrderId != request.OrderId
+                        && rv.State == ReservedVehicleState.StillBooked
+                        && rv.Order.OrderState != OrderState.Completed
+                        && rv.Order.OrderState != OrderState.Cancelled,
+                        cancellationToken);
+
+                if (!stillBookedElsewhere)
+                    link.Vehicle.UpdateStatus(VehicleStatus.Available, actor);
+            }
+
+            if (order.OrderState == OrderState.Cancelled)
+            {
+                var leftover = order.ReservedVehiclesPerDays.Where(r => r.State == ReservedVehicleState.StillBooked).ToList();
+                foreach (var reservation in leftover)
+                    reservation.Cancel(actor);
             }
 
             await _context.SaveChangesAsync(cancellationToken);
 
             await _realtime.NotifyAsync(
                 request.OrderId,
-                "Customer did not receive vehicle",
-                $"Vehicle {request.VehicleId} was marked as not received by customer.",
-                NotificationType.OrderUpdated,
-                cancellationToken: cancellationToken);
-
-            return Result.Success(true);
-        }
-    }
-
-    public record MarkOrderNotDeliveredCommand : IRequest<Result<bool>>
-    {
-        public int OrderId { get; set; }
-        public string Reason { get; set; } = string.Empty;
-        public FaultParty FaultParty { get; set; }
-    }
-
-    public class MarkOrderNotDeliveredCommandHandler
-        : IRequestHandler<MarkOrderNotDeliveredCommand, Result<bool>>
-    {
-        private readonly DatabaseContext _context;
-        private readonly IUserSession _userSession;
-        private readonly IOrderRealtimeNotifier _realtime;
-
-        public MarkOrderNotDeliveredCommandHandler(
-            DatabaseContext context,
-            IUserSession userSession,
-            IOrderRealtimeNotifier realtime)
-        {
-            _context = context;
-            _userSession = userSession;
-            _realtime = realtime;
-        }
-
-        public async Task<Result<bool>> Handle(MarkOrderNotDeliveredCommand request, CancellationToken cancellationToken)
-        {
-            var order = await _context.Orders
-                .AsTracking()
-                .Include(o => o.OrderVehicles)
-                .Include(o => o.OrderPayments)
-                .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
-
-            if (order == null)
-                return Result.Failure<bool>($"Order {request.OrderId} not found");
-
-            var snapshotsResult = await VehicleSettlementSnapshotLoader.LoadAllAsync(
-                _context, request.OrderId, cancellationToken);
-            if (snapshotsResult.IsFailure)
-                return Result.Failure<bool>(snapshotsResult.Error);
-
-            var actor = _userSession.UserName ?? "System";
-            try
-            {
-                order.MarkOrderNotDelivered(snapshotsResult.Value, request.Reason, request.FaultParty, actor);
-            }
-            catch (Exception ex) when (ex is InvalidOperationException or ArgumentException)
-            {
-                return Result.Failure<bool>(ex.Message);
-            }
-
-            if (order.PaymentMethodId == (int)PaymentMethod.Cash
-                && order.OrderState == OrderState.CustomerReceived)
-            {
-                var orderPayment = order.OrderPayments.FirstOrDefault();
-                if (orderPayment != null && orderPayment.State == PaymentState.Pending)
-                    orderPayment.MarkAsPaid(actor);
-            }
-
-            await _context.SaveChangesAsync(cancellationToken);
-
-            await _realtime.NotifyAsync(
-                request.OrderId,
-                "Order not delivered",
-                $"Order {request.OrderId} was marked as not delivered.",
+                "Vehicle cancelled",
+                $"Vehicle {request.VehicleId} was cancelled on the order.",
                 NotificationType.OrderUpdated,
                 cancellationToken: cancellationToken);
 

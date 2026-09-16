@@ -42,5 +42,8 @@ namespace Application.Features.Order.DTOs
         /// <summary>Motor engine capacity in CC. Optional.</summary>
         public int? EngineCapacityCc { get; set; }
         public decimal DeliveryFees { get; set; }
+        public bool MerchantCashOnReceive { get; set; }
+        public int MerchantZoneId { get; set; }
+        public string MerchantZoneName { get; set; } = string.Empty;
     }
 }

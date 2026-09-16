@@ -1,4 +1,4 @@
-/* Order Detail — ops console redesign */
+/* Order Detail — formal operations layout */
 
 :host {
   display: block;
@@ -7,7 +7,7 @@
 .od {
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1.25rem;
   color: var(--volt-text-primary);
   font-family: var(--volt-font);
 }
@@ -38,14 +38,12 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1.15rem 1.25rem;
-  border-radius: calc(var(--volt-radius) + 0.15rem);
-  border: 1px solid color-mix(in srgb, var(--volt-accent) 18%, var(--volt-border));
-  background:
-    radial-gradient(90% 120% at 0% 0%, color-mix(in srgb, var(--volt-accent) 16%, transparent), transparent 55%),
-    linear-gradient(180deg, var(--volt-surface), var(--volt-bg-elevated));
-  box-shadow: var(--volt-shadow);
+  gap: 1.25rem;
+  padding: 1.15rem 0 1.25rem;
+  border-bottom: 1px solid var(--volt-border);
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 .od__hero-main {
@@ -59,21 +57,20 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
   flex-shrink: 0;
-  border-radius: 0.8rem;
+  border-radius: 0.35rem;
   border: 1px solid var(--volt-border);
   background: var(--volt-surface);
   color: var(--volt-text-secondary);
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, transform 0.12s ease;
+  transition: border-color 0.15s ease, color 0.15s ease;
 }
 
 .od__back:hover {
-  border-color: var(--volt-accent-muted);
+  border-color: var(--volt-text-muted);
   color: var(--volt-text-primary);
-  transform: translateY(-1px);
 }
 
 .od__back svg {
@@ -82,12 +79,12 @@
 }
 
 .od__eyebrow {
-  margin: 0 0 0.25rem;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  margin: 0 0 0.2rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--volt-accent);
+  color: var(--volt-text-muted);
 }
 
 .od__title-row {
@@ -99,9 +96,9 @@
 
 .od__code {
   margin: 0;
-  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
-  font-weight: 850;
-  letter-spacing: -0.03em;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -119,7 +116,9 @@
 
 .od__hero-actions {
   display: flex;
-  gap: 0.55rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
@@ -179,18 +178,17 @@
 .od__kpi {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 1rem 1.05rem;
-  border-radius: 1.1rem;
+  gap: 0.2rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.35rem;
   border: 1px solid var(--volt-border);
   background: var(--volt-surface);
-  box-shadow: 0 8px 22px rgba(26, 43, 42, 0.04);
+  box-shadow: none;
 }
 
 .od__kpi--accent {
-  border-color: color-mix(in srgb, var(--volt-accent) 30%, var(--volt-border));
-  background:
-    linear-gradient(145deg, color-mix(in srgb, var(--volt-accent) 14%, var(--volt-surface)), var(--volt-surface));
+  border-color: var(--volt-border);
+  background: var(--volt-surface);
 }
 
 .od__kpi-label {
@@ -228,10 +226,11 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.95rem 1.1rem;
-  border-radius: 1.15rem;
-  border: 1px solid var(--volt-border);
-  background: var(--volt-surface);
+  padding: 0.75rem 0;
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid var(--volt-border);
+  background: transparent;
   overflow-x: auto;
 }
 
@@ -281,9 +280,13 @@
 
 .od__pipe-step--done .od__pipe-dot,
 .od__pipe-step--active .od__pipe-dot {
-  border-color: transparent;
-  background: linear-gradient(135deg, var(--volt-accent), var(--volt-accent-strong));
-  color: #fff;
+  border-color: var(--volt-text-primary);
+  background: var(--volt-text-primary);
+  color: var(--volt-surface);
+}
+
+.od__pipe-step--active .od__pipe-dot {
+  box-shadow: none;
 }
 
 .od__pipe-step--done .od__pipe-label,
@@ -291,12 +294,8 @@
   color: var(--volt-text-primary);
 }
 
-.od__pipe-step--active .od__pipe-dot {
-  box-shadow: 0 0 0 4px var(--volt-accent-soft);
-}
-
 .od__pipe-line--done {
-  background: var(--volt-accent);
+  background: var(--volt-text-primary);
 }
 
 /* Alerts */
@@ -330,18 +329,67 @@
 }
 
 /* Layout */
-.od__layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 19.5rem;
-  gap: 1rem;
-  align-items: start;
-}
-
 .od__main {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   min-width: 0;
+}
+
+.od__banner {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-radius: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--volt-accent) 22%, var(--volt-border));
+  background: color-mix(in srgb, var(--volt-accent) 8%, var(--volt-surface));
+  color: var(--volt-text-secondary);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.od__facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.od__fact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.35rem;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-surface);
+}
+
+.od__fact span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--volt-text-muted);
+}
+
+.od__fact strong {
+  font-size: 0.92rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.od__fact small {
+  font-size: 0.74rem;
+  color: var(--volt-text-secondary);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .od__grid-2 {
@@ -350,18 +398,13 @@
   gap: 1rem;
 }
 
-.od__aside {
-  position: sticky;
-  top: 1rem;
-}
-
 /* Cards */
 .od__card {
-  padding: 1.15rem 1.2rem 1.2rem;
-  border-radius: 1.2rem;
+  padding: 1.1rem 1.15rem 1.15rem;
+  border-radius: 0.4rem;
   border: 1px solid var(--volt-border);
   background: var(--volt-surface);
-  box-shadow: 0 10px 28px rgba(26, 43, 42, 0.04);
+  box-shadow: none;
 }
 
 .od__card--aside {
@@ -383,11 +426,11 @@
 
 .od__card-kicker {
   margin: 0 0 0.2rem;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--volt-accent);
+  color: var(--volt-text-muted);
 }
 
 .od__card-title {
@@ -495,6 +538,20 @@
   letter-spacing: -0.02em;
 }
 
+.od__merchant-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.od__merchant-zone {
+  font-size: 0.74rem;
+  font-weight: 650;
+  color: var(--volt-text-secondary);
+}
+
 .od__merchant-count {
   flex-shrink: 0;
   font-size: 0.74rem;
@@ -502,25 +559,39 @@
   color: var(--volt-text-secondary);
 }
 
-.od__invoice {
+.od__tickets {
   display: flex;
   flex-direction: column;
+  gap: 0.7rem;
+  padding: 0.75rem;
 }
 
-.od__invoice-item {
+.od__ticket {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.7rem 0.95rem 0.8rem;
-  border-bottom: 1px dashed var(--volt-border);
+  gap: 0.7rem;
+  padding: 0.9rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--volt-border);
+  background: var(--volt-surface);
 }
 
-.od__invoice-item:last-child {
-  border-bottom: none;
+.od__ticket--assigned {
+  border-color: color-mix(in srgb, #16a34a 42%, var(--volt-border));
+  border-inline-start-width: 4px;
+  border-inline-start-color: #16a34a;
 }
 
-.od__invoice-item--declined {
-  background: rgba(239, 68, 68, 0.06);
+.od__ticket--declined {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: color-mix(in srgb, #ef4444 28%, var(--volt-border));
+}
+
+.od__ticket-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 1fr) auto;
+  gap: 0.85rem;
+  align-items: stretch;
 }
 
 .od__invoice-main {
@@ -528,13 +599,14 @@
   align-items: center;
   gap: 0.75rem;
   min-width: 0;
+  flex: 1;
 }
 
 .od__invoice-thumb {
   flex-shrink: 0;
-  width: 3rem;
-  height: 3rem;
-  border-radius: 0.65rem;
+  width: 4.25rem;
+  height: 4.25rem;
+  border-radius: 0.8rem;
   overflow: hidden;
   border: 1px solid var(--volt-border);
   background: #fff;
@@ -545,7 +617,7 @@
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .od__invoice-fallback {
@@ -617,6 +689,18 @@
   color: var(--volt-text-muted);
 }
 
+.od__invoice-delivery {
+  margin-top: 0.28rem;
+  font-size: 0.7rem !important;
+  font-weight: 700;
+  color: var(--volt-text-secondary) !important;
+}
+
+.od__invoice-delivery b {
+  font-weight: 800;
+  color: var(--volt-text-primary);
+}
+
 .od__vehicle-badge {
   display: inline-flex;
   align-items: center;
@@ -637,16 +721,69 @@
 .od__vehicle-action {
   margin-top: 0;
   justify-content: center;
+  white-space: nowrap;
 }
 
 .od__vehicle-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  flex-shrink: 0;
+  min-width: 11.5rem;
   gap: 0.35rem;
 }
 
 .od__vehicle-actions .od__vehicle-action {
-  width: auto;
+  width: 100%;
+}
+
+.od__courier {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.65rem;
+  min-width: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.85rem;
+  border: 1px dashed var(--volt-border);
+  background: var(--volt-bg);
+}
+
+.od__courier--on {
+  border-style: solid;
+  border-color: color-mix(in srgb, #16a34a 38%, var(--volt-border));
+  background: color-mix(in srgb, #16a34a 8%, var(--volt-surface));
+}
+
+.od__courier--off {
+  background: color-mix(in srgb, var(--volt-accent) 6%, var(--volt-bg));
+}
+
+.od__courier .od__btn {
+  align-self: flex-start;
+}
+
+.od__courier-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  min-width: 0;
+}
+
+.od__courier-kicker {
+  margin: 0;
+  width: 100%;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--volt-text-muted);
+}
+
+.od__courier-copy strong {
+  font-size: 0.92rem;
+  font-weight: 800;
 }
 
 .od__cycle {
@@ -816,8 +953,12 @@
 
 .od-proof__drop {
   position: relative;
+  width: min(16rem, 100%);
+  margin-inline: auto;
+  aspect-ratio: 1 / 1;
   border-radius: 1.05rem;
   overflow: hidden;
+  background: var(--volt-bg);
 }
 
 .od-proof__input {
@@ -834,7 +975,9 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  min-height: 11.5rem;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   padding: 1.25rem 1rem;
   border: 1.5px dashed color-mix(in srgb, var(--volt-accent) 38%, var(--volt-border));
   border-radius: 1.05rem;
@@ -881,7 +1024,9 @@
 }
 
 .od-proof__preview {
-  position: relative;
+  position: absolute;
+  inset: 0;
+  display: block;
   border-radius: 1.05rem;
   overflow: hidden;
   border: 1px solid var(--volt-border);
@@ -891,11 +1036,16 @@
 .od-proof__preview img {
   display: block;
   width: 100%;
-  height: 13.5rem;
+  height: 100%;
   object-fit: cover;
+  object-position: center;
 }
 
 .od-proof__preview-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1155,15 +1305,15 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  min-height: 2.45rem;
-  padding: 0 1rem;
-  border-radius: 0.8rem;
+  min-height: 2.3rem;
+  padding: 0 0.9rem;
+  border-radius: 0.3rem;
   border: 1px solid transparent;
   font: inherit;
-  font-size: 0.84rem;
-  font-weight: 750;
+  font-size: 0.8rem;
+  font-weight: 650;
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 
 .od__btn svg {
@@ -1189,19 +1339,17 @@
 }
 
 .od__btn--ghost:hover:not(:disabled) {
-  border-color: var(--volt-accent-muted);
-  transform: translateY(-1px);
+  border-color: var(--volt-text-muted);
 }
 
 .od__btn--primary {
-  background: linear-gradient(135deg, var(--volt-accent), var(--volt-accent-strong));
-  color: #fff;
-  box-shadow: 0 10px 22px rgba(20, 176, 162, 0.25);
+  background: var(--volt-text-primary);
+  color: var(--volt-surface);
+  box-shadow: none;
 }
 
 .od__btn--primary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 14px 26px rgba(20, 176, 162, 0.32);
+  opacity: 0.9;
 }
 
 .od__btn--success {
@@ -1870,16 +2018,17 @@
 
 /* Responsive */
 @media (max-width: 1100px) {
-  .od__layout {
+  .od__kpis,
+  .od__facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .od__ticket-grid {
     grid-template-columns: 1fr;
   }
 
-  .od__aside {
-    position: static;
-  }
-
-  .od__kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .od__hero-actions {
+    justify-content: flex-start;
   }
 }
 
@@ -1889,8 +2038,29 @@
   }
 
   .od__grid-2,
-  .od__kpis {
+  .od__kpis,
+  .od__facts {
     grid-template-columns: 1fr;
+  }
+
+  .od__ticket-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .od__vehicle-actions {
+    width: 100%;
+    min-width: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .od__vehicle-actions .od__vehicle-action {
+    width: auto;
+    flex: 1 1 auto;
+  }
+
+  .od__courier .od__btn {
+    width: 100%;
   }
 
   .od__pipeline {

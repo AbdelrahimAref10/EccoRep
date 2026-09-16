@@ -89,17 +89,6 @@ export function canMarkVehicleNotReceived(
   return orderState === OrderState.OnWay;
 }
 
-export function canMarkOrderNotDelivered(
-  orderState: OrderState,
-  vehicles: VehicleCycleFlags[],
-  orderDeliveryFailed: boolean,
-  blocked: boolean
-): boolean {
-  if (blocked || orderDeliveryFailed || !vehicles.length) return false;
-  if (orderState !== OrderState.DeliveryAssigned && orderState !== OrderState.OnWay) return false;
-  return vehicles.every(v => v.receivedFromOwner);
-}
-
 export function hasAnyReceivedFromOwner(vehicles: VehicleCycleFlags[]): boolean {
   return vehicles.some(v => v.receivedFromOwner);
 }

@@ -37,6 +37,7 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                 .Include(o => o.OrderVehicles)
                     .ThenInclude(ov => ov.Vehicle)
                         .ThenInclude(v => v.Merchant)
+                            .ThenInclude(m => m.Zone)
                 .Include(o => o.OrderPayments)
                 .Include(o => o.ReservedVehiclesPerDays)
                 .FirstOrDefaultAsync(o => o.OrderId == request.OrderId, cancellationToken);
@@ -88,6 +89,7 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
 
             var journals = await _context.OrderJournals
                 .AsNoTracking()
+                .Include(j => j.Vehicle)
                 .Where(j => j.OrderId == request.OrderId)
                 .OrderBy(j => j.CreatedDate)
                 .ThenBy(j => j.OrderJournalId)
@@ -144,6 +146,9 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                     Model = ov.Vehicle.Model,
                     Price = ov.Vehicle.Price,
                     DeliveryFee = ov.DeliveryFee,
+                    MerchantCashOnReceive = ov.Vehicle.Merchant?.CashOnReceive ?? false,
+                    MerchantZoneId = ov.Vehicle.Merchant?.ZoneId ?? 0,
+                    MerchantZoneName = ov.Vehicle.Merchant?.Zone?.Name ?? string.Empty,
                     SpeedKmh = ov.Vehicle.SpeedKmh,
                     EngineCapacityCc = ov.Vehicle.EngineCapacityCc,
                     ReceivedFromOwner = ov.ReceivedFromOwner,
@@ -257,6 +262,7 @@ namespace Application.Features.Order.Query.GetOrderByIdQuery
                     OrderJournalId = j.OrderJournalId,
                     OrderId = j.OrderId,
                     VehicleId = j.VehicleId,
+                    VehicleCode = j.Vehicle?.VehicleCode,
                     PartyType = j.PartyType,
                     PartyId = j.PartyId,
                     Direction = j.Direction,

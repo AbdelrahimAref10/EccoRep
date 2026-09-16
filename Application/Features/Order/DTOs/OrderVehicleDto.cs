@@ -17,6 +17,9 @@ namespace Application.Features.Order.DTOs
         public string Model { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public decimal DeliveryFee { get; set; }
+        public bool MerchantCashOnReceive { get; set; }
+        public int MerchantZoneId { get; set; }
+        public string MerchantZoneName { get; set; } = string.Empty;
         /// <summary>Top speed in km/h. Optional.</summary>
         public int? SpeedKmh { get; set; }
         /// <summary>Motor engine capacity in CC. Optional.</summary>

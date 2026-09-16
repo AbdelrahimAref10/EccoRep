@@ -17,7 +17,6 @@ import {
   JournalDirection,
   LedgerPartyType,
   MarkMerchantHandoverToDeliveryCommand,
-  MarkOrderNotDeliveredCommand,
   MarkVehicleDeliveredToCustomerCommand,
   MarkVehicleDeliveredToOwnerCommand,
   MarkVehicleNotReceivedByCustomerCommand,
@@ -53,7 +52,6 @@ import {
   VehicleLifecycleStep,
   canMarkDeliveredToCustomer,
   canMarkDeliveredToOwner,
-  canMarkOrderNotDelivered,
   canMarkReceivedFromCustomer,
   canMarkReceivedFromOwner,
   canMarkVehicleNotReceived,
@@ -116,8 +114,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   // Assign delivery
   showDeliveryModal = false;
+  assigningVehicleId: number | null = null;
+  selectedAssignDeliveryId: number | null = null;
   activeDeliveries: DeliveryLookupDto[] = [];
-  deliveryAssignments: Record<number, number | null> = {};
   isLoadingDeliveries = false;
 
   // Merchant handover
@@ -168,8 +167,20 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     }));
   }
 
-  get vehiclesByMerchant(): Array<{ merchantId: number; merchantName: string; vehicles: OrderVehicleDto[] }> {
-    const groups = new Map<number, { merchantId: number; merchantName: string; vehicles: OrderVehicleDto[] }>();
+  get vehiclesByMerchant(): Array<{
+    merchantId: number;
+    merchantName: string;
+    cashOnReceive: boolean;
+    zoneName: string;
+    vehicles: OrderVehicleDto[];
+  }> {
+    const groups = new Map<number, {
+      merchantId: number;
+      merchantName: string;
+      cashOnReceive: boolean;
+      zoneName: string;
+      vehicles: OrderVehicleDto[];
+    }>();
     for (const vehicle of this.order?.orderVehicles || []) {
       const merchantId = vehicle.merchantId || 0;
       const existing = groups.get(merchantId);
@@ -180,6 +191,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       groups.set(merchantId, {
         merchantId,
         merchantName: (vehicle.merchantName || '').trim() || this.localeService.translate('orders.unassignedMerchant'),
+        cashOnReceive: !!vehicle.merchantCashOnReceive,
+        zoneName: (vehicle.merchantZoneName || '').trim(),
         vehicles: [vehicle]
       });
     }
@@ -195,12 +208,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   showVehicleNotReceivedModal = false;
   failVehicle: OrderVehicleDto | null = null;
-  failReason = '';
-  failFaultParty: FaultParty = FaultParty.Merchant;
-
-  showOrderNotDeliveredModal = false;
-  orderFailReason = '';
-  orderFailFaultParty: FaultParty = FaultParty.Merchant;
 
   // Cancel / refund dialogs
   showCancelDialog = false;
@@ -564,60 +571,85 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  deliveryFor(vehicleId: number): DeliveryMenOrderDto | undefined {
+    return (this.order?.deliveryMenOrders || []).find(d => d.vehicleId === vehicleId);
+  }
+
+  canAssignVehicle(vehicle: OrderVehicleDto): boolean {
+    if (!this.order || this.isCancelled) return false;
+    if (vehicle.merchantResponseStatus === MerchantVehicleResponseStatus.Declined) return false;
+    const state = this.order.orderState;
+    if (state !== OrderState.Confirmed && state !== OrderState.DeliveryAssigned) return false;
+    const assignment = this.deliveryFor(vehicle.vehicleId);
+    if (assignment?.deliveryReceivedFromMerchant) return false;
+    return true;
+  }
+
+  assignedVehicleCount(): number {
+    return this.assignableVehicles.filter(v => !!this.deliveryFor(v.vehicleId)).length;
+  }
+
+  get assignableVehicles(): OrderVehicleDto[] {
+    return (this.order?.orderVehicles || []).filter(
+      v => v.merchantResponseStatus !== MerchantVehicleResponseStatus.Declined
+    );
+  }
+
   // ── Assign delivery ────────────────────────────────────────────────
-  onOpenAssignDelivery(): void {
-    if (!this.order) return;
+  onOpenAssignDelivery(vehicle: OrderVehicleDto): void {
+    if (!this.order || !this.canAssignVehicle(vehicle)) return;
+    this.assigningVehicleId = vehicle.vehicleId;
+    this.selectedAssignDeliveryId = this.deliveryFor(vehicle.vehicleId)?.deliveryId ?? null;
     this.showDeliveryModal = true;
-    this.isLoadingDeliveries = true;
-    this.activeDeliveries = [];
-    this.deliveryAssignments = {};
-    for (const v of this.order.orderVehicles || []) {
-      this.deliveryAssignments[v.vehicleId] = null;
+    this.isLoadingDeliveries = this.activeDeliveries.length === 0;
+
+    const finish = () => {
+      this.isLoadingDeliveries = false;
+    };
+
+    if (this.activeDeliveries.length > 0) {
+      finish();
+      return;
     }
 
     this.deliveryClient.getActive(this.order.cityId).subscribe({
       next: (list) => {
         this.activeDeliveries = list || [];
-        this.isLoadingDeliveries = false;
+        finish();
       },
       error: (error: any) => {
         this.showErrorMessage(
           error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.deliveriesLoadFailed')
         );
-        this.isLoadingDeliveries = false;
+        finish();
       }
     });
   }
 
-  setDeliveryAssignment(vehicleId: number, deliveryId: number | string | boolean | null): void {
-    this.deliveryAssignments[vehicleId] =
-      deliveryId == null || deliveryId === '' ? null : Number(deliveryId);
-  }
-
-  get allDeliveriesAssigned(): boolean {
-    if (!this.order?.orderVehicles?.length) return false;
-    return this.order.orderVehicles.every(v => !!this.deliveryAssignments[v.vehicleId]);
+  get assigningVehicle(): OrderVehicleDto | undefined {
+    return this.order?.orderVehicles?.find(v => v.vehicleId === this.assigningVehicleId);
   }
 
   onConfirmAssignDelivery(): void {
-    if (!this.order || !this.allDeliveriesAssigned) {
-      this.showErrorMessage(this.localeService.translate('orders.assignDeliveryAllRequired'));
+    const deliveryId = Number(this.selectedAssignDeliveryId);
+    if (!this.order || !this.assigningVehicleId || !deliveryId) {
+      this.showErrorMessage(this.localeService.translate('orders.assignDeliveryRequired'));
       return;
     }
 
     this.actionLoading = 'assignDelivery';
     const command = new AssignDeliveryToOrderCommand();
     command.orderId = this.orderId;
-    command.assignments = this.order.orderVehicles.map(v => {
-      const item = new AssignDeliveryVehicleItem();
-      item.vehicleId = v.vehicleId;
-      item.deliveryId = this.deliveryAssignments[v.vehicleId]!;
-      return item;
-    });
+    const item = new AssignDeliveryVehicleItem();
+    item.vehicleId = this.assigningVehicleId;
+    item.deliveryId = deliveryId;
+    command.assignments = [item];
 
     this.orderClient.assignDelivery(this.orderId, command).subscribe({
       next: () => {
         this.showDeliveryModal = false;
+        this.assigningVehicleId = null;
+        this.selectedAssignDeliveryId = null;
         this.showSuccessMessage(this.localeService.translate('orders.assignDeliverySuccess'));
         this.loadOrder();
         this.actionLoading = '';
@@ -633,6 +665,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   onCloseDeliveryModal(): void {
     this.showDeliveryModal = false;
+    this.assigningVehicleId = null;
+    this.selectedAssignDeliveryId = null;
   }
 
   // ── Merchant handover ──────────────────────────────────────────────
@@ -874,75 +908,30 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   openVehicleNotReceived(vehicle: OrderVehicleDto): void {
     this.failVehicle = vehicle;
-    this.failReason = '';
-    this.failFaultParty = FaultParty.Merchant;
     this.showVehicleNotReceivedModal = true;
   }
 
   onCloseVehicleNotReceived(): void {
     this.showVehicleNotReceivedModal = false;
     this.failVehicle = null;
-    this.failReason = '';
   }
 
   onConfirmVehicleNotReceived(): void {
-    if (!this.failVehicle || !this.failReason.trim()) {
-      this.showErrorMessage(this.localeService.translate('orders.failureReasonRequired'));
-      return;
-    }
+    if (!this.failVehicle) return;
     this.actionLoading = 'vehicleNotReceived';
     const command = new MarkVehicleNotReceivedByCustomerCommand();
     command.orderId = this.orderId;
     command.vehicleId = this.failVehicle.vehicleId;
-    command.reason = this.failReason.trim();
-    command.faultParty = this.failFaultParty;
     this.orderClient.markVehicleNotReceivedByCustomer(this.orderId, this.failVehicle.vehicleId, command).subscribe({
       next: () => {
         this.onCloseVehicleNotReceived();
-        this.showSuccessMessage(this.localeService.translate('orders.notReceivedSuccess'));
+        this.showSuccessMessage(this.localeService.translate('orders.vehicleCancelledSuccess'));
         this.loadOrder();
         this.actionLoading = '';
       },
       error: (error: any) => {
         this.showErrorMessage(
-          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.notReceivedFailed')
-        );
-        this.actionLoading = '';
-      }
-    });
-  }
-
-  openOrderNotDelivered(): void {
-    this.orderFailReason = '';
-    this.orderFailFaultParty = FaultParty.Merchant;
-    this.showOrderNotDeliveredModal = true;
-  }
-
-  onCloseOrderNotDelivered(): void {
-    this.showOrderNotDeliveredModal = false;
-    this.orderFailReason = '';
-  }
-
-  onConfirmOrderNotDelivered(): void {
-    if (!this.orderFailReason.trim()) {
-      this.showErrorMessage(this.localeService.translate('orders.failureReasonRequired'));
-      return;
-    }
-    this.actionLoading = 'orderNotDelivered';
-    const command = new MarkOrderNotDeliveredCommand();
-    command.orderId = this.orderId;
-    command.reason = this.orderFailReason.trim();
-    command.faultParty = this.orderFailFaultParty;
-    this.orderClient.markOrderNotDelivered(this.orderId, command).subscribe({
-      next: () => {
-        this.onCloseOrderNotDelivered();
-        this.showSuccessMessage(this.localeService.translate('orders.notDeliveredSuccess'));
-        this.loadOrder();
-        this.actionLoading = '';
-      },
-      error: (error: any) => {
-        this.showErrorMessage(
-          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.notDeliveredFailed')
+          error?.errorMessage || error?.error?.errorMessage || this.localeService.translate('orders.vehicleCancelledFailed')
         );
         this.actionLoading = '';
       }
@@ -964,7 +953,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       next: () => {
         this.showCancelDialog = false;
         this.cancelDialogLoading = false;
-        this.showSuccessMessage(this.localeService.translate('orders.rejectedSuccess'));
+        this.showSuccessMessage(this.localeService.translate('orders.cancelledSuccess'));
         this.loadOrder();
         this.actionLoading = '';
       },
@@ -1239,16 +1228,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       && this.unreceivedDeliveryVehicles.length > 0;
   }
 
-  canMarkOrderNotDelivered(): boolean {
-    if (!this.order || this.isCancelled) return false;
-    return canMarkOrderNotDelivered(
-      this.order.orderState,
-      this.order.orderVehicles || [],
-      !!this.order.orderDeliveryFailed,
-      this.isCancelled
-    );
-  }
-
   canCancel(): boolean {
     if (!this.order || this.isCancelled) return false;
     const state = this.order.orderState;
@@ -1334,10 +1313,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   get hasPrimaryAction(): boolean {
     return this.canSendToMerchants()
       || this.canConfirm()
-      || this.canAssignDelivery()
       || this.canMarkHandover()
-      || this.canMarkOrderNotDelivered()
       || this.order?.orderState === OrderState.MerchantPending
+      || this.order?.orderState === OrderState.Confirmed
       || this.order?.orderState === OrderState.OnWay
       || this.order?.orderState === OrderState.CustomerReceived
       || this.order?.orderState === OrderState.DeliveryAssigned;

@@ -156,31 +156,16 @@ namespace Domain.Models
             Touch(modifiedBy);
         }
 
-        internal void MarkDeliveryFailed(
-            string reason,
-            Domain.Enums.FaultParty faultParty,
-            string? modifiedBy = null)
+        internal void CancelAsNotReceived(string? modifiedBy = null)
         {
-            if (!ReceivedFromOwner)
-                throw new InvalidOperationException("Cannot mark delivery failed before receiving from owner.");
+            if (DeliveryFailed)
+                throw new InvalidOperationException("Vehicle is already cancelled.");
 
-            if (string.IsNullOrWhiteSpace(reason))
-                throw new ArgumentException("Failure reason is required", nameof(reason));
-
-            if (faultParty is Domain.Enums.FaultParty.None or Domain.Enums.FaultParty.Customer)
-                throw new ArgumentException("Fault party must be Merchant, Delivery, or Company", nameof(faultParty));
+            if (DeliveredToCustomer)
+                throw new InvalidOperationException("Cannot cancel a vehicle already delivered to the customer.");
 
             DeliveryFailed = true;
-            DeliveryFailureReason = reason.Trim();
-            DeliveryFailureFaultParty = faultParty;
-
-            // Cycle treats vehicle as delivered to customer for aggregation.
-            if (!DeliveredToCustomer)
-            {
-                DeliveredToCustomer = true;
-                DeliveredToCustomerAt = DateTime.UtcNow;
-            }
-
+            DeliveryFailureReason = "Cancelled — not received by customer";
             Touch(modifiedBy);
         }
 

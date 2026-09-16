@@ -435,7 +435,8 @@ namespace Domain.Models
             || state == OrderState.DeliveryAssigned;
 
         /// <summary>
-        /// Cancel allowed until the first vehicle is received from owner (that moves order to OnWay).
+        /// Cancel is allowed until the first vehicle is received from the merchant.
+        /// After that, neither admin nor customer may cancel the order.
         /// </summary>
         public bool CanCancel() =>
             OrderState != OrderState.Cancelled
@@ -710,6 +711,9 @@ namespace Domain.Models
             var lines = new List<OrderLedgerLine>();
             if (snapshot.MerchantCashOnReceive && snapshot.VehicleRental > 0)
             {
+                if (snapshot.DeliveryId <= 0)
+                    throw new InvalidOperationException("Delivery ID is required to credit cash on receive paid by delivery.");
+
                 lines.Add(new OrderLedgerLine(
                     OrderId,
                     snapshot.VehicleId,
@@ -720,6 +724,17 @@ namespace Domain.Models
                     OrderJournalEntryKind.MerchantPaidByDeliveryCashOnReceive,
                     $"order:{OrderId}:vehicle:{snapshot.VehicleId}:cash-on-receive",
                     note: "Cash on receive — merchant debit vehicle rental"));
+
+                lines.Add(new OrderLedgerLine(
+                    OrderId,
+                    snapshot.VehicleId,
+                    LedgerPartyType.Delivery,
+                    snapshot.DeliveryId,
+                    JournalDirection.Credit,
+                    snapshot.VehicleRental,
+                    OrderJournalEntryKind.DeliveryCashAdvanceToMerchant,
+                    $"order:{OrderId}:vehicle:{snapshot.VehicleId}:cash-on-receive-delivery",
+                    note: "Cash on receive — delivery credit for cash paid to merchant"));
             }
 
             if (wasFirst && OrderState == OrderState.DeliveryAssigned)
@@ -746,7 +761,9 @@ namespace Domain.Models
 
             var lines = BuildCustomerDeliveryAccrualLines(snapshot, modifiedBy);
 
-            if (OrderVehicles.All(v => v.DeliveredToCustomer) && OrderState == OrderState.OnWay)
+            if (ActiveOrderVehicles.Any()
+                && ActiveOrderVehicles.All(v => v.DeliveredToCustomer)
+                && OrderState == OrderState.OnWay)
                 MarkCustomerReceived(modifiedBy);
 
             RaiseDomainEvent(new OrderVehicleDeliveredToCustomerEvent(
@@ -778,119 +795,37 @@ namespace Domain.Models
             var ov = RequireOrderVehicle(vehicleId);
             ov.MarkDeliveredToOwner(imageUrl, modifiedBy);
 
-            if (OrderVehicles.All(v => v.DeliveredToOwner) && OrderState == OrderState.CustomerReceived)
+            if (ActiveOrderVehicles.Any()
+                && ActiveOrderVehicles.All(v => v.DeliveredToOwner)
+                && OrderState == OrderState.CustomerReceived)
                 Complete(modifiedBy);
 
             Touch(modifiedBy);
         }
 
         /// <summary>
-        /// Vehicle not received by customer: post delivery accruals as if delivered, then debit fault party
-        /// for vehicle rental + delivery fee.
+        /// Customer did not receive this vehicle: cancel the vehicle only. No ledger, no order-level delivery.
         /// </summary>
-        public void MarkVehicleNotReceivedByCustomer(
-            VehicleSettlementSnapshot snapshot,
-            string reason,
-            FaultParty faultParty,
-            string? modifiedBy = null)
+        public void CancelVehicleNotReceived(int vehicleId, string? modifiedBy = null)
         {
-            EnsureOperationalStateForCustomerDelivery();
-            var ov = RequireOrderVehicle(snapshot.VehicleId);
-            ov.MarkDeliveryFailed(reason, faultParty, modifiedBy);
+            var ov = RequireOrderVehicle(vehicleId);
+            ov.CancelAsNotReceived(modifiedBy);
 
-            var lines = BuildCustomerDeliveryAccrualLines(snapshot, modifiedBy);
-            var faultAmount = snapshot.VehicleRental + snapshot.DeliveryFeeShare;
-            if (faultAmount > 0)
+            if (OrderVehicles.All(v => v.DeliveryFailed))
             {
-                lines.Add(BuildNonDeliveryFaultLine(
-                    snapshot.VehicleId,
-                    faultAmount,
-                    faultParty,
-                    snapshot.MerchantId,
-                    snapshot.DeliveryId,
-                    $"order:{OrderId}:vehicle:{snapshot.VehicleId}:non-delivery-fault",
-                    reason));
+                if (CanCancel())
+                    Cancel(modifiedBy);
             }
-
-            if (OrderVehicles.All(v => v.DeliveredToCustomer) && OrderState == OrderState.OnWay)
+            else if (ActiveOrderVehicles.All(v => v.DeliveredToCustomer) && OrderState == OrderState.OnWay)
+            {
                 MarkCustomerReceived(modifiedBy);
-
-            if (lines.Count > 0)
-                RaiseDomainEvent(new OrderLedgerPostsRequested(OrderId, lines, modifiedBy));
+            }
 
             Touch(modifiedBy);
         }
 
-        /// <summary>
-        /// Whole order not delivered: post accruals for every vehicle, cash/paypal order-total rules,
-        /// then one fault debit chosen by admin.
-        /// </summary>
-        public void MarkOrderNotDelivered(
-            IReadOnlyList<VehicleSettlementSnapshot> snapshots,
-            string reason,
-            FaultParty faultParty,
-            string? modifiedBy = null)
-        {
-            if (snapshots == null || snapshots.Count == 0)
-                throw new ArgumentException("At least one vehicle settlement is required", nameof(snapshots));
-
-            if (OrderState is not (OrderState.DeliveryAssigned or OrderState.OnWay))
-                throw new InvalidOperationException(
-                    $"Cannot mark order not delivered in {OrderState}. Order must be DeliveryAssigned or OnWay.");
-
-            if (string.IsNullOrWhiteSpace(reason))
-                throw new ArgumentException("Failure reason is required", nameof(reason));
-
-            if (faultParty is FaultParty.None or FaultParty.Customer)
-                throw new ArgumentException("Fault party must be Merchant, Delivery, or Company", nameof(faultParty));
-
-            var lines = new List<OrderLedgerLine>();
-            foreach (var snapshot in snapshots)
-            {
-                var ov = RequireOrderVehicle(snapshot.VehicleId);
-                if (!ov.ReceivedFromOwner)
-                    throw new InvalidOperationException($"Vehicle {snapshot.VehicleId} must be received from owner first.");
-
-                ov.MarkDeliveryFailed(reason, faultParty, modifiedBy);
-                lines.AddRange(BuildCustomerDeliveryAccrualLines(snapshot, modifiedBy));
-            }
-
-            var faultTotal = snapshots.Sum(s => s.VehicleRental + s.DeliveryFeeShare);
-            if (faultTotal > 0)
-            {
-                int? partyId = faultParty switch
-                {
-                    FaultParty.Delivery => snapshots[0].DeliveryId,
-                    FaultParty.Merchant => snapshots[0].MerchantId,
-                    _ => null
-                };
-
-                lines.Add(BuildNonDeliveryFaultLine(
-                    vehicleId: null,
-                    faultTotal,
-                    faultParty,
-                    snapshots[0].MerchantId,
-                    snapshots[0].DeliveryId,
-                    $"order:{OrderId}:order-non-delivery-fault",
-                    reason,
-                    partyIdOverride: partyId));
-            }
-
-            OrderDeliveryFailed = true;
-            OrderDeliveryFailureReason = reason.Trim();
-            OrderDeliveryFailureFaultParty = faultParty;
-
-            if (OrderState == OrderState.DeliveryAssigned)
-                MarkOnWay(modifiedBy);
-
-            if (OrderState == OrderState.OnWay)
-                MarkCustomerReceived(modifiedBy);
-
-            if (lines.Count > 0)
-                RaiseDomainEvent(new OrderLedgerPostsRequested(OrderId, lines, modifiedBy));
-
-            Touch(modifiedBy);
-        }
+        private IReadOnlyList<OrderVehicle> ActiveOrderVehicles =>
+            OrderVehicles.Where(v => !v.DeliveryFailed).ToList();
 
         private List<OrderLedgerLine> BuildCustomerDeliveryAccrualLines(
             VehicleSettlementSnapshot snapshot,
@@ -968,37 +903,6 @@ namespace Domain.Models
             }
 
             return lines;
-        }
-
-        private OrderLedgerLine BuildNonDeliveryFaultLine(
-            int? vehicleId,
-            decimal amount,
-            FaultParty faultParty,
-            int merchantId,
-            int deliveryId,
-            string idempotencyKey,
-            string reason,
-            int? partyIdOverride = null)
-        {
-            var (partyType, partyId) = faultParty switch
-            {
-                FaultParty.Merchant => (LedgerPartyType.Merchant, partyIdOverride ?? merchantId),
-                FaultParty.Delivery => (LedgerPartyType.Delivery, partyIdOverride ?? deliveryId),
-                FaultParty.Company => (LedgerPartyType.Company, (int?)null),
-                _ => throw new ArgumentException("Unsupported fault party", nameof(faultParty))
-            };
-
-            return new OrderLedgerLine(
-                OrderId,
-                vehicleId,
-                partyType,
-                partyId,
-                JournalDirection.Debit,
-                amount,
-                OrderJournalEntryKind.NonDeliveryFaultDebit,
-                idempotencyKey,
-                note: reason,
-                faultParty: faultParty);
         }
 
         private OrderVehicle RequireOrderVehicle(int vehicleId)

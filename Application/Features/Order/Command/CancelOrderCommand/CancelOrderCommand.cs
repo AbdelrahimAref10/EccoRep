@@ -69,22 +69,24 @@ namespace Application.Features.Order.Command.CancelOrderCommand
             if (!order.CanCancel())
             {
                 return Result.Failure<bool>(
-                    $"Cannot cancel order in {order.OrderState} state. Cancel stops once any vehicle is received from the merchant.");
+                    "Cannot cancel the order after a vehicle has been received from the merchant.");
             }
 
             var userId = _userSession.UserId;
             var isAdmin = _userSession.Roles.Contains(Domain.Enums.AppRoleNames.SuperAdmin);
 
-            if (!isAdmin)
+            if (isAdmin)
             {
-                var customer = await _context.Customers
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+                return Result.Failure<bool>("Admin must reject the order; customer cancellation fees do not apply to admin.");
+            }
 
-                if (customer == null || order.CustomerId != customer.CustomerId)
-                {
-                    return Result.Failure<bool>("You do not have permission to cancel this order");
-                }
+            var customer = await _context.Customers
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.UserId == userId, cancellationToken);
+
+            if (customer == null || order.CustomerId != customer.CustomerId)
+            {
+                return Result.Failure<bool>("You do not have permission to cancel this order");
             }
 
             // Prior debt attached but not yet paid → release back to Pending

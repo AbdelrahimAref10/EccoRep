@@ -77,6 +77,7 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
 
             var vehicles = await _context.Vehicles
                 .Include(v => v.Merchant)
+                    .ThenInclude(m => m.Zone)
                 .Where(v => distinctVehicleIds.Contains(v.VehicleId))
                 .ToListAsync(cancellationToken);
 
@@ -163,7 +164,10 @@ namespace Application.Features.Order.Query.AdminCalculateOrderTotalsQuery
                     Price = v.Price,
                     SpeedKmh = v.SpeedKmh,
                     EngineCapacityCc = v.EngineCapacityCc,
-                    DeliveryFees = feesByVehicle.First(f => f.VehicleId == v.VehicleId).Fee
+                    DeliveryFees = feesByVehicle.First(f => f.VehicleId == v.VehicleId).Fee,
+                    MerchantCashOnReceive = v.Merchant?.CashOnReceive ?? false,
+                    MerchantZoneId = v.Merchant?.ZoneId ?? 0,
+                    MerchantZoneName = v.Merchant?.Zone?.Name ?? string.Empty
                 }).ToList(),
                 UnitPrice = pricing.UnitPrice,
                 SubTotal = pricing.SubTotal,

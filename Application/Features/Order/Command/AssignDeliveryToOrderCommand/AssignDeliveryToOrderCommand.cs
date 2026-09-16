@@ -148,7 +148,6 @@ namespace Application.Features.Order.Command.AssignDeliveryToOrderCommand
                 }
             }
 
-            // After loop inserts, ensure full order vehicle coverage then move to DeliveryAssigned
             var existingOther = await _context.DeliveryMenOrders
                 .AsNoTracking()
                 .Where(d => d.OrderId == request.OrderId && !requestedVehicleIds.Contains(d.VehicleId))
@@ -160,13 +159,17 @@ namespace Application.Features.Order.Command.AssignDeliveryToOrderCommand
                 .Distinct()
                 .ToHashSet();
 
-            if (coveredVehicleIds.Count != orderVehicleIds.Count
-                || orderVehicleIds.Any(id => !coveredVehicleIds.Contains(id)))
-            {
-                return Result.Failure<bool>("All order vehicles must be assigned to a delivery");
-            }
+            var requiredVehicleIds = order.OrderVehicles
+                .Where(ov => ov.MerchantResponseStatus != MerchantVehicleResponseStatus.Declined)
+                .Select(ov => ov.VehicleId)
+                .ToHashSet();
 
-            order.MarkDeliveryAssigned(createdBy);
+            var allVehiclesCovered = requiredVehicleIds.Count > 0
+                && requiredVehicleIds.All(id => coveredVehicleIds.Contains(id));
+
+            if (allVehiclesCovered)
+                order.MarkDeliveryAssigned(createdBy);
+
             await _context.SaveChangesAsync(cancellationToken);
 
             await _realtime.NotifyAsync(

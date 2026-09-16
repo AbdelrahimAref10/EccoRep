@@ -6706,69 +6706,6 @@ export class AdminOrderClient {
         return _observableOf(null as any);
     }
 
-    markOrderNotDelivered(orderId: number, command: MarkOrderNotDeliveredCommand): Observable<boolean> {
-        let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/NotDelivered";
-        if (orderId === undefined || orderId === null)
-            throw new Error("The parameter 'orderId' must be defined.");
-        url_ = url_.replace("{orderId}", encodeURIComponent("" + orderId));
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(command);
-
-        let options_ : any = {
-            body: content_,
-            observe: "response",
-            responseType: "blob",
-            headers: new HttpHeaders({
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            })
-        };
-
-        return this.http.request("post", url_, options_).pipe(_observableMergeMap((response_ : any) => {
-            return this.processMarkOrderNotDelivered(response_);
-        })).pipe(_observableCatch((response_: any) => {
-            if (response_ instanceof HttpResponseBase) {
-                try {
-                    return this.processMarkOrderNotDelivered(response_ as any);
-                } catch (e) {
-                    return _observableThrow(e) as any as Observable<boolean>;
-                }
-            } else
-                return _observableThrow(response_) as any as Observable<boolean>;
-        }));
-    }
-
-    protected processMarkOrderNotDelivered(response: HttpResponseBase): Observable<boolean> {
-        const status = response.status;
-        const responseBlob =
-            response instanceof HttpResponse ? response.body :
-            (response as any).error instanceof Blob ? (response as any).error : undefined;
-
-        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
-        if (status === 200) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : <any>null;
-    
-            return _observableOf(result200);
-            }));
-        } else if (status === 400) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            let result400: any = null;
-            let resultData400 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result400 = ProblemDetail.fromJS(resultData400);
-            return throwException("A server side error occurred.", status, _responseText, _headers, result400);
-            }));
-        } else if (status !== 200 && status !== 204) {
-            return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            }));
-        }
-        return _observableOf(null as any);
-    }
-
     rejectReceipt(orderId: number, command: MarkCustomerRejectedReceiptCommand): Observable<boolean> {
         let url_ = this.baseUrl + "/api/AdminOrder/{orderId}/RejectReceipt";
         if (orderId === undefined || orderId === null)
@@ -12851,6 +12788,7 @@ export class OrderJournalDto {
     orderJournalId!: number;
     orderId!: number | null;
     vehicleId!: number | null;
+    vehicleCode!: string | null;
     partyType!: LedgerPartyType;
     partyId!: number | null;
     direction!: JournalDirection;
@@ -12867,6 +12805,7 @@ export class OrderJournalDto {
             this.orderJournalId = _data["orderJournalId"] !== undefined ? _data["orderJournalId"] : <any>null;
             this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
             this.vehicleId = _data["vehicleId"] !== undefined ? _data["vehicleId"] : <any>null;
+            this.vehicleCode = _data["vehicleCode"] !== undefined ? _data["vehicleCode"] : <any>null;
             this.partyType = _data["partyType"] !== undefined ? _data["partyType"] : <any>null;
             this.partyId = _data["partyId"] !== undefined ? _data["partyId"] : <any>null;
             this.direction = _data["direction"] !== undefined ? _data["direction"] : <any>null;
@@ -12892,6 +12831,7 @@ export class OrderJournalDto {
         data["orderJournalId"] = this.orderJournalId !== undefined ? this.orderJournalId : <any>null;
         data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
         data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
+        data["vehicleCode"] = this.vehicleCode !== undefined ? this.vehicleCode : <any>null;
         data["partyType"] = this.partyType !== undefined ? this.partyType : <any>null;
         data["partyId"] = this.partyId !== undefined ? this.partyId : <any>null;
         data["direction"] = this.direction !== undefined ? this.direction : <any>null;
@@ -16048,6 +15988,9 @@ export class OrderVehicleDto {
     model!: string;
     price!: number;
     deliveryFee!: number;
+    merchantCashOnReceive!: boolean;
+    merchantZoneId!: number;
+    merchantZoneName!: string;
     speedKmh!: number | null;
     engineCapacityCc!: number | null;
     receivedFromOwner!: boolean;
@@ -16077,6 +16020,9 @@ export class OrderVehicleDto {
             this.model = _data["model"] !== undefined ? _data["model"] : <any>null;
             this.price = _data["price"] !== undefined ? _data["price"] : <any>null;
             this.deliveryFee = _data["deliveryFee"] !== undefined ? _data["deliveryFee"] : <any>null;
+            this.merchantCashOnReceive = _data["merchantCashOnReceive"] !== undefined ? _data["merchantCashOnReceive"] : <any>null;
+            this.merchantZoneId = _data["merchantZoneId"] !== undefined ? _data["merchantZoneId"] : <any>null;
+            this.merchantZoneName = _data["merchantZoneName"] !== undefined ? _data["merchantZoneName"] : <any>null;
             this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
             this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
             this.receivedFromOwner = _data["receivedFromOwner"] !== undefined ? _data["receivedFromOwner"] : <any>null;
@@ -16115,6 +16061,9 @@ export class OrderVehicleDto {
         data["model"] = this.model !== undefined ? this.model : <any>null;
         data["price"] = this.price !== undefined ? this.price : <any>null;
         data["deliveryFee"] = this.deliveryFee !== undefined ? this.deliveryFee : <any>null;
+        data["merchantCashOnReceive"] = this.merchantCashOnReceive !== undefined ? this.merchantCashOnReceive : <any>null;
+        data["merchantZoneId"] = this.merchantZoneId !== undefined ? this.merchantZoneId : <any>null;
+        data["merchantZoneName"] = this.merchantZoneName !== undefined ? this.merchantZoneName : <any>null;
         data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
         data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         data["receivedFromOwner"] = this.receivedFromOwner !== undefined ? this.receivedFromOwner : <any>null;
@@ -16707,6 +16656,9 @@ export class AdminOrderPreviewVehicleDto {
     speedKmh!: number | null;
     engineCapacityCc!: number | null;
     deliveryFees!: number;
+    merchantCashOnReceive!: boolean;
+    merchantZoneId!: number;
+    merchantZoneName!: string;
 
     init(_data?: any) {
         if (_data) {
@@ -16723,6 +16675,9 @@ export class AdminOrderPreviewVehicleDto {
             this.speedKmh = _data["speedKmh"] !== undefined ? _data["speedKmh"] : <any>null;
             this.engineCapacityCc = _data["engineCapacityCc"] !== undefined ? _data["engineCapacityCc"] : <any>null;
             this.deliveryFees = _data["deliveryFees"] !== undefined ? _data["deliveryFees"] : <any>null;
+            this.merchantCashOnReceive = _data["merchantCashOnReceive"] !== undefined ? _data["merchantCashOnReceive"] : <any>null;
+            this.merchantZoneId = _data["merchantZoneId"] !== undefined ? _data["merchantZoneId"] : <any>null;
+            this.merchantZoneName = _data["merchantZoneName"] !== undefined ? _data["merchantZoneName"] : <any>null;
         }
     }
 
@@ -16748,6 +16703,9 @@ export class AdminOrderPreviewVehicleDto {
         data["speedKmh"] = this.speedKmh !== undefined ? this.speedKmh : <any>null;
         data["engineCapacityCc"] = this.engineCapacityCc !== undefined ? this.engineCapacityCc : <any>null;
         data["deliveryFees"] = this.deliveryFees !== undefined ? this.deliveryFees : <any>null;
+        data["merchantCashOnReceive"] = this.merchantCashOnReceive !== undefined ? this.merchantCashOnReceive : <any>null;
+        data["merchantZoneId"] = this.merchantZoneId !== undefined ? this.merchantZoneId : <any>null;
+        data["merchantZoneName"] = this.merchantZoneName !== undefined ? this.merchantZoneName : <any>null;
         return data;
     }
 }
@@ -17308,35 +17266,6 @@ export class MarkVehicleNotReceivedByCustomerCommand {
         data = typeof data === 'object' ? data : {};
         data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
         data["vehicleId"] = this.vehicleId !== undefined ? this.vehicleId : <any>null;
-        data["reason"] = this.reason !== undefined ? this.reason : <any>null;
-        data["faultParty"] = this.faultParty !== undefined ? this.faultParty : <any>null;
-        return data;
-    }
-}
-
-export class MarkOrderNotDeliveredCommand {
-    orderId!: number;
-    reason!: string;
-    faultParty!: FaultParty;
-
-    init(_data?: any) {
-        if (_data) {
-            this.orderId = _data["orderId"] !== undefined ? _data["orderId"] : <any>null;
-            this.reason = _data["reason"] !== undefined ? _data["reason"] : <any>null;
-            this.faultParty = _data["faultParty"] !== undefined ? _data["faultParty"] : <any>null;
-        }
-    }
-
-    static fromJS(data: any): MarkOrderNotDeliveredCommand {
-        data = typeof data === 'object' ? data : {};
-        let result = new MarkOrderNotDeliveredCommand();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["orderId"] = this.orderId !== undefined ? this.orderId : <any>null;
         data["reason"] = this.reason !== undefined ? this.reason : <any>null;
         data["faultParty"] = this.faultParty !== undefined ? this.faultParty : <any>null;
         return data;

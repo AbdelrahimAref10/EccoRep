@@ -290,18 +290,6 @@ namespace Volt.Server.Controllers.Admin
             return Ok(result.Value);
         }
 
-        [HttpPost("{orderId}/NotDelivered")]
-        [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> MarkOrderNotDelivered(int orderId, [FromBody] MarkOrderNotDeliveredCommand command)
-        {
-            command.OrderId = orderId;
-            var result = await _mediator.Send(command);
-            if (result.IsFailure)
-                return BadRequest(ProblemDetail.CreateProblemDetail(result.Error));
-            return Ok(result.Value);
-        }
-
         [HttpPost("{orderId}/RejectReceipt")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetail), StatusCodes.Status400BadRequest)]
